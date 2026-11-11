@@ -545,7 +545,7 @@ class Course {
     this.stars(D(8), D(16), 4, 2.4, -6); this.stars(D(8), D(16), 4, 2.4, 6);
     if (L >= 3) this.stompers(D(19.6), D(24), 2, Y);
     // safe but narrow bridge on the right; islands on the left are faster and have the stars
-    const bw = L <= 4 ? 5 : 3.8, bx = HALF_W - bw / 2 - 0.4; this.floor(D(25.4), D(54.2), Y, { w: bw, x: bx, th: 0.8, rails: false }); this.lanesHint.push({ d0: D(25), d1: D(54.5), x: bx });
+    // no side bridge any more: everyone hops across the islands
     (this.hopHints = this.hopHints || []).push({ d0: D(22), d1: D(32), x: -2 }, { d0: D(32), d1: D(39), x: -6 }, { d0: D(39), d1: D(46), x: -4.5 }, { d0: D(46), d1: D(54.5), x: 0.5 });
     this.island(-9.5, D(29), 2.5, Y); this.island(-2, D(29.4), 2.5, Y);
     this.island(-6, D(35), 2.4, Y + 0.6, { bob: L >= 3 ? 0.5 : 0 });

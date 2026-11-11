@@ -481,7 +481,7 @@ class Race {
           if (Math.random() < A.acc) door = Math.random() < 0.85 ? G._herdRight : pick(G.doors.filter((x) => x.correct));
           else door = Math.random() < 0.8 ? G._herdWrong : pick(G.doors.filter((x) => !x.correct)) || G._herdWrong;
           A.door = door; A.commitT = G._herdT + rand(-0.25, 0.25); A.standD = rand(1.2, 5.2);
-          A.millX = clamp(r.p.x + rand(-1.5, 1.5), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.2, 2.2);
+          A.millX = clamp(pick(G.doors).x + rand(-2.2, 2.2), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.2, 2.2);
         }
         tx = G.timer <= A.commitT ? A.door.x + A.jit : A.millX; td = G.d - A.standD;
         if (G.locked) { if (d < G.d - GATE_ZONE) { tx = r.p.x; td = G.d - GATE_ZONE - 1.2 - A.waitB; } else tx = G.doors[G.slotAt(r.p.x)].x + A.jit; }
@@ -495,7 +495,7 @@ class Race {
     // lane selection with obstacle look-ahead
     let target = A.laneX;
     const hint = C.lanesHint.find((h) => d > h.d0 - 12 && d < h.d1 - 1);
-    const hop = A.hop && hint && !hint.must && C.hopHints ? C.hopHints.find((h) => d > h.d0 && d < h.d1) : null;
+    const hop = C.hopHints ? C.hopHints.find((h) => d > h.d0 && d < h.d1) : null;
     if (hop) target = hop.x; else if (hint && (hint.must || !A.hop)) target = hint.x;
     // aggressive racers steer toward neighbours, stompers line up behind someone
     if ((T.aggro > 0.5 || T.stomp > 0.5) && !hint) {

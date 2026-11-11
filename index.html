@@ -1471,7 +1471,7 @@ class MallangView {
   setOutline(on) {
     if (!on) { if (this.outline) this.outline.visible = false; return; }
     if (!this.outline) { const m = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide }); this.outline = new THREE.Mesh(this.body.geometry, m); this.outline.scale.setScalar(1.07); this.squash.add(this.outline);
-      const m2 = new THREE.MeshBasicMaterial({ color: 0x3d2a55, side: THREE.BackSide }); const o2 = new THREE.Mesh(this.body.geometry, m2); o2.scale.setScalar(1.2); this.outline.add(o2); o2.scale.setScalar(1.04); }
+      const m2 = new THREE.MeshBasicMaterial({ color: 0xffd84d, side: THREE.BackSide }); const o2 = new THREE.Mesh(this.body.geometry, m2); o2.scale.setScalar(1.2); this.outline.add(o2); o2.scale.setScalar(1.04); }
     this.outline.visible = true;
   }
   buildExtras() {
@@ -2070,7 +2070,7 @@ class Course {
     this.stars(D(8), D(16), 4, 2.4, -6); this.stars(D(8), D(16), 4, 2.4, 6);
     if (L >= 3) this.stompers(D(19.6), D(24), 2, Y);
     // safe but narrow bridge on the right; islands on the left are faster and have the stars
-    const bw = L <= 4 ? 5 : 3.8, bx = HALF_W - bw / 2 - 0.4; this.floor(D(25.4), D(54.2), Y, { w: bw, x: bx, th: 0.8, rails: false }); this.lanesHint.push({ d0: D(25), d1: D(54.5), x: bx });
+    // no side bridge any more: everyone hops across the islands
     (this.hopHints = this.hopHints || []).push({ d0: D(22), d1: D(32), x: -2 }, { d0: D(32), d1: D(39), x: -6 }, { d0: D(39), d1: D(46), x: -4.5 }, { d0: D(46), d1: D(54.5), x: 0.5 });
     this.island(-9.5, D(29), 2.5, Y); this.island(-2, D(29.4), 2.5, Y);
     this.island(-6, D(35), 2.4, Y + 0.6, { bob: L >= 3 ? 0.5 : 0 });
@@ -2881,7 +2881,7 @@ class Race {
           if (Math.random() < A.acc) door = Math.random() < 0.85 ? G._herdRight : pick(G.doors.filter((x) => x.correct));
           else door = Math.random() < 0.8 ? G._herdWrong : pick(G.doors.filter((x) => !x.correct)) || G._herdWrong;
           A.door = door; A.commitT = G._herdT + rand(-0.25, 0.25); A.standD = rand(1.2, 5.2);
-          A.millX = clamp(r.p.x + rand(-1.5, 1.5), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.2, 2.2);
+          A.millX = clamp(pick(G.doors).x + rand(-2.2, 2.2), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.2, 2.2);
         }
         tx = G.timer <= A.commitT ? A.door.x + A.jit : A.millX; td = G.d - A.standD;
         if (G.locked) { if (d < G.d - GATE_ZONE) { tx = r.p.x; td = G.d - GATE_ZONE - 1.2 - A.waitB; } else tx = G.doors[G.slotAt(r.p.x)].x + A.jit; }
@@ -2895,7 +2895,7 @@ class Race {
     // lane selection with obstacle look-ahead
     let target = A.laneX;
     const hint = C.lanesHint.find((h) => d > h.d0 - 12 && d < h.d1 - 1);
-    const hop = A.hop && hint && !hint.must && C.hopHints ? C.hopHints.find((h) => d > h.d0 && d < h.d1) : null;
+    const hop = C.hopHints ? C.hopHints.find((h) => d > h.d0 && d < h.d1) : null;
     if (hop) target = hop.x; else if (hint && (hint.must || !A.hop)) target = hint.x;
     // aggressive racers steer toward neighbours, stompers line up behind someone
     if ((T.aggro > 0.5 || T.stomp > 0.5) && !hint) {
