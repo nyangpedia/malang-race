@@ -90,19 +90,14 @@ function canvasTex(w, h, draw, repeat) { const c = document.createElement('canva
 function floorTexture(th, A, B, kind = 'check') {
   A = A || th.floorA; B = B || th.floorB;
   return canvasTex(256, 256, (g, w, h) => {
-    g.fillStyle = A; g.fillRect(0, 0, w, h); g.fillStyle = B;
-    const rr = (x, y, a, b, r) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, a, b, r) : g.rect(x, y, a, b); g.fill(); };
-    if (kind === 'check') { for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) if ((x + y) % 2) rr(x * 64 + 3, y * 64 + 3, 58, 58, 14); }
-    else if (kind === 'stripe') { for (let x = -256; x < 512; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 32, 0); g.lineTo(x + 32 + 256, 256); g.lineTo(x + 256, 256); g.fill(); } }
-    else if (kind === 'dots') { for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { g.beginPath(); g.arc(x * 64 + 32 + (y % 2) * 0, y * 64 + 32, 20, 0, 7); g.fill(); } g.fillStyle = 'rgba(255,255,255,0.55)'; for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { g.beginPath(); g.arc(x * 64 + 26, y * 64 + 26, 6, 0, 7); g.fill(); } }
-    else if (kind === 'chevron') { g.lineWidth = 22; g.strokeStyle = B; g.lineJoin = 'round'; for (let y = -64; y < 320; y += 64) { g.beginPath(); g.moveTo(0, y + 40); g.lineTo(128, y); g.lineTo(256, y + 40); g.stroke(); } }
-    else if (kind === 'star') { const star = (cx, cy, R) => { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? R * 0.45 : R; g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } g.closePath(); g.fill(); }; for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) { star(x * 128 + 64, y * 128 + 64, 46); } g.fillStyle = 'rgba(255,255,255,0.5)'; for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) { g.beginPath(); g.arc(x * 128, y * 128, 10, 0, 7); g.fill(); } }
-    else if (kind === 'wave') { g.lineWidth = 26; g.strokeStyle = B; for (let y = 16; y < 300; y += 64) { g.beginPath(); for (let x = 0; x <= 256; x += 8) g.lineTo(x, y + Math.sin(x / 256 * Math.PI * 2) * 14); g.stroke(); } }
-    else if (kind === 'rainbow') { const cs = ['#ff3b5c', '#ff9a1f', '#ffe11f', '#3fd35a', '#20b8ff', '#8a5cff']; for (let i = 0; i < 8; i++) { g.fillStyle = cs[i % 6]; g.fillRect(0, i * 32, w, 32); } g.fillStyle = 'rgba(255,255,255,0.35)'; for (let x = 0; x < 256; x += 64) g.fillRect(x, 0, 6, h); }
-    // glossy sparkles
-    g.fillStyle = 'rgba(255,255,255,0.45)'; for (let i = 0; i < 14; i++) { g.beginPath(); g.arc(RNG() * w, RNG() * h, 1.5 + RNG() * 2.5, 0, 7); g.fill(); }
-    // bright border so every tile pops
-    g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, h - 4);
+    g.fillStyle = A; g.fillRect(0, 0, w, h); g.fillStyle = B; g.strokeStyle = B; g.lineCap = 'round'; g.lineJoin = 'round';
+    if (kind === 'check') { g.lineWidth = 6; g.beginPath(); g.roundRect ? g.roundRect(8, 8, 240, 240, 36) : g.rect(8, 8, 240, 240); g.stroke(); }
+    else if (kind === 'stripe') { g.lineWidth = 10; for (let x = -256; x < 512; x += 128) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 256, 256); g.stroke(); } }
+    else if (kind === 'dots') { for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) { g.beginPath(); g.arc(x * 128 + 64 + (y % 2) * 64, y * 128 + 64, 9, 0, 7); g.fill(); } }
+    else if (kind === 'chevron') { g.lineWidth = 8; for (let y = 40; y < 300; y += 128) { g.beginPath(); g.moveTo(40, y + 36); g.lineTo(128, y); g.lineTo(216, y + 36); g.stroke(); } }
+    else if (kind === 'star') { g.lineWidth = 6; for (const [cx, cy, R] of [[70, 70, 70], [190, 190, 70]]) { g.beginPath(); g.arc(cx, cy, R * 0.55, 0, 7); g.stroke(); } }
+    else if (kind === 'wave') { g.lineWidth = 7; for (let y = 64; y < 300; y += 128) { g.beginPath(); for (let x = 0; x <= 256; x += 8) g.lineTo(x, y + Math.sin(x / 256 * Math.PI * 2) * 14); g.stroke(); } }
+    else if (kind === 'rainbow') { const cs = ['#ff7a8f', '#ffb45c', '#ffe46b', '#7fdc8a', '#6fcaff', '#a990ff']; for (let i = 0; i < 8; i++) { g.fillStyle = cs[i % 6]; g.fillRect(0, i * 32, w, 32); } }
   }, true);
 }
 const VIVID = [0xff2d6f, 0xff8a00, 0xffe600, 0x22e06a, 0x00c8ff, 0x7a5cff, 0xff4fd8];
@@ -124,7 +119,7 @@ class Course {
     this.pulse = []; this.spinners = [];
     // every stretch of the course has its own colours and pattern
     const zs = this.th.zones || [[this.th.floorA, this.th.floorB]];
-    this.zones = ZONE_EDGES.map((d, i) => { const [A, B0] = zs[i % zs.length]; const B = '#' + new THREE.Color(B0).lerp(new THREE.Color(A), 0.3).getHexString(); return { tex: floorTexture(this.th, A, B, ZONE_KINDS[i % ZONE_KINDS.length]), side: new THREE.MeshStandardMaterial({ color: new THREE.Color(A).multiplyScalar(0.72), roughness: 0.45, envMapIntensity: 0.4 }), edge: new THREE.Color(A).lerp(new THREE.Color(0xffffff), 0.25) }; });
+    this.zones = ZONE_EDGES.map((d, i) => { const [A0] = zs[i % zs.length]; const A = '#' + new THREE.Color(A0).lerp(new THREE.Color(0xffffff), 0.12).getHexString(), B = '#' + new THREE.Color(A).lerp(new THREE.Color(0xffffff), 0.22).getHexString(); return { tex: floorTexture(this.th, A, B, ZONE_KINDS[i % ZONE_KINDS.length]), side: new THREE.MeshStandardMaterial({ color: new THREE.Color(A).multiplyScalar(0.72), roughness: 0.45, envMapIntensity: 0.4 }), edge: new THREE.Color(A).lerp(new THREE.Color(0xffffff), 0.25) }; });
     this.gateTex = floorTexture(this.th, '#ffffff', '#ffffff', 'rainbow');
     this.railTex = stripeTexture(this.th.rail[0], this.th.rail[1]);
     this.warnTex = stripeTexture('#ff2d6f', '#ffe600');

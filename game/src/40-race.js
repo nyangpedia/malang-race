@@ -165,20 +165,20 @@ class Race {
         const L = clamp(this.level || 1, 1, 6), accBase = [0, 0.5, 0.54, 0.58, 0.62, 0.66, 0.7][L];
         const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.4, 0.35, 0.8), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0, 6), waitX: rand(-13, 13), jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
         const nm = (names[i % names.length] || '말랑') + '말랑이';
-        const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.7, 0.77) };
+        const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.84, 0.92) };
         r = new Racer(this, i, { name: nm, look, ai, speedMul: (1 + (rand(...T.speed) - 0.95) * 0.5) * ([0, 0.84, 0.88, 0.92, 0.96, 1.0, 1.03][clamp(this.level || 1, 1, 6)] + (this.subject === 'run' ? 0.04 : 0)) });
         r.baseSpeed = r.speed;
       }
       r.p.set(clamp((col - 4.5) * 2.7 + rand(-1.1, 1.1) + (row % 2) * 1.3, -13, 13), PHYS.R + 0.05, -(4 + row * 2.6 + rand(-0.9, 0.9)));
       r.yaw = Math.PI + rand(-0.6, 0.6); r.view.yaw.rotation.y = r.yaw; if (r.ai) r.ai.startT = rand(0, 0.45);
-      if (r.isPlayer) { r.view.root.scale.setScalar(0.8); r.view.setOutline(true); }
+      if (r.isPlayer) { r.view.root.scale.setScalar(0.95); r.view.setOutline(true); }
       this.racers.push(r); r.view.root.position.copy(r.p).y -= PHYS.R;
     }
   }
   // ---------- HUD ----------
   buildHUD() {
     $('#hud').classList.remove('hidden'); $('#controls').classList.remove('hidden');
-    $('#hud-world').textContent = `${WORLDS[this.worldId].icon} ${WORLDS[this.worldId].name}${this.mapNo ? ' · 맵 ' + this.mapNo : ''}`;
+    $('#hud-world').style.display = 'none'; $('#hud-sim').style.display = 'none'; if (0) $('#hud-world').textContent = `${WORLDS[this.worldId].icon} ${WORLDS[this.worldId].name}${this.mapNo ? ' · 맵 ' + this.mapNo : ''}`;
     $('#hud-sim').textContent = this.subject === 'run' ? '🔥 피버 모드 · 에너지 2배' : `${SUBJECTS[this.subject].icon} ${SUBJECTS[this.subject].name} · AI ${this.N - 1}명`;
     $('#qpanel').classList.add('hidden'); $('#bigmsg').classList.add('hidden');
     const bar = $('#prog-marks'); bar.innerHTML = '';
@@ -200,7 +200,7 @@ class Race {
     // gap ahead/behind
     const ahead = this.order[rank - 2], behind = this.order[rank];
     const fmt = (o) => (o ? (o.finished ? '완주' : Math.abs(o.progress() - P.progress()).toFixed(1) + 'm') : '-');
-    $('#hud-gap').innerHTML = `<span>▲ 앞 ${ahead ? fmt(ahead) : '없음'}</span><span>▼ 뒤 ${behind ? fmt(behind) : '없음'}</span>`;
+    if (0) $('#hud-gap').innerHTML = `<span>▲ 앞 ${ahead ? fmt(ahead) : '없음'}</span><span>▼ 뒤 ${behind ? fmt(behind) : '없음'}</span>`;
     // mini leaderboard: top3 + around me
     const rows = []; const add = (i) => { const o = this.order[i]; if (!o || rows.some((r) => r.i === i)) return; rows.push({ i, o }); };
     // compact by default (1st + the racers right around me) so it does not hide the course; tap to see more
@@ -213,6 +213,7 @@ class Race {
   }
   showQuestion(G) {
     const P = this.player; const el = $('#qpanel');
+    $('#leaderboard').classList.toggle('q-hide', !!G);
     if (!G) { if (this._qHtml) { this._qHtml = ''; el.classList.add('hidden'); } return; }
     let html; const title = `숫자 에너지 관문 ${G.idx + 1}`;
     const al = G.allowed.get(P);
@@ -240,7 +241,7 @@ class Race {
     }
     if (this.state === 'run' || this.state === 'finished') this.raceTime += this.state === 'run' ? dt : 0;
     this.course.update(this.t, dt);
-    { const P = this.player, L = this.course.starList; if (P && L && this.state === 'run' && P.respawnT <= 0) for (const s of L) { if (s.got) continue; const dz = P.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = P.p.x - s.x, dy = P.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; this.stats.stars = (this.stats.stars || 0) + 1; this.stats.energy += 2; Sound.play('coin'); this.particles.spawn(s.x, s.y, s.z, 10, ['#ffe11f', '#fff7b0'], 4, 0.5, 0.35, 4, 2); } } }
+    { const P = this.player, L = this.course.starList; if (P && L && this.state === 'run') for (const s of L) { if (s.got) continue; for (const r of this.racers) { if (r.respawnT > 0 || r === P) continue; const dz = r.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = r.p.x - s.x, dy = r.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; if (Math.abs(P.p.z - s.z) < 25) { Sound.play('star', 0.35); this.particles.spawn(s.x, s.y, s.z, 6, ['#ffe11f', '#fff7b0'], 3, 0.4, 0.3, 3, 2); } break; } } if (s.got || P.respawnT > 0) continue; const dz = P.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = P.p.x - s.x, dy = P.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; this.stats.stars = (this.stats.stars || 0) + 1; this.stats.energy += 2; Sound.play('star'); this.toast('⭐ 별 +10점', 'good'); this.particles.spawn(s.x, s.y, s.z, 10, ['#ffe11f', '#fff7b0'], 4, 0.5, 0.35, 4, 2); } } }
     const running = this.state === 'run' || this.state === 'finished' || this.state === 'done';
     // player input
     const P = this.player;
@@ -537,7 +538,7 @@ class Race {
     const gy = this.course.groundAt(r.p.x, r.p.z, r.p.y); const i = r.idx;
     if (gy > -50) { const hgt = r.p.y - r.r - gy, s = clamp(1 - hgt * 0.12, 0.35, 1); _m4.makeScale(s, 1, s); _m4.setPosition(r.p.x, gy + 0.03, r.p.z); } else _m4.makeScale(0, 0, 0);
     this.shadows.setMatrixAt(i, _m4); this.shadows.instanceMatrix.needsUpdate = true;
-    if (r.isPlayer) { this.marker.position.set(r.p.x, r.p.y + 1.75 + Math.sin(this.t * 5) * 0.14, r.p.z); this.ring.material.opacity = 0.65 + 0.3 * Math.sin(this.t * 6); this.ring.scale.setScalar(1 + 0.08 * Math.sin(this.t * 6)); this.marker.visible = true; this.ring.visible = gy > -50; this.ring.position.set(r.p.x, gy + 0.05, r.p.z); }
+    if (r.isPlayer) { this.marker.position.set(r.p.x, r.p.y + 2.05 + Math.sin(this.t * 5) * 0.14, r.p.z); this.ring.material.opacity = 0.65 + 0.3 * Math.sin(this.t * 6); this.ring.scale.setScalar(1 + 0.08 * Math.sin(this.t * 6)); this.marker.visible = true; this.ring.visible = gy > -50; this.ring.position.set(r.p.x, gy + 0.05, r.p.z); }
     // trail cosmetic (player only)
     if (r.isPlayer && sp > 2) { r.trailT -= dt; const tr = Save.data.equip.trail; if (tr !== 'none' && r.trailT <= 0) { r.trailT = 0.05; spawnTrail(this.particles, tr, r.p); } }
   }

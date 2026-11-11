@@ -282,8 +282,8 @@ class MallangView {
   // thick bright outline so my mallang stands out from the floor
   setOutline(on) {
     if (!on) { if (this.outline) this.outline.visible = false; return; }
-    if (!this.outline) { const m = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide }); this.outline = new THREE.Mesh(GEO.bodyLo, m); this.outline.scale.setScalar(1.12); this.squash.add(this.outline);
-      const m2 = new THREE.MeshBasicMaterial({ color: 0x3d2a55, side: THREE.BackSide }); const o2 = new THREE.Mesh(GEO.bodyLo, m2); o2.scale.setScalar(1.2); this.outline.add(o2); o2.scale.setScalar(1.07); }
+    if (!this.outline) { const m = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide }); this.outline = new THREE.Mesh(this.body.geometry, m); this.outline.scale.setScalar(1.12); this.squash.add(this.outline);
+      const m2 = new THREE.MeshBasicMaterial({ color: 0x3d2a55, side: THREE.BackSide }); const o2 = new THREE.Mesh(this.body.geometry, m2); o2.scale.setScalar(1.2); this.outline.add(o2); o2.scale.setScalar(1.07); }
     this.outline.visible = true;
   }
   buildExtras() {

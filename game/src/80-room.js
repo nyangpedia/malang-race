@@ -95,7 +95,7 @@ class Room {
     g.buf.push({ t: performance.now() / 1000, x: +p.x, y: +p.y, z: +p.z, h: p.h }); if (g.buf.length > 24) g.buf.shift();
   }
   makeGhost(m) {
-    const R = App.race, v = new MallangView(Object.assign({}, m.look || {}, { scale: 0.75 }), true); v.root.scale.setScalar(0.75); R.scene.add(v.root);
+    const R = App.race, v = new MallangView(Object.assign({}, m.look || {}, { scale: 0.9 }), true); v.root.scale.setScalar(0.9); R.scene.add(v.root);
     const lab = nameSprite('👫 ' + m.nick, '#d8407f'); R.scene.add(lab);
     return { view: v, lab, buf: [], nick: m.nick, yaw: Math.PI, d: 0 };
   }

@@ -111,7 +111,7 @@ const Sound = {
     const g = c.createGain(); g.gain.value = vol;
     src.connect(f); f.connect(g); g.connect(this.sfx); src.start(t);
   },
-  play(name) {
+  play(name, vol) {
     if (!this.ctx || !Save.data.settings.sound) return;
     switch (name) {
       case 'jump': this.tone(320, 0.16, 'sine', 0.25, 720); break;
@@ -126,6 +126,7 @@ const Sound = {
       case 'shield': this.tone(900, 0.3, 'sine', 0.12, 400); break;
       case 'count': this.tone(660, 0.15, 'sine', 0.3); break;
       case 'go': this.tone(990, 0.35, 'sine', 0.3); this.tone(1320, 0.35, 'sine', 0.15); break;
+      case 'star': this.tone(1568, 0.07, 'triangle', 0.16 * (vol || 1)); this.tone(2093, 0.09, 'triangle', 0.14 * (vol || 1), null, 0.06); this.tone(2637, 0.22, 'sine', 0.12 * (vol || 1), null, 0.12); break;
       case 'coin': this.tone(988, 0.08, 'square', 0.1); this.tone(1319, 0.2, 'square', 0.1, null, 0.07); break;
       case 'click': this.tone(700, 0.06, 'sine', 0.18, 900); break;
       case 'finish': [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.25, 'triangle', 0.22, null, i * 0.11)); break;

@@ -350,6 +350,11 @@ body:has(#modal:not(.hidden)) #roomcall{display:none}
 #map-sheet .ms-x{position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;background:#f3ecff;font-size:16px;line-height:30px;text-align:center}
 #map-sheet.closed{left:50%;bottom:12px;transform:translateX(-50%)}
 @container stage (max-height:430px){ #map-sheet.center{width:min(400px,70cqw);padding:8px 12px;gap:5px} #map-sheet.center .ms-chips{display:none} .ms-sub.big .sj{padding:6px 2px 5px;font-size:13px} .ms-sub.big .sj i{font-size:22px} }
+
+/* phones: the ranking box steps aside while a question is up */
+@container stage (max-height:500px){ #leaderboard.q-hide{display:none} }
+@container stage (max-width:600px){ #leaderboard.q-hide{display:none} }
+.hud-chip:empty,#hud-gap{display:none!important}
 </style>
 </head>
 <body>
