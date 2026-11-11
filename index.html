@@ -188,6 +188,7 @@ body:has(#modal:not(.hidden)) #controls{display:none}
 .mode .opt.off{opacity:.6}
 input[type=range]{width:100%;accent-color:var(--pink)}
 .res-rank{font-size:64px;text-align:center;color:#ff5fa2;-webkit-text-stroke:2px #fff;text-shadow:0 4px 0 #d8407f}
+.res-pts{display:flex;align-items:stretch;justify-content:center;gap:6px;margin:12px 0 8px;flex-wrap:wrap}.res-pts>div{background:#f8f3ff;border-radius:16px;padding:8px 12px;text-align:center;font-size:14px;min-width:92px;flex:1}.res-pts b{display:block;font-size:26px}.res-pts small{display:block;font-size:12px;color:#8a7ca8}.res-pts>i{align-self:center;font-style:normal;font-weight:800;color:#b9a9d9;font-size:20px}.res-pts .sum{background:#ffe9f3}.res-pts .sum b{color:#ff5fa2;font-size:30px}.res-mini{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;font-size:14px;color:#7a6c99;margin-bottom:8px}.res-mini b{color:#3b2a5c}@media (max-width:560px){.res-pts>i{display:none}.res-pts>div{min-width:40%}}
 .res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:12px 0}
 .res-grid div{background:#f8f3ff;border-radius:16px;padding:10px;text-align:center;font-size:14px}.res-grid b{display:block;font-size:24px}
 .switch{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:2px dashed #f0e8ff;font-size:17px}
@@ -292,6 +293,7 @@ body:has(#modal:not(.hidden)) #fever,body:has(#modal:not(.hidden)) #fever-mini{d
 .ol-kid{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:20px;background:#f8f3ff;border:3px solid transparent;font-size:18px}.ol-kid:hover{border-color:var(--pink)}.ol-kid small{color:var(--ink2);font-size:13px}
 .ol-kid.add{background:#fff;border:3px dashed #d9c8f5}.ol-kid .plus{font-size:40px;line-height:1;color:#b090e0}
 .ad-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.ad-stat{background:#f3ecff;border-radius:16px;padding:10px;text-align:center}.ad-stat b{display:block;font-size:24px;color:#6b3fd6}.ad-stat span{font-size:13px;color:#7a6c99}.ad-bars{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:110px;padding:6px 0 18px}.ad-bars>div{flex:1;max-width:46px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}.ad-bars i{display:block;width:100%;min-height:2px;border-radius:6px 6px 0 0;background:linear-gradient(#ff5fae,#8a5cff)}.ad-bars small{position:absolute;bottom:-17px;font-size:11px;color:#8a7ca8}.ad-list .ol-choose{display:flex;flex-direction:column;gap:10px;margin:12px auto 4px;max-width:420px}.ol-choose .btn{font-size:20px;padding:12px 18px;display:flex;flex-direction:column;align-items:center;gap:2px}.ol-choose .btn small{font-size:13px;opacity:.85;font-weight:600}
+.ol-choose{display:flex;flex-direction:column;gap:10px;margin:14px auto 4px;max-width:380px}.ol-choose .btn{width:100%;font-size:20px;padding:12px 18px;display:flex;flex-direction:column;align-items:center;gap:2px}.ol-choose .btn small{font-size:13px;opacity:.85;font-weight:600}.ol-choose .btn.ol-google{flex-direction:row;justify-content:center;gap:10px;background:#fff;color:#3c4043;border:2px solid #dadce0;box-shadow:0 4px 0 #dadce0;font-size:18px}.ol-or{text-align:center;color:#9a8fb5;font-size:13px;margin:8px 0 2px}#modal-panel.narrow{max-width:460px;text-align:center}#modal-panel.narrow .field{text-align:left}
 .ol-row{cursor:pointer}
 .ol-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px}.ol-row .blob{vertical-align:middle}
 .ol-inline{font-size:17px;padding:8px 12px;border-radius:12px;border:3px solid var(--line);min-width:0;width:140px;font-family:inherit;color:var(--ink)}
@@ -1284,7 +1286,7 @@ function floorTexture(th, A, B, kind = 'check') {
 }
 const VIVID = [0xff2d6f, 0xff8a00, 0xffe600, 0x22e06a, 0x00c8ff, 0x7a5cff, 0xff4fd8];
 const ZONE_KINDS = ['check', 'stripe', 'dots', 'chevron', 'star', 'wave'];
-const ZONE_EDGES = [0, 124, 232, 332, 432, 532];
+const ZONE_EDGES = [0, 124, 164, 264, 304, 404, 444, 544, 584, 684, 724];
 function stripeTexture(a, b) { return canvasTex(128, 32, (g) => { g.fillStyle = a; g.fillRect(0, 0, 128, 32); g.fillStyle = b; for (let x = -32; x < 160; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 16, 0); g.lineTo(x + 32, 32); g.lineTo(x + 16, 32); g.fill(); } }, true); }
 function arrowTexture(col) { return canvasTex(128, 128, (g) => { g.fillStyle = col; g.fillRect(0, 0, 128, 128); g.fillStyle = 'rgba(255,255,255,0.75)'; for (const y of [20, 84]) { g.beginPath(); g.moveTo(64, y); g.lineTo(100, y + 30); g.lineTo(80, y + 30); g.lineTo(80, y + 40); g.lineTo(48, y + 40); g.lineTo(48, y + 30); g.lineTo(28, y + 30); g.fill(); } }, true); }
 
@@ -1607,39 +1609,48 @@ class Course {
     this.speedPanel(41, 50, 9.5, 8, 'fast'); if (L >= 2) this.speedPanel(76, 84, -7, 10, 'slow');
     if (L >= 3) this.pendulum(106);
     if (L >= 4) this.punchers(54, 70, L >= 6 ? 3 : 2);
-    // --- Gate 1 ---
+    // --- Gate 1, a short bonus strip, Gate 2 ---
     this.gate(124, 0); this.checkpoint(128.5);
+    let gi = 1; const gateDs = [124];
+    const strip = (a, k) => { // 16 m breather between two quiz gates
+      this.floor(a, a + 16, 0); this.stars(a + 3, a + 13, 4);
+      if (k % 3 === 0) this.speedPanel(a + 2, a + 14, 0, 8, 'fast'); else if (k % 3 === 1) this.bumpers(a + 4, a + 12, 3, { color: th.accent }); else if (L >= 2) this.speedPanel(a + 3, a + 13, k % 2 ? 7 : -7, 9, 'slow');
+      this.gate(a + 28, gi++); this.checkpoint(a + 32.5); gateDs.push(a + 28);
+    };
+    strip(136, 0);
     // --- four middle sections: picked and ordered differently for every map number ---
     const pool = ['hill', 'holes', 'gauntlet', 'flat', 'zigzag', 'twinHill']; if (L >= 2) pool.push('islands');
     this.plan = shuffle(pool).slice(0, 4);
-    [[136, 1, 232], [244, 2, 332], [344, 3, 432], [444, 4, 532]].forEach(([d0, gi, gd], i) => {
+    for (let i = 0; i < 4; i++) {
+      const d0 = 176 + i * 140;
       this['mod_' + this.plan[i]](d0, L, th, W);
-      if (i === 0) { this.floor(212, 220, 0); this.stars(213, 219, 3); }
-      this.gate(gd, gi); this.checkpoint(gd + 4.5);
-    });
+      this.gate(d0 + 88, gi++); this.checkpoint(d0 + 92.5); gateDs.push(d0 + 88);
+      strip(d0 + 100, i + 1);
+    }
+    const F = 192; // the final section starts where the last gate plaza ends
     // --- Final (544..632) ---
-    this.jumpGap(580, 2.6);
-    this.floorWithHoles(544, 632, 0);
-    this.jumpPad(556, -8, 0); this.jumpPad(556, 0, 0); this.jumpPad(556, 8, 0);
-    if (W === 'candy' || W === 'cloud') this.bumpers(562, 576, 6, W === 'cloud' ? { color: 0xffffff } : {});
-    if (W === 'block') this.pushers(562, 576, 3, { jelly: false });
-    if (W === 'jungle') this.bumpers(562, 576, 6, { color: 0xff6b5a });
-    if (W === 'space') { this.laser(566, 'updown', { speed: 2, color: 0x7fe7ff }); this.bumpers(570, 577, 3, { color: 0xffd23f }); }
-    if (W === 'crystal') { this.laser(566, 'updown', { speed: 2.2 }); this.bumpers(570, 577, 3, { color: 0x8be9ff }); }
-    this.pushers(592, 602, 2, { amp: 7 });
-    this.checkpoint(584);
-    this.stars(554, 560, 3, 5, -8); this.stars(554, 560, 3, 5, 8); this.stars(579.5, 583.5, 3, 1.6); this.stars(590, 606, 5);
-    this.speedPanel(546, 553, 0, 8, 'fast'); if (L >= 2) { this.speedPanel(594, 602, -8.5, 10, 'slow'); this.mysteryPad(586, 7); }
-    if (L >= 2) this.pendulum(607, { speed: 1.2 });
-    if (L >= 4) this.pendulum(588, { speed: 1.6 });
-    if (L >= 6) this.punchers(564, 576, 2);
-    if (L >= 6) this.rollers(562, 576, 2);
-    this.FINISH = 612;
+    this.jumpGap((F + 580), 2.6);
+    this.floorWithHoles((F + 544), (F + 632), 0);
+    this.jumpPad((F + 556), -8, 0); this.jumpPad((F + 556), 0, 0); this.jumpPad((F + 556), 8, 0);
+    if (W === 'candy' || W === 'cloud') this.bumpers((F + 562), (F + 576), 6, W === 'cloud' ? { color: 0xffffff } : {});
+    if (W === 'block') this.pushers((F + 562), (F + 576), 3, { jelly: false });
+    if (W === 'jungle') this.bumpers((F + 562), (F + 576), 6, { color: 0xff6b5a });
+    if (W === 'space') { this.laser((F + 566), 'updown', { speed: 2, color: 0x7fe7ff }); this.bumpers((F + 570), (F + 577), 3, { color: 0xffd23f }); }
+    if (W === 'crystal') { this.laser((F + 566), 'updown', { speed: 2.2 }); this.bumpers((F + 570), (F + 577), 3, { color: 0x8be9ff }); }
+    this.pushers((F + 592), (F + 602), 2, { amp: 7 });
+    this.checkpoint((F + 584));
+    this.stars((F + 554), (F + 560), 3, 5, -8); this.stars((F + 554), (F + 560), 3, 5, 8); this.stars((F + 579.5), (F + 583.5), 3, 1.6); this.stars((F + 590), (F + 606), 5);
+    this.speedPanel((F + 546), (F + 553), 0, 8, 'fast'); if (L >= 2) { this.speedPanel((F + 594), (F + 602), -8.5, 10, 'slow'); this.mysteryPad((F + 586), 7); }
+    if (L >= 2) this.pendulum((F + 607), { speed: 1.2 });
+    if (L >= 4) this.pendulum((F + 588), { speed: 1.6 });
+    if (L >= 6) this.punchers((F + 564), (F + 576), 2);
+    if (L >= 6) this.rollers((F + 562), (F + 576), 2);
+    this.FINISH = (F + 612);
     const fin = makeBannerArch('FINISH', 0xffd23f, true); fin.position.set(0, 0, -this.FINISH); this.group.add(fin);
-    const endWall = new THREE.Object3D(); endWall.position.set(0, 3, -632.5); this.addSolid(endWall, 'box', HALF_W, 4, 0.5, { kind: 'rail' });
-    const endDeco = new THREE.Mesh(new THREE.BoxGeometry(TRACK_W, 3, 1), jellyMaterial(th.accent)); endDeco.position.set(0, 1.5, -632.6); this.group.add(endDeco);
+    const endWall = new THREE.Object3D(); endWall.position.set(0, 3, -(F + 632.5)); this.addSolid(endWall, 'box', HALF_W, 4, 0.5, { kind: 'rail' });
+    const endDeco = new THREE.Mesh(new THREE.BoxGeometry(TRACK_W, 3, 1), jellyMaterial(th.accent)); endDeco.position.set(0, 1.5, -(F + 632.6)); this.group.add(endDeco);
     this.LENGTH = this.FINISH;
-    this.sections = [0, 124, 232, 332, 432, 532, this.FINISH];
+    this.sections = [0, ...gateDs, this.FINISH];
     this.buildScenery();
   }
   // round island you can stand on (some bob up and down, some spin)
@@ -1767,25 +1778,25 @@ class Course {
     const cloudM = W === 'space' ? mat(0x7a63d8, { roughness: 0.9, emissive: 0x2a1f70 }) : mat(0xffffff, { roughness: 0.9, emissive: 0x666677 });
     if (W === 'space') { const n = 700, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const a = rand(0, 6.283), e = rand(-0.25, 1), r = 560; pos[i * 3] = Math.cos(a) * Math.sqrt(1 - e * e) * r; pos[i * 3 + 1] = e * r; pos[i * 3 + 2] = Math.sin(a) * Math.sqrt(1 - e * e) * r - 300; } const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const st = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.9 })); st.frustumCulled = false; grp.add(st); }
     const puff = (x, y, z, s) => { const c = new THREE.Group(); for (let i = 0; i < 5; i++) { const b = new THREE.Mesh(GEO.sphereLo, cloudM); b.scale.setScalar(s * rand(0.6, 1.1)); b.position.set((i - 2) * s * 0.8, rand(0, s * 0.4), rand(-s * 0.3, s * 0.3)); c.add(b); } c.position.set(x, y, z); grp.add(c); return c; };
-    for (let i = 0; i < 36; i++) puff(rand(-140, 140) + (RNG() < 0.5 ? -50 : 50) * 0, rand(18, 50), -rand(-60, 720), rand(4, 9)).position.x = (RNG() < 0.5 ? -1 : 1) * rand(40, 150);
-    if (W === 'cloud') for (let i = 0; i < 56; i++) puff((RNG() < 0.5 ? -1 : 1) * rand(16, 70), rand(-12, -4), -rand(-20, 660), rand(3, 7));
+    for (let i = 0; i < 48; i++) puff(rand(-140, 140) + (RNG() < 0.5 ? -50 : 50) * 0, rand(18, 50), -rand(-60, 940), rand(4, 9)).position.x = (RNG() < 0.5 ? -1 : 1) * rand(40, 150);
+    if (W === 'cloud') for (let i = 0; i < 76; i++) puff((RNG() < 0.5 ? -1 : 1) * rand(16, 70), rand(-12, -4), -rand(-20, 900), rand(3, 7));
     // side decorations
     const side = () => (RNG() < 0.5 ? -1 : 1);
-    for (let i = 0; i < 100; i++) {
-      const d = rand(-20, 650), x = side() * (rand(HALF_W + 6, HALF_W + 34) + (this.gates.some((G) => Math.abs(G.d - d) < 18) ? 9 : 0)), y = W === 'cloud' || W === 'space' ? rand(-6, 2) : -1;
+    for (let i = 0; i < 135; i++) {
+      const d = rand(-20, this.FINISH + 40), x = side() * (rand(HALF_W + 6, HALF_W + 34) + (this.gates.some((G) => Math.abs(G.d - d) < 18) ? 9 : 0)), y = W === 'cloud' || W === 'space' ? rand(-6, 2) : -1;
       const o = this.decoItem(W); o.position.set(x, y, -d); o.rotation.y = rand(0, 6.28); grp.add(o);
     }
     // festival decor: bunting lines + balloons along the course
     const flagCols = [0xff5a7a, 0xffd23f, 0x5fd35f, 0x3fc2ff, 0xa86bff, 0xff9a3c];
     const flagGeo = new THREE.ConeGeometry(0.32, 0.7, 3); flagGeo.rotateX(Math.PI); flagGeo.scale(1, 1, 0.15);
-    for (let d = 30; d < 620; d += 34) {
+    for (let d = 30; d < this.FINISH + 8; d += 34) {
       if (this.gates.some((G) => Math.abs(G.d - d) < 16)) continue;
       const y = (d > 150 && d < 200 ? 3 : 0) + 10.5;
       for (const sd of [-1, 1]) { const pole = new THREE.Mesh(GEO.cyl, mat(0xffffff)); pole.scale.set(0.18, y + 1, 0.18); pole.position.set(sd * (HALF_W + 1.6), (y + 1) / 2 - 1, -d); grp.add(pole); const top = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); top.scale.setScalar(0.45); top.position.set(sd * (HALF_W + 1.6), y + 0.2, -d); grp.add(top); }
       for (let i = 0; i < 25; i++) { const u = i / 24, x = lerp(-HALF_W - 1.6, HALF_W + 1.6, u); const f = new THREE.Mesh(flagGeo, mat(flagCols[i % 6], { side: THREE.DoubleSide })); f.position.set(x, y - Math.sin(u * Math.PI) * 1.6 - 0.5, -d); grp.add(f); }
     }
     this.balloons = [];
-    for (let i = 0; i < 40; i++) { const g = new THREE.Group(); const b = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); b.scale.set(1.1, 1.35, 1.1); g.add(b); const st = new THREE.Mesh(GEO.cyl, mat(0xffffff)); st.scale.set(0.03, 3, 0.03); st.position.y = -2.8; g.add(st); g.position.set(side() * rand(HALF_W + 3, HALF_W + 14), rand(5, 13), -rand(0, 630)); if (this.gates.some((G) => Math.abs(G.d + g.position.z) < 18)) g.position.x += Math.sign(g.position.x) * 9; g.userData.y0 = g.position.y; g.userData.ph = rand(0, 6); grp.add(g); this.balloons.push(g); }
+    for (let i = 0; i < 54; i++) { const g = new THREE.Group(); const b = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); b.scale.set(1.1, 1.35, 1.1); g.add(b); const st = new THREE.Mesh(GEO.cyl, mat(0xffffff)); st.scale.set(0.03, 3, 0.03); st.position.y = -2.8; g.add(st); g.position.set(side() * rand(HALF_W + 3, HALF_W + 14), rand(5, 13), -rand(0, 850)); if (this.gates.some((G) => Math.abs(G.d + g.position.z) < 18)) g.position.x += Math.sign(g.position.x) * 9; g.userData.y0 = g.position.y; g.userData.ph = rand(0, 6); grp.add(g); this.balloons.push(g); }
     this.landmarks(W);
     // big landmark: rainbow-ish ring over the finish area
     const ring = new THREE.Mesh(new THREE.TorusGeometry(30, 1.6, 12, 48, Math.PI), new THREE.MeshBasicMaterial({ color: 0xff9ccf, transparent: true, opacity: 0.55 }));
@@ -1797,10 +1808,10 @@ class Course {
   landmarks(W) {
     const grp = this.group, RB = [0xff3b5c, 0xff9a1f, 0xffe11f, 0x3fd35a, 0x20b8ff, 0x8a5cff];
     const rainbow = (x, z, R, rotY) => { const g = new THREE.Group(); RB.forEach((c, i) => { const t = new THREE.Mesh(new THREE.TorusGeometry(R - i * 1.6, 0.85, 8, 40, Math.PI), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85, fog: false })); g.add(t); }); g.position.set(x, -6, z); g.rotation.y = rotY; grp.add(g); };
-    for (let i = 0; i < 4; i++) rainbow((i % 2 ? 1 : -1) * rand(80, 120), -rand(60, 640), rand(34, 46), rand(-0.6, 0.6));
+    for (let i = 0; i < 6; i++) rainbow((i % 2 ? 1 : -1) * rand(80, 120), -rand(60, this.FINISH + 30), rand(34, 46), rand(-0.6, 0.6));
     const glow = (hex) => new THREE.MeshStandardMaterial({ color: hex, emissive: new THREE.Color(hex).multiplyScalar(0.55), roughness: 0.4 });
     for (let i = 0; i < 18; i++) {
-      const side = i % 2 ? 1 : -1, x = side * rand(55, 140), z = -rand(-40, 700), c = pick(VIVID), g = new THREE.Group();
+      const side = i % 2 ? 1 : -1, x = side * rand(55, 140), z = -rand(-40, 920), c = pick(VIVID), g = new THREE.Group();
       if (W === 'candy') { const s = new THREE.Mesh(GEO.cyl, mat(0xffffff)); s.scale.set(0.8, 26, 0.8); s.position.y = 13; g.add(s); const tex = canvasTex(256, 256, (cx, w, h) => { const cs = ['#' + new THREE.Color(c).getHexString(), '#ffffff', '#' + new THREE.Color(pick(VIVID)).getHexString()]; for (let k = 0; k < 18; k++) { cx.fillStyle = cs[k % 3]; cx.beginPath(); cx.moveTo(128, 128); cx.arc(128, 128, 128, k / 18 * 6.283, (k + 1) / 18 * 6.283); cx.fill(); } }); const p = new THREE.Mesh(new THREE.CylinderGeometry(9, 9, 2, 32), [glow(c), new THREE.MeshBasicMaterial({ map: tex }), new THREE.MeshBasicMaterial({ map: tex })]); p.rotation.x = Math.PI / 2; p.position.y = 30; g.add(p); this.spinners.push({ o: p, sp: 0 }); }
       else if (W === 'block') { let y = 0; for (let k = 0, n = randi(3, 6); k < n; k++) { const s = rand(6, 11); const b = new THREE.Mesh(GEO.box, glow(VIVID[(i + k) % VIVID.length])); b.scale.setScalar(s); b.position.set(rand(-2, 2), y + s / 2, rand(-2, 2)); b.rotation.y = rand(0, 1); y += s; g.add(b); } }
       else if (W === 'jungle') { const h = rand(30, 60); const mtn = new THREE.Mesh(GEO.cone, mat(pick([0x2fa85a, 0x3fbf6a, 0x1f8f4a]), { roughness: 0.9 })); mtn.scale.set(h * 0.7, h, h * 0.7); mtn.position.y = h / 2 - 10; g.add(mtn); const fl = new THREE.Mesh(GEO.sphere, glow(c)); fl.scale.set(6, 2.5, 6); fl.position.y = h - 10; g.add(fl); for (let k = 0; k < 5; k++) { const pt = new THREE.Mesh(GEO.sphereLo, glow(pick(VIVID))); pt.scale.set(4, 1.2, 2); const a = k / 5 * 6.283; pt.position.set(Math.cos(a) * 5, h - 9, Math.sin(a) * 5); pt.rotation.y = -a; g.add(pt); } }
@@ -1811,7 +1822,7 @@ class Course {
       g.position.x = x; g.position.z = z; grp.add(g);
     }
     // giant spinning stars in the sky
-    for (let i = 0; i < 10; i++) { const c = pick(VIVID); const s = new THREE.Mesh(GEO.star, new THREE.MeshBasicMaterial({ color: c, fog: false })); s.scale.setScalar(rand(3, 6)); s.position.set((i % 2 ? 1 : -1) * rand(30, 90), rand(28, 55), -rand(0, 680)); grp.add(s); this.spinners.push({ o: s, sp: rand(0.4, 1), bob: rand(0, 6), y0: s.position.y, amp: 3 }); }
+    for (let i = 0; i < 10; i++) { const c = pick(VIVID); const s = new THREE.Mesh(GEO.star, new THREE.MeshBasicMaterial({ color: c, fog: false })); s.scale.setScalar(rand(3, 6)); s.position.set((i % 2 ? 1 : -1) * rand(30, 90), rand(28, 55), -rand(0, 900)); grp.add(s); this.spinners.push({ o: s, sp: rand(0.4, 1), bob: rand(0, 6), y0: s.position.y, amp: 3 }); }
   }
   decoItem(W) {
     const g = new THREE.Group();
@@ -2416,7 +2427,7 @@ class Race {
     if (!wait.length) { G.close(); return; }
     G.reveal(); const P = this.player, st = this.stats; let nOk = 0;
     for (const r of wait) {
-      const dr = G.doors[G.slotAt(r.p.x)], ok = dr.correct; G.pending.add(r); G.allowed.set(r, ok ? 0 : GATE_HOLD); if (ok) nOk++;
+      const dr = G.doors[G.slotAt(r.p.x)], ok = dr.correct; G.pending.add(r); r.quizN = (r.quizN || 0) + 1; if (ok) r.quizOk = (r.quizOk || 0) + 1; G.allowed.set(r, ok ? 0 : GATE_HOLD); if (ok) nOk++;
       if (ok) { r.view.setFace('joy', 1.2); r.view.stretch(0.3); dr.flashT = 0.6; }
       else { r.v.y = 5; r.ground = false; r.stunT = 0.3; r.view.bump(1.3); r.view.setFace('oops', 1.5); dr.shieldT = 0.9; }
       if (r.isPlayer) {
@@ -2451,7 +2462,7 @@ class Race {
     if (!r.finished && r.d >= this.course.FINISH) {
       r.finished = true; r.place = ++this.finishCount; r.finishTime = this.raceTime;
       if (this.near(r)) this.particles.spawn(r.p.x, r.p.y + 1, r.p.z, r.isPlayer ? 80 : 12, ['#ff7eb6', '#ffd84d', '#7fe7ff', '#9be35a', '#a77bff'], 8, 1.4, 0.5, 6, 6);
-      if (r.isPlayer) { this.state = 'finished'; this.endT = 3.2; Sound.play('finish'); this.bigMsg(`${r.place}등으로 완주!`, 3, 'go'); r.view.setFace('joy', 4); }
+      if (r.isPlayer) { this.state = 'finished'; this.endT = 3.2; Sound.play('finish'); this.bigMsg(`${r.place}번째로 골인!`, 3, 'go'); r.view.setFace('joy', 4); }
     }
   }
   racerContacts() {
@@ -2590,15 +2601,24 @@ class Race {
   }
   results() {
     const P = this.player, N = this.racers.length, st = this.stats;
-    const rank = P.place || this.order.indexOf(P) + 1;
+    // final rank = speed points (finish order) + answer points (100 each) + star bonus (10 each)
+    const place = P.place || this.order.indexOf(P) + 1, nG = this.course.gates.length;
+    const rest = this.racers.filter((r) => !r.finished).sort((a, b) => b.progress() - a.progress());
+    const ptsOf = (r) => {
+      const pl = r.finished ? r.place : this.finishCount + rest.indexOf(r) + 1; // racers still running keep their current order
+      const okN = r.finished || !nG ? (r.quizOk || 0) : Math.min(nG, Math.round((r.quizOk || 0) + (nG - (r.quizN || 0)) * (r.quizN ? r.quizOk / r.quizN || 0 : 0.6)));
+      const speed = Math.round(1000 * (N - pl) / Math.max(1, N - 1)), quiz = 100 * okN, star = r === P ? 10 * (st.stars || 0) : 0;
+      return { speed, quiz, star, total: speed + quiz + star };
+    };
+    const pts = ptsOf(P); let rank = 1; for (const r of this.racers) if (r !== P && ptsOf(r).total > pts.total) rank++;
     const acc = st.attempts ? st.correct / st.attempts : 0;
     const avgSolve = st.solveTimes.length ? st.solveTimes.reduce((a, b) => a + b, 0) / st.solveTimes.length : 15;
     const speedScore = clamp(1 - (avgSolve - 3) / 12, 0, 1), finishScore = 1 - (rank - 1) / Math.max(1, N - 1);
-    const score = Math.round(1000 * (st.attempts ? 0.5 * acc + 0.2 * speedScore + 0.3 * finishScore : 0.85 * finishScore + 0.15) * (1 + 0.15 * (this.level - 1)));
+    const score = pts.total;
     const rankBonus = rank === 1 ? 40 : rank <= 3 ? 25 : rank <= 10 ? 12 : 0;
     const energy = (st.energy + 20 + rankBonus + (st.maxCombo >= 3 ? 15 : 0)) * (this.subject === 'run' ? 2 : 1);
     const xp = 40 + st.correct * 15 + rankBonus + Math.round(score / 50);
-    return { rank, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stars: st.stars || 0, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
+    return { rank, place, pts, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stars: st.stars || 0, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
   }
   dispose() { this.course.dispose(); this.racers.forEach((r) => { r.view.bodyMat.dispose(); }); this.scene.clear(); $('#hud').classList.add('hidden'); $('#controls').classList.add('hidden'); $('#qpanel').classList.add('hidden'); }
 }
@@ -2795,7 +2815,7 @@ const App = {
     $('#btn-race').onclick = () => { Sound.play('click'); this.openMenu('race'); };
   },
   toastHub(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2200); },
-  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeModal()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
+  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').classList.remove('narrow'); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeModal()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
   closeModal() { $('#modal').classList.add('hidden'); document.body.classList.remove('modal-side'); if (this.hub && this.hub.zoom) this.setHubZoom(0); if (this.screen === 'hub' && Save.data.profile) this.drawHub(); },
   openMenu(id) {
     const fn = { race: 'menuRace', custom: 'menuCustom', notes: 'menuNotes', rank: 'menuRank', level: 'menuLevel', shop: 'menuShop', map: 'menuMap', settings: 'menuSettings' }[id];
@@ -2851,16 +2871,17 @@ const App = {
     if (S.history.length > 200) S.history.length = 200;
     const dp = S.daily.progress; if (S.daily.date === todayStr()) { dp.race1 = (dp.race1 || 0) + 1; dp.correct10 = (dp.correct10 || 0) + res.correct; dp.stomp3 = (dp.stomp3 || 0) + res.stomps; }
     let tk = ''; if (res.subject !== 'run') { S.runProgress = (S.runProgress || 0) + 1; if (S.runProgress >= RUN_NEED) { S.runProgress = 0; S.runTickets = (S.runTickets || 0) + 1; S.feverSeen = false; tk = `<div class="fever-hero" style="margin:10px 0"><div class="big">🔥 피버 모드 열림!</div><p>레이스 ${RUN_NEED}판 완주 보상이에요. 문제 없이 달리고 에너지는 2배!</p><button class="btn" style="margin-top:10px;background:#fff;color:#ff5a3c;box-shadow:0 6px 0 #c9401f" onclick="App.startFever()">🔥 지금 참가하기</button></div>`; } else tk = `<p class="muted" style="text-align:center">🔥 피버 모드까지 ${S.runProgress}/${RUN_NEED}판</p>`; } else tk = `<p class="muted" style="text-align:center">🔥 남은 피버 참가권 ${S.runTickets || 0}장 · 일반 레이스 ${RUN_NEED}판마다 1장을 받아요</p>`;
-    const inRoom = !!(this.room && this.race && this.race.room); Online.submitScore(res, inRoom).then((sc) => { if (sc && $('#res-online')) $('#res-online').innerHTML = `🏆 랭킹에 올렸어요 · 이번 판 <b>${sc}점</b>`; });
+    const inRoom = !!(this.room && this.race && this.race.room); Online.submitScore(res, inRoom).then((sc) => { if (sc && $('#res-online')) $('#res-online').innerHTML = `🏆 랭킹에 올렸어요 · 랭킹 점수 <b>${sc}점</b>`; });
     let tkTop = ''; if (tk.includes('fever-hero')) { tkTop = tk; tk = ''; }
     const again = res.subject === 'run' && !(S.runTickets > 0) ? '' : `<button class="btn" onclick="App.restartRace();App.closeModal()">${res.subject === 'run' ? '🔥 피버 한 번 더!' : '한 번 더!'}</button>`;
     Save.save();
     const tm = `${Math.floor(res.time / 60)}분 ${Math.floor(res.time % 60)}초`;
-    const log = res.log.map((l) => `<div class="wn" style="padding:8px 12px"><span class="tag ${l.ok ? 'green' : 'red'}">${l.ok ? '한 번에 정답' : '오답 후 통과'}</span> ${escapeHtml(l.q)} → 정답 <b>${escapeHtml(l.answer)}</b>${l.ok ? '' : ` (처음 고른 문: ${escapeHtml(l.chosen)})`}</div>`).join('');
+    const pts = res.pts || { speed: 0, quiz: 0, star: 0, total: res.score };
     this.modal(`<h2>${res.subject === 'run' ? '🔥 피버 모드 결과' : '🏁 레이스 결과'}</h2><div class="res-rank">${res.rank}등 <span style="font-size:26px;color:#a77bd0;-webkit-text-stroke:0;text-shadow:none">/ ${res.N}명</span></div>${inRoom ? '<div class="wn room-board" id="room-board"></div>' : ''}${tkTop}
+      <div class="res-pts"><div>🏃 속도<b>${pts.speed}</b><small>${res.place || res.rank}번째 골인 · ${tm}</small></div><i>+</i><div>✏️ 정답<b>${pts.quiz}</b><small>${res.subject === 'run' ? '문제 없음' : res.correct + ' / ' + res.attempts + ' 문제'}</small></div><i>+</i><div>⭐ 별<b>${pts.star}</b><small>${res.stars || 0}개</small></div><i>=</i><div class="sum">합계<b>${pts.total}</b><small>포인트</small></div></div>
+      <div class="res-mini"><span>최대 콤보 <b>${res.maxCombo}</b></span><span>밟기 <b>${res.stomps}</b></span><span>에너지 <b style="color:#d89a00">+${res.energy} ⚡</b></span><span>경험치 <b style="color:#d8407f">+${res.xp} XP</b></span></div>
       ${Online.child ? '<div class="muted" id="res-online" style="text-align:center">☁️ 기록 저장 중…</div>' : ''}
-      <div class="res-grid"><div>완주 기록<b>${tm}</b></div><div>관문 정답<b>${res.subject === 'run' ? '없음' : res.correct + '/' + res.attempts}</b></div><div>최대 콤보<b>${res.maxCombo}</b></div><div>밟기 성공<b>${res.stomps}</b></div><div>모은 별<b>⭐ ${res.stars || 0}</b></div><div>숫자 에너지<b style="color:#d89a00">+${res.energy} ⚡</b></div><div>경험치<b style="color:#d8407f">+${res.xp} XP</b></div><div>레이스 점수<b>${res.score}</b></div></div>
-      ${S.lastCrown ? `<div class="wn" style="text-align:center;font-size:18px">👑 ${res.rank}등 축하해요! 다음 판에는 <b>${CROWN_TIERS[S.lastCrown][1]}왕관</b>을 쓰고 달려요.</div>` : ''}${tk}${log}<p class="muted">${res.subject === 'run' ? '피버 모드는 문제 없이 달리고 에너지를 2배로 받아요.' : '틀린 문제는 오답노트에 자동으로 저장돼요.'}</p>
+      ${S.lastCrown ? `<div class="wn" style="text-align:center;font-size:18px">👑 ${res.rank}등 축하해요! 다음 판에는 <b>${CROWN_TIERS[S.lastCrown][1]}왕관</b>을 쓰고 달려요.</div>` : ''}${tk}<p class="muted" style="text-align:center">${res.subject === 'run' ? '피버 모드는 문제 없이 달리고 에너지를 2배로 받아요.' : res.attempts > res.correct ? `틀린 문제 ${res.attempts - res.correct}개는 📒 오답노트에서 다시 볼 수 있어요.` : '등수는 속도, 정답, 별 포인트를 더해서 정해요.'}</p>
       <div class="row" style="justify-content:center;margin-top:10px">${inRoom ? '<button class="btn" onclick="App.roomBackToLobby()">👫 방으로 돌아가기</button>' : again}<button class="btn blue" onclick="App.exitRace()">${inRoom ? '방 나가기' : '광장으로'}</button></div>`);
   },
   // ---------------- customize & shop ----------------
@@ -3502,7 +3523,7 @@ const Online = {
   async submitScore(res, inRoom) {
     if (!this.child) return null;
     try {
-      const r = await this.call('submit_score', { child: this.child.id, world: res.worldId, subject: res.subject || 'math', rnk: res.rank, n: res.N, time_s: Math.round(res.time * 10) / 10, correct: Math.min(res.correct, 5), attempts: Math.min(res.attempts, 5), in_room: !!inRoom });
+      const r = await this.call('submit_score', { child: this.child.id, world: res.worldId, subject: res.subject || 'math', rnk: res.place || res.rank, n: res.N, time_s: Math.round(res.time * 10) / 10, correct: Math.min(res.correct, 10), attempts: Math.min(res.attempts, 10), in_room: !!inRoom });
       return r.score;
     } catch (e) { return null; }
   },
@@ -3542,10 +3563,24 @@ Object.assign(App, {
     this.modal(`<h2>👋 말랑 레이스에 오신 걸 환영해요!</h2>
       <p class="muted">보호자가 계정을 만들면 아이 기록이 서버에 저장되고, 랭킹에 오르고, 승인한 친구와 함께 달릴 수 있어요.</p>
       <div class="ol-choose">
+        <button class="btn ol-google" id="ol-google"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.6z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.5 0 20.1 0 24s1 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.300 0 11.700-2.100 15.600-5.700l-7.600-5.900c-2.100 1.400-4.800 2.300-8 2.300-6.300 0-11.600-4.100-13.500-9.900l-7.900 6.200C6.500 42.600 14.600 48 24 48z"/></svg><span>구글 계정으로 계속하기</span></button>
+        <div class="ol-or">또는 이메일로</div>
         <button class="btn green" data-m="signup">✨ 회원가입 <small>처음이에요 (보호자가 해요)</small></button>
         <button class="btn blue" data-m="login">🔑 로그인 <small>계정이 있어요</small></button>
-      </div>`);
+      </div><div class="ol-msg" id="ol-msg"></div>`);
+    $('#modal-panel').classList.add('narrow');
     $$('.ol-choose [data-m]').forEach((b) => (b.onclick = () => this.olAuth(b.dataset.m)));
+    $('#ol-google').onclick = () => this.olGoogle();
+  },
+  async olGoogle() {
+    const b = $('#ol-google'); if (b) b.disabled = true;
+    try {
+      const { error } = await Online.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0].split('?')[0] } });
+      if (error) throw error;
+    } catch (e) {
+      if (b) b.disabled = false;
+      const m = $('#ol-msg'); if (m) { m.textContent = /not enabled|provider/i.test(e.message || '') ? '구글 로그인이 아직 켜져 있지 않아요. 이메일로 해 주세요.' : olErr(e); m.classList.add('bad'); }
+    }
   },
   olEntry() { if (!Online.session) return this.olChoose(); if (!Online.guardian) return this.olRegisterGuardian(); this.olPickChild(); },
   // ---- guardian sign in / sign up ----
@@ -3557,7 +3592,11 @@ Object.assign(App, {
       <div class="field"><label>보호자 이메일</label><input id="ol-email" type="email" autocomplete="email" value="${escapeHtml(Online.email || '')}"></div>
       <div class="field"><label>비밀번호 ${su ? '(8글자 이상)' : ''}</label><input id="ol-pw" type="password" autocomplete="${su ? 'new-password' : 'current-password'}"></div>
       <div class="ol-msg" id="ol-msg">${msg}</div>
-      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="ol-go">${su ? '가입하기' : '로그인'}</button>${su ? '' : '<button class="btn sm gray" id="ol-forgot">비밀번호를 잊었어요</button>'}</div>`);
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="ol-go">${su ? '가입하기' : '로그인'}</button>${su ? '' : '<button class="btn sm gray" id="ol-forgot">비밀번호를 잊었어요</button>'}</div>
+      <div class="ol-or">또는</div>
+      <div class="ol-choose" style="margin-top:0"><button class="btn ol-google" id="ol-google"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.6z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.5 0 20.1 0 24s1 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.300 0 11.700-2.100 15.600-5.700l-7.600-5.900c-2.100 1.400-4.800 2.300-8 2.300-6.300 0-11.600-4.100-13.500-9.900l-7.900 6.200C6.500 42.600 14.600 48 24 48z"/></svg><span>구글 계정으로 계속하기</span></button></div>`);
+    $('#modal-panel').classList.add('narrow');
+    $('#ol-google').onclick = () => this.olGoogle();
     $$('[data-m]').forEach((b) => (b.onclick = () => this.olAuth(b.dataset.m)));
     const say = (t, bad) => { const m = $('#ol-msg'); m.textContent = t; m.classList.toggle('bad', !!bad); };
     $('#ol-go').onclick = async () => {

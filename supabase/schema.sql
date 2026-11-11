@@ -242,7 +242,7 @@ begin
      or subject not in ('math', 'capital', 'quiz', 'run')
      or n not between 2 and 50 or rnk not between 1 and n
      or time_s not between 45 and 1200
-     or attempts not between 0 and 5 or correct not between 0 and attempts
+     or attempts not between 0 and 10 or correct not between 0 and attempts
      or (subject = 'run' and attempts <> 0) then
     return jsonb_build_object('ok', false, 'err', 'invalid');
   end if;
@@ -252,7 +252,8 @@ begin
   select level into lvl from public.children where id = child;
   finish := 1 - (rnk - 1)::real / greatest(1, n - 1);
   acc := case when attempts > 0 then correct::real / attempts else 0 end;
-  sc := round(1000 * (case when attempts > 0 then 0.6 * acc + 0.4 * finish else 0.85 * finish + 0.15 end) * (1 + 0.15 * (lvl - 1)));
+  -- speed points (finish order, up to 1000) + answer points (100 each), harder grades count a little more
+  sc := round((1000 * finish + 100 * correct) * (1 + 0.15 * (lvl - 1)));
   insert into public.scores (child_id, world, subject, rank, n, time_s, correct, attempts, score, in_room)
     values (child, world, subject, rnk, n, time_s, correct, attempts, sc, coalesce(in_room, false));
   return jsonb_build_object('ok', true, 'score', sc);

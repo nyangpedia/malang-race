@@ -88,7 +88,7 @@ const Online = {
   async submitScore(res, inRoom) {
     if (!this.child) return null;
     try {
-      const r = await this.call('submit_score', { child: this.child.id, world: res.worldId, subject: res.subject || 'math', rnk: res.rank, n: res.N, time_s: Math.round(res.time * 10) / 10, correct: Math.min(res.correct, 5), attempts: Math.min(res.attempts, 5), in_room: !!inRoom });
+      const r = await this.call('submit_score', { child: this.child.id, world: res.worldId, subject: res.subject || 'math', rnk: res.place || res.rank, n: res.N, time_s: Math.round(res.time * 10) / 10, correct: Math.min(res.correct, 10), attempts: Math.min(res.attempts, 10), in_room: !!inRoom });
       return r.score;
     } catch (e) { return null; }
   },
@@ -128,10 +128,24 @@ Object.assign(App, {
     this.modal(`<h2>👋 말랑 레이스에 오신 걸 환영해요!</h2>
       <p class="muted">보호자가 계정을 만들면 아이 기록이 서버에 저장되고, 랭킹에 오르고, 승인한 친구와 함께 달릴 수 있어요.</p>
       <div class="ol-choose">
+        <button class="btn ol-google" id="ol-google"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.6z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.5 0 20.1 0 24s1 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.300 0 11.700-2.100 15.600-5.700l-7.600-5.900c-2.100 1.400-4.800 2.300-8 2.300-6.300 0-11.600-4.100-13.500-9.900l-7.900 6.200C6.500 42.600 14.600 48 24 48z"/></svg><span>구글 계정으로 계속하기</span></button>
+        <div class="ol-or">또는 이메일로</div>
         <button class="btn green" data-m="signup">✨ 회원가입 <small>처음이에요 (보호자가 해요)</small></button>
         <button class="btn blue" data-m="login">🔑 로그인 <small>계정이 있어요</small></button>
-      </div>`);
+      </div><div class="ol-msg" id="ol-msg"></div>`);
+    $('#modal-panel').classList.add('narrow');
     $$('.ol-choose [data-m]').forEach((b) => (b.onclick = () => this.olAuth(b.dataset.m)));
+    $('#ol-google').onclick = () => this.olGoogle();
+  },
+  async olGoogle() {
+    const b = $('#ol-google'); if (b) b.disabled = true;
+    try {
+      const { error } = await Online.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('#')[0].split('?')[0] } });
+      if (error) throw error;
+    } catch (e) {
+      if (b) b.disabled = false;
+      const m = $('#ol-msg'); if (m) { m.textContent = /not enabled|provider/i.test(e.message || '') ? '구글 로그인이 아직 켜져 있지 않아요. 이메일로 해 주세요.' : olErr(e); m.classList.add('bad'); }
+    }
   },
   olEntry() { if (!Online.session) return this.olChoose(); if (!Online.guardian) return this.olRegisterGuardian(); this.olPickChild(); },
   // ---- guardian sign in / sign up ----
@@ -143,7 +157,11 @@ Object.assign(App, {
       <div class="field"><label>보호자 이메일</label><input id="ol-email" type="email" autocomplete="email" value="${escapeHtml(Online.email || '')}"></div>
       <div class="field"><label>비밀번호 ${su ? '(8글자 이상)' : ''}</label><input id="ol-pw" type="password" autocomplete="${su ? 'new-password' : 'current-password'}"></div>
       <div class="ol-msg" id="ol-msg">${msg}</div>
-      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="ol-go">${su ? '가입하기' : '로그인'}</button>${su ? '' : '<button class="btn sm gray" id="ol-forgot">비밀번호를 잊었어요</button>'}</div>`);
+      <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="ol-go">${su ? '가입하기' : '로그인'}</button>${su ? '' : '<button class="btn sm gray" id="ol-forgot">비밀번호를 잊었어요</button>'}</div>
+      <div class="ol-or">또는</div>
+      <div class="ol-choose" style="margin-top:0"><button class="btn ol-google" id="ol-google"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.6z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.5 0 20.1 0 24s1 7.5 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.300 0 11.700-2.100 15.600-5.700l-7.600-5.900c-2.100 1.400-4.800 2.300-8 2.300-6.300 0-11.600-4.100-13.500-9.900l-7.900 6.200C6.500 42.600 14.600 48 24 48z"/></svg><span>구글 계정으로 계속하기</span></button></div>`);
+    $('#modal-panel').classList.add('narrow');
+    $('#ol-google').onclick = () => this.olGoogle();
     $$('[data-m]').forEach((b) => (b.onclick = () => this.olAuth(b.dataset.m)));
     const say = (t, bad) => { const m = $('#ol-msg'); m.textContent = t; m.classList.toggle('bad', !!bad); };
     $('#ol-go').onclick = async () => {

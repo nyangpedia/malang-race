@@ -154,7 +154,7 @@ const App = {
     $('#btn-race').onclick = () => { Sound.play('click'); this.openMenu('race'); };
   },
   toastHub(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2200); },
-  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeModal()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
+  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').classList.remove('narrow'); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeModal()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
   closeModal() { $('#modal').classList.add('hidden'); document.body.classList.remove('modal-side'); if (this.hub && this.hub.zoom) this.setHubZoom(0); if (this.screen === 'hub' && Save.data.profile) this.drawHub(); },
   openMenu(id) {
     const fn = { race: 'menuRace', custom: 'menuCustom', notes: 'menuNotes', rank: 'menuRank', level: 'menuLevel', shop: 'menuShop', map: 'menuMap', settings: 'menuSettings' }[id];
@@ -210,16 +210,17 @@ const App = {
     if (S.history.length > 200) S.history.length = 200;
     const dp = S.daily.progress; if (S.daily.date === todayStr()) { dp.race1 = (dp.race1 || 0) + 1; dp.correct10 = (dp.correct10 || 0) + res.correct; dp.stomp3 = (dp.stomp3 || 0) + res.stomps; }
     let tk = ''; if (res.subject !== 'run') { S.runProgress = (S.runProgress || 0) + 1; if (S.runProgress >= RUN_NEED) { S.runProgress = 0; S.runTickets = (S.runTickets || 0) + 1; S.feverSeen = false; tk = `<div class="fever-hero" style="margin:10px 0"><div class="big">🔥 피버 모드 열림!</div><p>레이스 ${RUN_NEED}판 완주 보상이에요. 문제 없이 달리고 에너지는 2배!</p><button class="btn" style="margin-top:10px;background:#fff;color:#ff5a3c;box-shadow:0 6px 0 #c9401f" onclick="App.startFever()">🔥 지금 참가하기</button></div>`; } else tk = `<p class="muted" style="text-align:center">🔥 피버 모드까지 ${S.runProgress}/${RUN_NEED}판</p>`; } else tk = `<p class="muted" style="text-align:center">🔥 남은 피버 참가권 ${S.runTickets || 0}장 · 일반 레이스 ${RUN_NEED}판마다 1장을 받아요</p>`;
-    const inRoom = !!(this.room && this.race && this.race.room); Online.submitScore(res, inRoom).then((sc) => { if (sc && $('#res-online')) $('#res-online').innerHTML = `🏆 랭킹에 올렸어요 · 이번 판 <b>${sc}점</b>`; });
+    const inRoom = !!(this.room && this.race && this.race.room); Online.submitScore(res, inRoom).then((sc) => { if (sc && $('#res-online')) $('#res-online').innerHTML = `🏆 랭킹에 올렸어요 · 랭킹 점수 <b>${sc}점</b>`; });
     let tkTop = ''; if (tk.includes('fever-hero')) { tkTop = tk; tk = ''; }
     const again = res.subject === 'run' && !(S.runTickets > 0) ? '' : `<button class="btn" onclick="App.restartRace();App.closeModal()">${res.subject === 'run' ? '🔥 피버 한 번 더!' : '한 번 더!'}</button>`;
     Save.save();
     const tm = `${Math.floor(res.time / 60)}분 ${Math.floor(res.time % 60)}초`;
-    const log = res.log.map((l) => `<div class="wn" style="padding:8px 12px"><span class="tag ${l.ok ? 'green' : 'red'}">${l.ok ? '한 번에 정답' : '오답 후 통과'}</span> ${escapeHtml(l.q)} → 정답 <b>${escapeHtml(l.answer)}</b>${l.ok ? '' : ` (처음 고른 문: ${escapeHtml(l.chosen)})`}</div>`).join('');
+    const pts = res.pts || { speed: 0, quiz: 0, star: 0, total: res.score };
     this.modal(`<h2>${res.subject === 'run' ? '🔥 피버 모드 결과' : '🏁 레이스 결과'}</h2><div class="res-rank">${res.rank}등 <span style="font-size:26px;color:#a77bd0;-webkit-text-stroke:0;text-shadow:none">/ ${res.N}명</span></div>${inRoom ? '<div class="wn room-board" id="room-board"></div>' : ''}${tkTop}
+      <div class="res-pts"><div>🏃 속도<b>${pts.speed}</b><small>${res.place || res.rank}번째 골인 · ${tm}</small></div><i>+</i><div>✏️ 정답<b>${pts.quiz}</b><small>${res.subject === 'run' ? '문제 없음' : res.correct + ' / ' + res.attempts + ' 문제'}</small></div><i>+</i><div>⭐ 별<b>${pts.star}</b><small>${res.stars || 0}개</small></div><i>=</i><div class="sum">합계<b>${pts.total}</b><small>포인트</small></div></div>
+      <div class="res-mini"><span>최대 콤보 <b>${res.maxCombo}</b></span><span>밟기 <b>${res.stomps}</b></span><span>에너지 <b style="color:#d89a00">+${res.energy} ⚡</b></span><span>경험치 <b style="color:#d8407f">+${res.xp} XP</b></span></div>
       ${Online.child ? '<div class="muted" id="res-online" style="text-align:center">☁️ 기록 저장 중…</div>' : ''}
-      <div class="res-grid"><div>완주 기록<b>${tm}</b></div><div>관문 정답<b>${res.subject === 'run' ? '없음' : res.correct + '/' + res.attempts}</b></div><div>최대 콤보<b>${res.maxCombo}</b></div><div>밟기 성공<b>${res.stomps}</b></div><div>모은 별<b>⭐ ${res.stars || 0}</b></div><div>숫자 에너지<b style="color:#d89a00">+${res.energy} ⚡</b></div><div>경험치<b style="color:#d8407f">+${res.xp} XP</b></div><div>레이스 점수<b>${res.score}</b></div></div>
-      ${S.lastCrown ? `<div class="wn" style="text-align:center;font-size:18px">👑 ${res.rank}등 축하해요! 다음 판에는 <b>${CROWN_TIERS[S.lastCrown][1]}왕관</b>을 쓰고 달려요.</div>` : ''}${tk}${log}<p class="muted">${res.subject === 'run' ? '피버 모드는 문제 없이 달리고 에너지를 2배로 받아요.' : '틀린 문제는 오답노트에 자동으로 저장돼요.'}</p>
+      ${S.lastCrown ? `<div class="wn" style="text-align:center;font-size:18px">👑 ${res.rank}등 축하해요! 다음 판에는 <b>${CROWN_TIERS[S.lastCrown][1]}왕관</b>을 쓰고 달려요.</div>` : ''}${tk}<p class="muted" style="text-align:center">${res.subject === 'run' ? '피버 모드는 문제 없이 달리고 에너지를 2배로 받아요.' : res.attempts > res.correct ? `틀린 문제 ${res.attempts - res.correct}개는 📒 오답노트에서 다시 볼 수 있어요.` : '등수는 속도, 정답, 별 포인트를 더해서 정해요.'}</p>
       <div class="row" style="justify-content:center;margin-top:10px">${inRoom ? '<button class="btn" onclick="App.roomBackToLobby()">👫 방으로 돌아가기</button>' : again}<button class="btn blue" onclick="App.exitRace()">${inRoom ? '방 나가기' : '광장으로'}</button></div>`);
   },
   // ---------------- customize & shop ----------------

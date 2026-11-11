@@ -107,7 +107,7 @@ function floorTexture(th, A, B, kind = 'check') {
 }
 const VIVID = [0xff2d6f, 0xff8a00, 0xffe600, 0x22e06a, 0x00c8ff, 0x7a5cff, 0xff4fd8];
 const ZONE_KINDS = ['check', 'stripe', 'dots', 'chevron', 'star', 'wave'];
-const ZONE_EDGES = [0, 124, 232, 332, 432, 532];
+const ZONE_EDGES = [0, 124, 164, 264, 304, 404, 444, 544, 584, 684, 724];
 function stripeTexture(a, b) { return canvasTex(128, 32, (g) => { g.fillStyle = a; g.fillRect(0, 0, 128, 32); g.fillStyle = b; for (let x = -32; x < 160; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 16, 0); g.lineTo(x + 32, 32); g.lineTo(x + 16, 32); g.fill(); } }, true); }
 function arrowTexture(col) { return canvasTex(128, 128, (g) => { g.fillStyle = col; g.fillRect(0, 0, 128, 128); g.fillStyle = 'rgba(255,255,255,0.75)'; for (const y of [20, 84]) { g.beginPath(); g.moveTo(64, y); g.lineTo(100, y + 30); g.lineTo(80, y + 30); g.lineTo(80, y + 40); g.lineTo(48, y + 40); g.lineTo(48, y + 30); g.lineTo(28, y + 30); g.fill(); } }, true); }
 
@@ -430,39 +430,48 @@ class Course {
     this.speedPanel(41, 50, 9.5, 8, 'fast'); if (L >= 2) this.speedPanel(76, 84, -7, 10, 'slow');
     if (L >= 3) this.pendulum(106);
     if (L >= 4) this.punchers(54, 70, L >= 6 ? 3 : 2);
-    // --- Gate 1 ---
+    // --- Gate 1, a short bonus strip, Gate 2 ---
     this.gate(124, 0); this.checkpoint(128.5);
+    let gi = 1; const gateDs = [124];
+    const strip = (a, k) => { // 16 m breather between two quiz gates
+      this.floor(a, a + 16, 0); this.stars(a + 3, a + 13, 4);
+      if (k % 3 === 0) this.speedPanel(a + 2, a + 14, 0, 8, 'fast'); else if (k % 3 === 1) this.bumpers(a + 4, a + 12, 3, { color: th.accent }); else if (L >= 2) this.speedPanel(a + 3, a + 13, k % 2 ? 7 : -7, 9, 'slow');
+      this.gate(a + 28, gi++); this.checkpoint(a + 32.5); gateDs.push(a + 28);
+    };
+    strip(136, 0);
     // --- four middle sections: picked and ordered differently for every map number ---
     const pool = ['hill', 'holes', 'gauntlet', 'flat', 'zigzag', 'twinHill']; if (L >= 2) pool.push('islands');
     this.plan = shuffle(pool).slice(0, 4);
-    [[136, 1, 232], [244, 2, 332], [344, 3, 432], [444, 4, 532]].forEach(([d0, gi, gd], i) => {
+    for (let i = 0; i < 4; i++) {
+      const d0 = 176 + i * 140;
       this['mod_' + this.plan[i]](d0, L, th, W);
-      if (i === 0) { this.floor(212, 220, 0); this.stars(213, 219, 3); }
-      this.gate(gd, gi); this.checkpoint(gd + 4.5);
-    });
+      this.gate(d0 + 88, gi++); this.checkpoint(d0 + 92.5); gateDs.push(d0 + 88);
+      strip(d0 + 100, i + 1);
+    }
+    const F = 192; // the final section starts where the last gate plaza ends
     // --- Final (544..632) ---
-    this.jumpGap(580, 2.6);
-    this.floorWithHoles(544, 632, 0);
-    this.jumpPad(556, -8, 0); this.jumpPad(556, 0, 0); this.jumpPad(556, 8, 0);
-    if (W === 'candy' || W === 'cloud') this.bumpers(562, 576, 6, W === 'cloud' ? { color: 0xffffff } : {});
-    if (W === 'block') this.pushers(562, 576, 3, { jelly: false });
-    if (W === 'jungle') this.bumpers(562, 576, 6, { color: 0xff6b5a });
-    if (W === 'space') { this.laser(566, 'updown', { speed: 2, color: 0x7fe7ff }); this.bumpers(570, 577, 3, { color: 0xffd23f }); }
-    if (W === 'crystal') { this.laser(566, 'updown', { speed: 2.2 }); this.bumpers(570, 577, 3, { color: 0x8be9ff }); }
-    this.pushers(592, 602, 2, { amp: 7 });
-    this.checkpoint(584);
-    this.stars(554, 560, 3, 5, -8); this.stars(554, 560, 3, 5, 8); this.stars(579.5, 583.5, 3, 1.6); this.stars(590, 606, 5);
-    this.speedPanel(546, 553, 0, 8, 'fast'); if (L >= 2) { this.speedPanel(594, 602, -8.5, 10, 'slow'); this.mysteryPad(586, 7); }
-    if (L >= 2) this.pendulum(607, { speed: 1.2 });
-    if (L >= 4) this.pendulum(588, { speed: 1.6 });
-    if (L >= 6) this.punchers(564, 576, 2);
-    if (L >= 6) this.rollers(562, 576, 2);
-    this.FINISH = 612;
+    this.jumpGap((F + 580), 2.6);
+    this.floorWithHoles((F + 544), (F + 632), 0);
+    this.jumpPad((F + 556), -8, 0); this.jumpPad((F + 556), 0, 0); this.jumpPad((F + 556), 8, 0);
+    if (W === 'candy' || W === 'cloud') this.bumpers((F + 562), (F + 576), 6, W === 'cloud' ? { color: 0xffffff } : {});
+    if (W === 'block') this.pushers((F + 562), (F + 576), 3, { jelly: false });
+    if (W === 'jungle') this.bumpers((F + 562), (F + 576), 6, { color: 0xff6b5a });
+    if (W === 'space') { this.laser((F + 566), 'updown', { speed: 2, color: 0x7fe7ff }); this.bumpers((F + 570), (F + 577), 3, { color: 0xffd23f }); }
+    if (W === 'crystal') { this.laser((F + 566), 'updown', { speed: 2.2 }); this.bumpers((F + 570), (F + 577), 3, { color: 0x8be9ff }); }
+    this.pushers((F + 592), (F + 602), 2, { amp: 7 });
+    this.checkpoint((F + 584));
+    this.stars((F + 554), (F + 560), 3, 5, -8); this.stars((F + 554), (F + 560), 3, 5, 8); this.stars((F + 579.5), (F + 583.5), 3, 1.6); this.stars((F + 590), (F + 606), 5);
+    this.speedPanel((F + 546), (F + 553), 0, 8, 'fast'); if (L >= 2) { this.speedPanel((F + 594), (F + 602), -8.5, 10, 'slow'); this.mysteryPad((F + 586), 7); }
+    if (L >= 2) this.pendulum((F + 607), { speed: 1.2 });
+    if (L >= 4) this.pendulum((F + 588), { speed: 1.6 });
+    if (L >= 6) this.punchers((F + 564), (F + 576), 2);
+    if (L >= 6) this.rollers((F + 562), (F + 576), 2);
+    this.FINISH = (F + 612);
     const fin = makeBannerArch('FINISH', 0xffd23f, true); fin.position.set(0, 0, -this.FINISH); this.group.add(fin);
-    const endWall = new THREE.Object3D(); endWall.position.set(0, 3, -632.5); this.addSolid(endWall, 'box', HALF_W, 4, 0.5, { kind: 'rail' });
-    const endDeco = new THREE.Mesh(new THREE.BoxGeometry(TRACK_W, 3, 1), jellyMaterial(th.accent)); endDeco.position.set(0, 1.5, -632.6); this.group.add(endDeco);
+    const endWall = new THREE.Object3D(); endWall.position.set(0, 3, -(F + 632.5)); this.addSolid(endWall, 'box', HALF_W, 4, 0.5, { kind: 'rail' });
+    const endDeco = new THREE.Mesh(new THREE.BoxGeometry(TRACK_W, 3, 1), jellyMaterial(th.accent)); endDeco.position.set(0, 1.5, -(F + 632.6)); this.group.add(endDeco);
     this.LENGTH = this.FINISH;
-    this.sections = [0, 124, 232, 332, 432, 532, this.FINISH];
+    this.sections = [0, ...gateDs, this.FINISH];
     this.buildScenery();
   }
   // round island you can stand on (some bob up and down, some spin)
@@ -590,25 +599,25 @@ class Course {
     const cloudM = W === 'space' ? mat(0x7a63d8, { roughness: 0.9, emissive: 0x2a1f70 }) : mat(0xffffff, { roughness: 0.9, emissive: 0x666677 });
     if (W === 'space') { const n = 700, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const a = rand(0, 6.283), e = rand(-0.25, 1), r = 560; pos[i * 3] = Math.cos(a) * Math.sqrt(1 - e * e) * r; pos[i * 3 + 1] = e * r; pos[i * 3 + 2] = Math.sin(a) * Math.sqrt(1 - e * e) * r - 300; } const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const st = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.9 })); st.frustumCulled = false; grp.add(st); }
     const puff = (x, y, z, s) => { const c = new THREE.Group(); for (let i = 0; i < 5; i++) { const b = new THREE.Mesh(GEO.sphereLo, cloudM); b.scale.setScalar(s * rand(0.6, 1.1)); b.position.set((i - 2) * s * 0.8, rand(0, s * 0.4), rand(-s * 0.3, s * 0.3)); c.add(b); } c.position.set(x, y, z); grp.add(c); return c; };
-    for (let i = 0; i < 36; i++) puff(rand(-140, 140) + (RNG() < 0.5 ? -50 : 50) * 0, rand(18, 50), -rand(-60, 720), rand(4, 9)).position.x = (RNG() < 0.5 ? -1 : 1) * rand(40, 150);
-    if (W === 'cloud') for (let i = 0; i < 56; i++) puff((RNG() < 0.5 ? -1 : 1) * rand(16, 70), rand(-12, -4), -rand(-20, 660), rand(3, 7));
+    for (let i = 0; i < 48; i++) puff(rand(-140, 140) + (RNG() < 0.5 ? -50 : 50) * 0, rand(18, 50), -rand(-60, 940), rand(4, 9)).position.x = (RNG() < 0.5 ? -1 : 1) * rand(40, 150);
+    if (W === 'cloud') for (let i = 0; i < 76; i++) puff((RNG() < 0.5 ? -1 : 1) * rand(16, 70), rand(-12, -4), -rand(-20, 900), rand(3, 7));
     // side decorations
     const side = () => (RNG() < 0.5 ? -1 : 1);
-    for (let i = 0; i < 100; i++) {
-      const d = rand(-20, 650), x = side() * (rand(HALF_W + 6, HALF_W + 34) + (this.gates.some((G) => Math.abs(G.d - d) < 18) ? 9 : 0)), y = W === 'cloud' || W === 'space' ? rand(-6, 2) : -1;
+    for (let i = 0; i < 135; i++) {
+      const d = rand(-20, this.FINISH + 40), x = side() * (rand(HALF_W + 6, HALF_W + 34) + (this.gates.some((G) => Math.abs(G.d - d) < 18) ? 9 : 0)), y = W === 'cloud' || W === 'space' ? rand(-6, 2) : -1;
       const o = this.decoItem(W); o.position.set(x, y, -d); o.rotation.y = rand(0, 6.28); grp.add(o);
     }
     // festival decor: bunting lines + balloons along the course
     const flagCols = [0xff5a7a, 0xffd23f, 0x5fd35f, 0x3fc2ff, 0xa86bff, 0xff9a3c];
     const flagGeo = new THREE.ConeGeometry(0.32, 0.7, 3); flagGeo.rotateX(Math.PI); flagGeo.scale(1, 1, 0.15);
-    for (let d = 30; d < 620; d += 34) {
+    for (let d = 30; d < this.FINISH + 8; d += 34) {
       if (this.gates.some((G) => Math.abs(G.d - d) < 16)) continue;
       const y = (d > 150 && d < 200 ? 3 : 0) + 10.5;
       for (const sd of [-1, 1]) { const pole = new THREE.Mesh(GEO.cyl, mat(0xffffff)); pole.scale.set(0.18, y + 1, 0.18); pole.position.set(sd * (HALF_W + 1.6), (y + 1) / 2 - 1, -d); grp.add(pole); const top = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); top.scale.setScalar(0.45); top.position.set(sd * (HALF_W + 1.6), y + 0.2, -d); grp.add(top); }
       for (let i = 0; i < 25; i++) { const u = i / 24, x = lerp(-HALF_W - 1.6, HALF_W + 1.6, u); const f = new THREE.Mesh(flagGeo, mat(flagCols[i % 6], { side: THREE.DoubleSide })); f.position.set(x, y - Math.sin(u * Math.PI) * 1.6 - 0.5, -d); grp.add(f); }
     }
     this.balloons = [];
-    for (let i = 0; i < 40; i++) { const g = new THREE.Group(); const b = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); b.scale.set(1.1, 1.35, 1.1); g.add(b); const st = new THREE.Mesh(GEO.cyl, mat(0xffffff)); st.scale.set(0.03, 3, 0.03); st.position.y = -2.8; g.add(st); g.position.set(side() * rand(HALF_W + 3, HALF_W + 14), rand(5, 13), -rand(0, 630)); if (this.gates.some((G) => Math.abs(G.d + g.position.z) < 18)) g.position.x += Math.sign(g.position.x) * 9; g.userData.y0 = g.position.y; g.userData.ph = rand(0, 6); grp.add(g); this.balloons.push(g); }
+    for (let i = 0; i < 54; i++) { const g = new THREE.Group(); const b = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); b.scale.set(1.1, 1.35, 1.1); g.add(b); const st = new THREE.Mesh(GEO.cyl, mat(0xffffff)); st.scale.set(0.03, 3, 0.03); st.position.y = -2.8; g.add(st); g.position.set(side() * rand(HALF_W + 3, HALF_W + 14), rand(5, 13), -rand(0, 850)); if (this.gates.some((G) => Math.abs(G.d + g.position.z) < 18)) g.position.x += Math.sign(g.position.x) * 9; g.userData.y0 = g.position.y; g.userData.ph = rand(0, 6); grp.add(g); this.balloons.push(g); }
     this.landmarks(W);
     // big landmark: rainbow-ish ring over the finish area
     const ring = new THREE.Mesh(new THREE.TorusGeometry(30, 1.6, 12, 48, Math.PI), new THREE.MeshBasicMaterial({ color: 0xff9ccf, transparent: true, opacity: 0.55 }));
@@ -620,10 +629,10 @@ class Course {
   landmarks(W) {
     const grp = this.group, RB = [0xff3b5c, 0xff9a1f, 0xffe11f, 0x3fd35a, 0x20b8ff, 0x8a5cff];
     const rainbow = (x, z, R, rotY) => { const g = new THREE.Group(); RB.forEach((c, i) => { const t = new THREE.Mesh(new THREE.TorusGeometry(R - i * 1.6, 0.85, 8, 40, Math.PI), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85, fog: false })); g.add(t); }); g.position.set(x, -6, z); g.rotation.y = rotY; grp.add(g); };
-    for (let i = 0; i < 4; i++) rainbow((i % 2 ? 1 : -1) * rand(80, 120), -rand(60, 640), rand(34, 46), rand(-0.6, 0.6));
+    for (let i = 0; i < 6; i++) rainbow((i % 2 ? 1 : -1) * rand(80, 120), -rand(60, this.FINISH + 30), rand(34, 46), rand(-0.6, 0.6));
     const glow = (hex) => new THREE.MeshStandardMaterial({ color: hex, emissive: new THREE.Color(hex).multiplyScalar(0.55), roughness: 0.4 });
     for (let i = 0; i < 18; i++) {
-      const side = i % 2 ? 1 : -1, x = side * rand(55, 140), z = -rand(-40, 700), c = pick(VIVID), g = new THREE.Group();
+      const side = i % 2 ? 1 : -1, x = side * rand(55, 140), z = -rand(-40, 920), c = pick(VIVID), g = new THREE.Group();
       if (W === 'candy') { const s = new THREE.Mesh(GEO.cyl, mat(0xffffff)); s.scale.set(0.8, 26, 0.8); s.position.y = 13; g.add(s); const tex = canvasTex(256, 256, (cx, w, h) => { const cs = ['#' + new THREE.Color(c).getHexString(), '#ffffff', '#' + new THREE.Color(pick(VIVID)).getHexString()]; for (let k = 0; k < 18; k++) { cx.fillStyle = cs[k % 3]; cx.beginPath(); cx.moveTo(128, 128); cx.arc(128, 128, 128, k / 18 * 6.283, (k + 1) / 18 * 6.283); cx.fill(); } }); const p = new THREE.Mesh(new THREE.CylinderGeometry(9, 9, 2, 32), [glow(c), new THREE.MeshBasicMaterial({ map: tex }), new THREE.MeshBasicMaterial({ map: tex })]); p.rotation.x = Math.PI / 2; p.position.y = 30; g.add(p); this.spinners.push({ o: p, sp: 0 }); }
       else if (W === 'block') { let y = 0; for (let k = 0, n = randi(3, 6); k < n; k++) { const s = rand(6, 11); const b = new THREE.Mesh(GEO.box, glow(VIVID[(i + k) % VIVID.length])); b.scale.setScalar(s); b.position.set(rand(-2, 2), y + s / 2, rand(-2, 2)); b.rotation.y = rand(0, 1); y += s; g.add(b); } }
       else if (W === 'jungle') { const h = rand(30, 60); const mtn = new THREE.Mesh(GEO.cone, mat(pick([0x2fa85a, 0x3fbf6a, 0x1f8f4a]), { roughness: 0.9 })); mtn.scale.set(h * 0.7, h, h * 0.7); mtn.position.y = h / 2 - 10; g.add(mtn); const fl = new THREE.Mesh(GEO.sphere, glow(c)); fl.scale.set(6, 2.5, 6); fl.position.y = h - 10; g.add(fl); for (let k = 0; k < 5; k++) { const pt = new THREE.Mesh(GEO.sphereLo, glow(pick(VIVID))); pt.scale.set(4, 1.2, 2); const a = k / 5 * 6.283; pt.position.set(Math.cos(a) * 5, h - 9, Math.sin(a) * 5); pt.rotation.y = -a; g.add(pt); } }
@@ -634,7 +643,7 @@ class Course {
       g.position.x = x; g.position.z = z; grp.add(g);
     }
     // giant spinning stars in the sky
-    for (let i = 0; i < 10; i++) { const c = pick(VIVID); const s = new THREE.Mesh(GEO.star, new THREE.MeshBasicMaterial({ color: c, fog: false })); s.scale.setScalar(rand(3, 6)); s.position.set((i % 2 ? 1 : -1) * rand(30, 90), rand(28, 55), -rand(0, 680)); grp.add(s); this.spinners.push({ o: s, sp: rand(0.4, 1), bob: rand(0, 6), y0: s.position.y, amp: 3 }); }
+    for (let i = 0; i < 10; i++) { const c = pick(VIVID); const s = new THREE.Mesh(GEO.star, new THREE.MeshBasicMaterial({ color: c, fog: false })); s.scale.setScalar(rand(3, 6)); s.position.set((i % 2 ? 1 : -1) * rand(30, 90), rand(28, 55), -rand(0, 900)); grp.add(s); this.spinners.push({ o: s, sp: rand(0.4, 1), bob: rand(0, 6), y0: s.position.y, amp: 3 }); }
   }
   decoItem(W) {
     const g = new THREE.Group();

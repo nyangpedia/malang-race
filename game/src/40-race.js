@@ -372,7 +372,7 @@ class Race {
     if (!wait.length) { G.close(); return; }
     G.reveal(); const P = this.player, st = this.stats; let nOk = 0;
     for (const r of wait) {
-      const dr = G.doors[G.slotAt(r.p.x)], ok = dr.correct; G.pending.add(r); G.allowed.set(r, ok ? 0 : GATE_HOLD); if (ok) nOk++;
+      const dr = G.doors[G.slotAt(r.p.x)], ok = dr.correct; G.pending.add(r); r.quizN = (r.quizN || 0) + 1; if (ok) r.quizOk = (r.quizOk || 0) + 1; G.allowed.set(r, ok ? 0 : GATE_HOLD); if (ok) nOk++;
       if (ok) { r.view.setFace('joy', 1.2); r.view.stretch(0.3); dr.flashT = 0.6; }
       else { r.v.y = 5; r.ground = false; r.stunT = 0.3; r.view.bump(1.3); r.view.setFace('oops', 1.5); dr.shieldT = 0.9; }
       if (r.isPlayer) {
@@ -407,7 +407,7 @@ class Race {
     if (!r.finished && r.d >= this.course.FINISH) {
       r.finished = true; r.place = ++this.finishCount; r.finishTime = this.raceTime;
       if (this.near(r)) this.particles.spawn(r.p.x, r.p.y + 1, r.p.z, r.isPlayer ? 80 : 12, ['#ff7eb6', '#ffd84d', '#7fe7ff', '#9be35a', '#a77bff'], 8, 1.4, 0.5, 6, 6);
-      if (r.isPlayer) { this.state = 'finished'; this.endT = 3.2; Sound.play('finish'); this.bigMsg(`${r.place}등으로 완주!`, 3, 'go'); r.view.setFace('joy', 4); }
+      if (r.isPlayer) { this.state = 'finished'; this.endT = 3.2; Sound.play('finish'); this.bigMsg(`${r.place}번째로 골인!`, 3, 'go'); r.view.setFace('joy', 4); }
     }
   }
   racerContacts() {
@@ -546,15 +546,24 @@ class Race {
   }
   results() {
     const P = this.player, N = this.racers.length, st = this.stats;
-    const rank = P.place || this.order.indexOf(P) + 1;
+    // final rank = speed points (finish order) + answer points (100 each) + star bonus (10 each)
+    const place = P.place || this.order.indexOf(P) + 1, nG = this.course.gates.length;
+    const rest = this.racers.filter((r) => !r.finished).sort((a, b) => b.progress() - a.progress());
+    const ptsOf = (r) => {
+      const pl = r.finished ? r.place : this.finishCount + rest.indexOf(r) + 1; // racers still running keep their current order
+      const okN = r.finished || !nG ? (r.quizOk || 0) : Math.min(nG, Math.round((r.quizOk || 0) + (nG - (r.quizN || 0)) * (r.quizN ? r.quizOk / r.quizN || 0 : 0.6)));
+      const speed = Math.round(1000 * (N - pl) / Math.max(1, N - 1)), quiz = 100 * okN, star = r === P ? 10 * (st.stars || 0) : 0;
+      return { speed, quiz, star, total: speed + quiz + star };
+    };
+    const pts = ptsOf(P); let rank = 1; for (const r of this.racers) if (r !== P && ptsOf(r).total > pts.total) rank++;
     const acc = st.attempts ? st.correct / st.attempts : 0;
     const avgSolve = st.solveTimes.length ? st.solveTimes.reduce((a, b) => a + b, 0) / st.solveTimes.length : 15;
     const speedScore = clamp(1 - (avgSolve - 3) / 12, 0, 1), finishScore = 1 - (rank - 1) / Math.max(1, N - 1);
-    const score = Math.round(1000 * (st.attempts ? 0.5 * acc + 0.2 * speedScore + 0.3 * finishScore : 0.85 * finishScore + 0.15) * (1 + 0.15 * (this.level - 1)));
+    const score = pts.total;
     const rankBonus = rank === 1 ? 40 : rank <= 3 ? 25 : rank <= 10 ? 12 : 0;
     const energy = (st.energy + 20 + rankBonus + (st.maxCombo >= 3 ? 15 : 0)) * (this.subject === 'run' ? 2 : 1);
     const xp = 40 + st.correct * 15 + rankBonus + Math.round(score / 50);
-    return { rank, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stars: st.stars || 0, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
+    return { rank, place, pts, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stars: st.stars || 0, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
   }
   dispose() { this.course.dispose(); this.racers.forEach((r) => { r.view.bodyMat.dispose(); }); this.scene.clear(); $('#hud').classList.add('hidden'); $('#controls').classList.add('hidden'); $('#qpanel').classList.add('hidden'); }
 }
