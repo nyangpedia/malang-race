@@ -162,11 +162,12 @@ class Race {
       if (i === playerSlot) { r = new Racer(this, i, { name: S.profile.nick, isPlayer: true, look: lookP }); this.player = r; }
       else {
         const type = typeKeys[i % typeKeys.length], T = AI_TYPES[type];
-        const lvlAdj = [0, 0.05, 0.04, 0.02, 0, -0.03, -0.06][this.level] || 0;
-        const ai = { type, T, acc: clamp(rand(...T.acc) * 0.42 + lvlAdj, 0.1, 0.6), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0, 6), waitX: rand(-13, 13), jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
+        const L = clamp(this.level || 1, 1, 6), accBase = [0, 0.5, 0.58, 0.66, 0.74, 0.8, 0.86][L];
+        const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.5, 0.35, 0.95), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0, 6), waitX: rand(-13, 13), jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
         const nm = (names[i % names.length] || '말랑') + '말랑이';
         const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.56, 0.62) };
-        r = new Racer(this, i, { name: nm, look, ai, speedMul: rand(...T.speed) * (0.84 + 0.025 * this.level + (this.subject === 'run' ? 0.07 : 0)) });
+        r = new Racer(this, i, { name: nm, look, ai, speedMul: (1 + (rand(...T.speed) - 0.95) * 0.5) * ([0, 0.84, 0.88, 0.92, 0.96, 1.0, 1.03][clamp(this.level || 1, 1, 6)] + (this.subject === 'run' ? 0.04 : 0)) });
+        r.baseSpeed = r.speed;
       }
       r.p.set((col - 4.5) * 2.7 + rand(-0.2, 0.2), PHYS.R + 0.05, -(4 + row * 2.6));
       if (r.isPlayer) r.view.root.scale.setScalar(0.62);
@@ -454,6 +455,8 @@ class Race {
     if (r.respawnT > 0) return;
     A.think -= dt; A.pauseT -= dt; A.jumpT -= dt; A.swerveT -= dt;
     const C = this.course, d = r.d;
+    if (r.baseSpeed && this.player) { const gap = this.player.d - d, L = clamp(this.level || 1, 1, 6), up = 0.03 + 0.02 * L;
+      r.speed = r.baseSpeed * (1 + clamp(gap / 40, -0.06, 1) * up); }
     // ---- gates ----
     const G = C.gates.find((g) => !g.passed.has(r) && g.d - d < 20 && g.d - d > -1);
     if (G) {
@@ -466,13 +469,17 @@ class Race {
         else { r.in.x = clamp(dx * 1.2, -1, 1); r.in.z = Math.abs(dx) < 2.4 || G.d - d > 3 ? -1 : 0.25; return; }
       } else if (G.state === 'ask') {
         const key = G.idx + ':' + G.round;
-        if (A.gRound !== key) { // secretly decide which pad to stand on; only move there late so the crowd gives little away
+        if (G._herdKey !== key) { // one shared plan per round: the same right pad, one shared wrong pad, one moment to move
+          G._herdKey = key; const right = G.doors.filter((x) => x.correct), wrong = G.doors.filter((x) => !x.correct);
+          G._herdRight = pick(right); G._herdWrong = G.decoys.length && Math.random() < 0.7 ? pick(G.decoys) : pick(wrong.length ? wrong : right);
+          G._herdT = GATE_COUNT + rand(0.4, 1.1);
+        }
+        if (A.gRound !== key) {
           A.gRound = key; let door;
-          if (Math.random() < A.acc) door = pick(G.doors.filter((x) => x.correct));
-          else if (Math.random() < 0.55 && G.decoys.length) door = pick(G.decoys);
-          else door = pick(G.doors.filter((x) => !x.correct));
-          A.door = door; A.commitT = GATE_COUNT + rand(1.0, 2.7) + (T.mistake > 0.2 ? -0.7 : 0); A.standD = rand(1.2, 6.4);
-          A.millX = clamp(door.x + (Math.random() < 0.5 ? -1 : 1) * rand(4, 11), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.6, 2.6);
+          if (Math.random() < A.acc) door = Math.random() < 0.85 ? G._herdRight : pick(G.doors.filter((x) => x.correct));
+          else door = Math.random() < 0.8 ? G._herdWrong : pick(G.doors.filter((x) => !x.correct)) || G._herdWrong;
+          A.door = door; A.commitT = G._herdT + rand(-0.25, 0.25); A.standD = rand(1.2, 5.2);
+          A.millX = clamp(r.p.x + rand(-1.5, 1.5), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.2, 2.2);
         }
         tx = G.timer <= A.commitT ? A.door.x + A.jit : A.millX; td = G.d - A.standD;
         if (G.locked) { if (d < G.d - GATE_ZONE) { tx = r.p.x; td = G.d - GATE_ZONE - 1.2 - A.waitB; } else tx = G.doors[G.slotAt(r.p.x)].x + A.jit; }
