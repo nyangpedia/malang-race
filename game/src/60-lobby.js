@@ -263,9 +263,10 @@ Object.assign(App, {
   drawHub() {
     const S = Save.data, P = S.profile, al = accountLevel(S.xp), L = LEVELS[P.level], col = playerColorCss();
     const crown = S.lastCrown ? { gold: '🥇', silver: '🥈', bronze: '🥉' }[S.lastCrown] : '';
-    $('#hub-top').innerHTML = `<div class="pcard"><span class="blob" style="--c:${col}"></span><div class="pc-t"><b>${escapeHtml(P.nick)} ${crown}</b><span class="pc-lv">말랑 Lv.${al.lv}<span class="xpbar"><i style="width:${al.cur / al.need * 100}%"></i></span></span></div></div>
+    $('#hub-top').innerHTML = `<div class="pcard"><span class="blob" style="--c:${col}"></span><div class="pc-t">${Online.admin ? '<button class="admin-badge" id="hub-admin" title="관리자 화면 열기">🛠️ 관리자 모드</button>' : ''}<b>${escapeHtml(P.nick)} ${crown}</b><span class="pc-lv">말랑 Lv.${al.lv}<span class="xpbar"><i style="width:${al.cur / al.need * 100}%"></i></span></span></div></div>
       <div></div>
       <div class="pills">${Online.enabled ? '<button class="pill rooms" id="hub-rooms">👫 친구 방</button>' : ''}${Number.isFinite(Online.timeLeft()) ? `<div class="pill">⏰ ${Math.max(0, Math.ceil(Online.timeLeft() / 60))}분</div>` : ''}<div class="pill hidden" id="hub-cloud"></div><div class="pill">${L.icon} ${P.level}학년 ${L.name}</div><div class="pill en">⚡ <b>${S.energy}</b></div><button class="pill gear" id="hub-gear">⚙️</button></div>`;
+    if ($('#hub-admin')) $('#hub-admin').onclick = () => { Sound.play('click'); this.olPin(() => this.olAdmin(), '관리자 확인 (보호자 PIN)'); };
     $('#hub-gear').onclick = () => { Sound.play('click'); this.menuSettings(); };
     if ($('#hub-rooms')) $('#hub-rooms').onclick = () => { Sound.play('click'); this.menuRooms(); };
     this.drawCloud();

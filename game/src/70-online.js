@@ -265,11 +265,11 @@ Object.assign(App, {
   // ---------------- guardian menu ----------------
   // ---------- operator (admin) screen: only accounts listed in public.admins ----------
   async olAdmin(q = '') {
-    const back = '<div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm gray" id="ad-back">← 보호자 메뉴</button></div>';
+    const back = '<div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm gray" id="ad-back">닫기</button></div>';
     this.modal('<h2>🛠️ 관리자 모드</h2><p class="muted">불러오는 중…</p>');
     let st, kids, notice;
     try { [st, kids, notice] = await Promise.all([Online.call('admin_stats'), Online.rpc('admin_find_children', { q }), Online.rpc('get_notice')]); }
-    catch (e) { this.modal(`<h2>🛠️ 관리자 모드</h2><p class="ol-msg bad">${olErr(e)}</p>${back}`); $('#ad-back').onclick = () => this.olParent('kids'); return; }
+    catch (e) { this.modal(`<h2>🛠️ 관리자 모드</h2><p class="ol-msg bad">${olErr(e)}</p>${back}`); $('#ad-back').onclick = () => this.closeModal(); return; }
     const box = (n, l) => `<div class="ad-stat"><b>${(+n || 0).toLocaleString('ko-KR')}</b><span>${l}</span></div>`;
     const days = st.daily || [], mx = Math.max(1, ...days.map((d) => d.n));
     const nt = notice && notice[0];
@@ -282,7 +282,7 @@ Object.assign(App, {
       <div class="ad-list">${(kids || []).map((k) => `<div class="wn ol-row" data-ak="${k.id}"><span><b>${escapeHtml(k.nickname)}</b> <span class="muted">LV${k.level} · ${k.friend_code} · ${new Date(k.created_at).toLocaleDateString('ko-KR')}</span></span><span class="muted">${k.games}판 · 최고 ${k.best || 0}점 ›</span></div>`).join('') || '<p class="muted">찾은 아이가 없어요.</p>'}</div>
       <div class="ol-msg" id="ol-msg"></div>${back}`);
     const msg = (t) => { $('#ol-msg').textContent = t; };
-    $('#ad-back').onclick = () => this.olParent('kids');
+    $('#ad-back').onclick = () => this.closeModal();
     $('#ad-find').onclick = () => this.olAdmin($('#ad-q').value.trim());
     $('#ad-q').onkeydown = (e) => { if (e.key === 'Enter') $('#ad-find').click(); };
     $('#ad-nsave').onclick = async () => { try { const r = await Online.call('admin_set_notice', { body: $('#ad-notice').value }); msg(r.cleared ? '공지를 내렸어요.' : '공지를 올렸어요.'); } catch (e) { msg(olErr(e)); } };
@@ -317,7 +317,7 @@ Object.assign(App, {
   },
   async olParent(tab = 'kids') {
     if (tab === 'admin') return this.olAdmin();
-    const tabs = [['kids', '📊 아이 기록'], ['friends', '🤝 친구 승인'], ['rules', '⏰ 사용 규칙'], ['account', '🔑 계정']]; if (Online.admin) tabs.push(['admin', '🛠️ 관리자']);
+    const tabs = [['kids', '📊 아이 기록'], ['friends', '🤝 친구 승인'], ['rules', '⏰ 사용 규칙'], ['account', '🔑 계정']]; 
     const head = `<h2>👨‍👩‍👧 보호자 메뉴</h2><div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-pt="${k}">${n}</button>`).join('')}</div>`;
     this.modal(head + '<p class="muted">불러오는 중…</p>');
     const bind = () => { $$('[data-pt]').forEach((b) => (b.onclick = () => this.olPin(() => this.olParent(b.dataset.pt)))); if ($('#ol-back')) $('#ol-back').onclick = () => this.olPickChild(); };
