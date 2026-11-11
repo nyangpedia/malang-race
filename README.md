@@ -20,7 +20,7 @@
 insert into public.admins(user_id) select id from auth.users where email = '내이메일@example.com' on conflict do nothing;
 ```
 
-그 계정으로 로그인하면 보호자 메뉴에 **🛠️ 관리자** 탭이 생겨요. 통계, 아이 찾기, 닉네임 바꾸기, 점수 지우기, 공지 올리기를 할 수 있어요.
+그 계정으로 로그인하면 광장 왼쪽 위에 **🛠️ 관리자 모드** 배지가 떠요. 누르고 보호자 PIN을 넣으면 통계, 아이 찾기, 닉네임 바꾸기, 점수 지우기, 공지 올리기를 할 수 있어요.
 
 ## 폴더
 
