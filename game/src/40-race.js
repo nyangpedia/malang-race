@@ -271,7 +271,7 @@ class Race {
     this.rankT -= dt; if (this.rankT <= 0) { this.rankT = 0.25; this.order = this.racers.slice().sort((a, b) => b.progress() - a.progress()); }
     this.hudT -= dt; if (this.hudT <= 0) { this.hudT = 0.12; this.updateHUD(); }
     this.updateCamera(dt);
-    if (this.state === 'finished') { this.endT -= dt; if (this.endT <= 0) { this.state = 'done'; App.showResults(this.results()); } }
+    if (this.state === 'finished') { this.endT -= dt; if (this.endT <= 0) { this.state = 'done'; try { App.showResults(this.results()); } catch (e) { App.reportError(e); } } }
   }
   stepRacer(r, dt, running) {
     if (r.respawnT > 0) { r.respawnT -= dt; if (r.respawnT <= 0) this.respawn(r); return; }

@@ -43,6 +43,12 @@ const App = {
     this.screen = name; this.drawFever && this.drawFever();
   },
   loop(t) {
+    requestAnimationFrame((tt) => this.loop(tt));
+    try { this.loopBody(t); } catch (e) { this.reportError(e); }
+  },
+  reportError(e) { const msg = String((e && e.message) || e).slice(0, 120); if (this._lastErr === msg) return; this._lastErr = msg; console.error(e);
+    if (this.race && this.race.state === 'done' && $('#modal').classList.contains('hidden')) this.modal(`<h2>🏁 레이스 끝!</h2><p>결과 화면을 여는 중에 문제가 생겼어요. 아래 글자를 캡처해서 알려 주시면 고칠게요.</p><p class="muted" style="font-size:11px">${escapeHtml(msg)}</p><div class="row" style="justify-content:center"><button class="btn blue" onclick="App.exitRace()">광장으로</button></div>`); },
+  loopBody(t) {
     const dt = Math.min(0.05, (t - (this.last || t)) / 1000); this.last = t;
     if (this.race) {
       if (!this.paused) this.race.update(dt);
@@ -52,7 +58,7 @@ const App = {
     if (!document.hidden && Save.data.profile && this.screen !== 'title' && this.screen !== 'register') Online.tickPlay(dt);
     this._pollT = (this._pollT || 3) - dt; if (this._pollT <= 0) { this._pollT = 25; this.pollRooms(); }
     this.fps = this.fps ? this.fps * 0.95 + (1 / Math.max(dt, 0.001)) * 0.05 : 60;
-    requestAnimationFrame((tt) => this.loop(tt));
+    return;
   },
   // ---------------- hub 3D ----------------
   buildHub() {
@@ -333,9 +339,9 @@ const App = {
     const S = Save.data, st = promotionStatus(), L = LEVELS[st.level];
     const per = st.per.map((p) => `<div class="statbar"><span style="width:170px">${p.name}</span><span class="b"><i style="width:${p.acc * 100}%;background:${p.ok ? '#2fbf7f' : '#ffc21f'}"></i></span><span style="width:90px;text-align:right">${p.a ? Math.round(p.acc * 100) + '%' : '-'} (${p.a})</span></div>`).join('');
     this.modal(`<h2>🎓 레벨 · 승급시험</h2><div class="wn"><div class="q">${L.icon} LV${st.level} ${L.name}</div><div class="muted">${L.desc}</div></div>
-      <h3>유형별 숙련도</h3>${per}
+      <div class="lv-grid"><div><h3>유형별 숙련도</h3>${per}</div><div>
       ${st.max ? '<p style="font-size:18px">최고 레벨 마스터예요! 👑</p>' : `<h3>승급시험 조건 (LV${st.level + 1} ${LEVELS[st.level + 1].name})</h3>${st.conds.map((c) => `<div style="font-size:16px;margin:4px 0">${c.ok ? '✅' : '⬜'} ${c.label}</div>`).join('')}<div style="font-size:16px;margin:4px 0">🎯 시험: 10문제 중 9문제 이상 정답</div>
-      <div style="text-align:center;margin-top:12px"><button class="btn yellow" id="exam" ${st.ready ? '' : 'disabled'}>승급시험 보기</button></div><p class="muted" style="text-align:center">시험에 떨어져도 레벨과 아이템은 그대로예요. 언제든 다시 도전할 수 있어요.</p>`}
+      <div style="text-align:center;margin-top:12px"><button class="btn yellow" id="exam" ${st.ready ? '' : 'disabled'}>승급시험 보기</button></div><p class="muted" style="text-align:center">시험에 떨어져도 레벨과 아이템은 그대로예요. 언제든 다시 도전할 수 있어요.</p></div></div>`}
       <p class="muted">레이스 순위가 아니라 문제 풀이 실력으로만 레벨이 올라가요. 레벨은 설정에서 직접 바꿀 수도 있어요.</p>`);
     const b = $('#exam'); if (b) b.onclick = () => this.exam();
   },

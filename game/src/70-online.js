@@ -193,20 +193,21 @@ Object.assign(App, {
   olAfterLogin() { this.drawTitleOnline(); if (!Online.guardian) this.olRegisterGuardian(); else this.olPickChild(); },
   // ---- guardian consent + PIN (first login) ----
   olRegisterGuardian() {
-    this.modal(`<h2>📝 보호자 확인과 동의</h2>
+    this.modal(`<h2>📝 보호자 확인과 동의</h2><div class="consent-grid">
       <div class="ol-consent">
         <b>모으는 정보</b> 보호자 이메일, 아이 닉네임, 말랑이 모습, 게임 기록(점수·순위·학습 기록·오답노트·플레이 시간)<br>
         <b>쓰는 곳</b> 기록 저장, 랭킹, 보호자 확인 화면, 보호자가 승인한 친구와 함께 달리기<br>
         <b>다른 사람에게 보이는 것</b> 닉네임, 말랑이 색, 학년 레벨, 랭킹 점수만 보여요<br>
         <b>보관</b> 보호자 메뉴에서 계정을 지우면 모든 기록이 바로 지워져요<br>
         <b>받지 않는 것</b> 아이 실명, 생년월일, 전화번호, 사진, 위치, 자유 채팅
-      </div>
+      </div><div>
       <label class="ol-check"><input type="checkbox" id="c1"> 저는 이 계정으로 게임할 아이의 보호자(법정대리인)예요.</label>
       <label class="ol-check"><input type="checkbox" id="c2"> 위 정보를 모으고 쓰는 것에 동의해요.</label>
-      <div class="field"><label>보호자 PIN 숫자 4자리 <span class="muted">(아이가 보호자 메뉴를 열지 못하게 해요)</span></label><input id="p1" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
-      <div class="field"><label>PIN 한 번 더</label><input id="p2" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+      <div class="muted" style="font-size:12px">보호자 PIN은 아이가 보호자 메뉴를 열지 못하게 해요.</div>
+      <div class="pins"><div class="field"><label>보호자 PIN (숫자 4자리)</label><input id="p1" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div>
+      <div class="field"><label>PIN 한 번 더</label><input id="p2" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></div></div>
       <div class="ol-msg" id="ol-msg"></div>
-      <div class="row" style="justify-content:center"><button class="btn" id="ol-go">동의하고 시작</button><button class="btn sm gray" id="ol-out">로그아웃</button></div>`);
+      <div class="row" style="justify-content:center"><button class="btn" id="ol-go">동의하고 시작</button><button class="btn sm gray" id="ol-out">로그아웃</button></div></div></div>`);
     $('#ol-out').onclick = async () => { await Online.signOut(); this.closeModal(); this.drawTitleOnline(); };
     $('#ol-go').onclick = async () => {
       const m = $('#ol-msg'), p = $('#p1').value;
