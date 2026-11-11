@@ -291,7 +291,8 @@ body:has(#modal:not(.hidden)) #fever,body:has(#modal:not(.hidden)) #fever-mini{d
 .ol-kids{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
 .ol-kid{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border-radius:20px;background:#f8f3ff;border:3px solid transparent;font-size:18px}.ol-kid:hover{border-color:var(--pink)}.ol-kid small{color:var(--ink2);font-size:13px}
 .ol-kid.add{background:#fff;border:3px dashed #d9c8f5}.ol-kid .plus{font-size:40px;line-height:1;color:#b090e0}
-.ad-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.ad-stat{background:#f3ecff;border-radius:16px;padding:10px;text-align:center}.ad-stat b{display:block;font-size:24px;color:#6b3fd6}.ad-stat span{font-size:13px;color:#7a6c99}.ad-bars{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:110px;padding:6px 0 18px}.ad-bars>div{flex:1;max-width:46px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}.ad-bars i{display:block;width:100%;min-height:2px;border-radius:6px 6px 0 0;background:linear-gradient(#ff5fae,#8a5cff)}.ad-bars small{position:absolute;bottom:-17px;font-size:11px;color:#8a7ca8}.ad-list .ol-row{cursor:pointer}
+.ad-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.ad-stat{background:#f3ecff;border-radius:16px;padding:10px;text-align:center}.ad-stat b{display:block;font-size:24px;color:#6b3fd6}.ad-stat span{font-size:13px;color:#7a6c99}.ad-bars{display:flex;align-items:flex-end;justify-content:center;gap:4px;height:110px;padding:6px 0 18px}.ad-bars>div{flex:1;max-width:46px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}.ad-bars i{display:block;width:100%;min-height:2px;border-radius:6px 6px 0 0;background:linear-gradient(#ff5fae,#8a5cff)}.ad-bars small{position:absolute;bottom:-17px;font-size:11px;color:#8a7ca8}.ad-list .ol-choose{display:flex;flex-direction:column;gap:10px;margin:12px auto 4px;max-width:420px}.ol-choose .btn{font-size:20px;padding:12px 18px;display:flex;flex-direction:column;align-items:center;gap:2px}.ol-choose .btn small{font-size:13px;opacity:.85;font-weight:600}
+.ol-row{cursor:pointer}
 .ol-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px}.ol-row .blob{vertical-align:middle}
 .ol-inline{font-size:17px;padding:8px 12px;border-radius:12px;border:3px solid var(--line);min-width:0;width:140px;font-family:inherit;color:var(--ink)}
 .ol-code{text-align:center;font-size:17px;margin:4px 0 10px}.ol-code b{font-size:30px;letter-spacing:4px;color:#d8407f;margin:0 8px;vertical-align:middle}
@@ -1469,15 +1470,15 @@ class Course {
     }
   }
   // heavy jelly stamps that slam down; a glowing ring on the floor warns where
-  stompers(d0, d1, n) {
+  stompers(d0, d1, n, y = 0) {
     for (let i = 0; i < n; i++) {
       const d = lerp(d0, d1, (i + 0.5) / n), x = n === 1 ? 0 : rand(-8, 8), sp = rand(0.32, 0.42) * (0.8 + 0.5 * this.df), ph = rand(0, 1), hh = 1.1, low = 1.0, high = 8;
-      const c = pick(VIVID), m = new THREE.Mesh(new THREE.BoxGeometry(4.2, hh * 2, 4.2), this.loud(c, 4)); m.position.set(x, high, -d);
+      const c = pick(VIVID), m = new THREE.Mesh(new THREE.BoxGeometry(4.2, hh * 2, 4.2), this.loud(c, 4)); m.position.set(x, y + high, -d);
       const face = new THREE.Mesh(GEO.star, mat(0xffffff, { emissive: 0x777777 })); face.scale.setScalar(1.1); face.rotation.x = Math.PI / 2; face.position.y = -hh - 0.05; m.add(face);
-      const warn = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.3, 28), new THREE.MeshBasicMaterial({ color: 0xff2d6f, transparent: true, opacity: 0.4, depthWrite: false })); warn.rotation.x = -Math.PI / 2; warn.position.set(x, 0.06, -d); this.group.add(warn);
+      const warn = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.3, 28), new THREE.MeshBasicMaterial({ color: 0xff2d6f, transparent: true, opacity: 0.4, depthWrite: false })); warn.rotation.x = -Math.PI / 2; warn.position.set(x, y + 0.06, -d); this.group.add(warn);
       this.addSolid(m, 'box', 2.1, hh, 2.1, { kind: 'stomper', reach: 0, motion: (t, s) => {
         const p = (t * sp + ph) % 1; const k = p < 0.45 ? 0 : p < 0.55 ? (p - 0.45) / 0.1 : p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3; // wait up, slam, stay, rise
-        s.obj.position.y = high - (high - low - hh) * (k * k); warn.material.opacity = p > 0.3 && p < 0.55 ? 0.45 + 0.45 * Math.sin(t * 30) : 0.3; } });
+        s.obj.position.y = y + high - (high - low - hh) * (k * k); warn.material.opacity = p > 0.3 && p < 0.55 ? 0.45 + 0.45 * Math.sin(t * 30) : 0.3; } });
     }
   }
   // giant striped balls rolling down the track toward the racers
@@ -1501,6 +1502,54 @@ class Course {
     this.addSolid(m, 'box', w / 2, 0.06, len / 2, { kind: 'floor', conv: new THREE.Vector3(0, 0, speed) });
     (this.belts = this.belts || []).push({ tex, speed });
     for (const sd of [-1, 1]) { const e = new THREE.Mesh(GEO.box, this.stripeMat(0xffe600, 0x2a2350)); e.scale.set(0.5, 0.3, len); e.position.set(sd * (w / 2 + 0.25), y + 0.12, -(d0 + d1) / 2); this.group.add(e); }
+  }
+  // bonus stars to collect (only the player's own count)
+  stars(d0, d1, n, y = 0, x0 = null) {
+    this.starList = this.starList || []; const cx = x0 === null ? rand(-8, 8) : x0, ph = rand(0, 6.28);
+    for (let i = 0; i < n; i++) {
+      const d = lerp(d0, d1, n === 1 ? 0.5 : i / (n - 1)), x = clamp(cx + Math.sin(i * 0.9 + ph) * 3, -12.5, 12.5);
+      const m = new THREE.Mesh(GEO.star, mat(0xffe11f, { emissive: 0xb88a00, roughness: 0.25 })); m.scale.setScalar(0.62); m.position.set(x, y + 1.35, -d); this.group.add(m);
+      this.spinners.push({ o: m, sp: 3, bob: i * 0.7, y0: y + 1.35, amp: 0.22 }); this.starList.push({ m, x, y: y + 1.35, z: -d, got: false });
+    }
+  }
+  // floor strips that change running speed: 'fast' (arrows) or 'slow' (sticky goo)
+  speedPanel(d0, d1, x, w, fx, y = 0) {
+    const len = d1 - d0, fast = fx === 'fast';
+    const tex = fast ? canvasTex(128, 128, (g, W, H) => { g.fillStyle = '#00d98b'; g.fillRect(0, 0, W, H); g.strokeStyle = '#eaffb0'; g.lineWidth = 16; g.lineJoin = 'round'; for (const y0 of [18, 82]) { g.beginPath(); g.moveTo(20, y0 + 30); g.lineTo(64, y0); g.lineTo(108, y0 + 30); g.stroke(); } }, true)
+      : canvasTex(128, 128, (g, W, H) => { g.fillStyle = '#8a3fd6'; g.fillRect(0, 0, W, H); for (let i = 0; i < 16; i++) { g.fillStyle = i % 2 ? '#b77bff' : '#6a2bb0'; g.beginPath(); g.arc(RNG() * W, RNG() * H, 6 + RNG() * 12, 0, 7); g.fill(); } }, true);
+    tex.repeat.set(w / 4, len / 4);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, len), new THREE.MeshStandardMaterial({ map: tex, roughness: fast ? 0.4 : 0.15, envMapIntensity: 0.3, emissive: fast ? 0x0a6b45 : 0x35125e })); m.position.set(x, y + 0.05, -(d0 + d1) / 2);
+    this.addSolid(m, 'box', w / 2, 0.05, len / 2, { kind: 'floor', fx });
+    if (fast) (this.belts = this.belts || []).push({ tex, speed: -9 });
+    const em = new THREE.MeshBasicMaterial({ color: fast ? 0xb6ff3f : 0xe08bff }); this.pulse.push({ m: em, base: em.color.clone(), ph: d0, sp: fast ? 8 : 2, basic: true });
+    for (const sd of [-1, 1]) { const e = new THREE.Mesh(GEO.box, em); e.scale.set(0.25, 0.14, len); e.position.set(x + sd * w / 2, y + 0.07, -(d0 + d1) / 2); this.group.add(e); }
+  }
+  // trap doors: a gap in the floor covered by three panels that take turns dropping open (they blink red first)
+  trapHole(d, y = 0) { this.holes = this.holes || []; this.holes.push([d, d + 3.2, y]); }
+  trapPanels(d, y = 0) {
+    const L = 3.2, w = TRACK_W / 3, sp = 0.2 + 0.1 * this.df, ph = rand(0, 1), order = shuffle([0, 1, 2]);
+    for (let i = 0; i < 3; i++) {
+      const x = (i - 1) * w, base = new THREE.Color(VIVID[(i * 2 + 1) % VIVID.length]);
+      const pm = new THREE.MeshStandardMaterial({ color: base.clone(), roughness: 0.4, envMapIntensity: 0.3 });
+      const hinge = new THREE.Group(); hinge.position.set(x, y, -d); this.group.add(hinge);
+      const vis = new THREE.Mesh(new THREE.BoxGeometry(w - 0.15, 0.4, L - 0.1), pm); vis.position.set(0, -0.2, -L / 2); hinge.add(vis);
+      const mark = new THREE.Mesh(GEO.box, mat(0xffffff, { emissive: 0x666666 })); mark.scale.set(w * 0.5, 0.05, 0.35); mark.position.set(0, 0.02, -L / 2); hinge.add(mark);
+      const o = new THREE.Object3D(); o.position.set(x, y - 0.2, -(d + L / 2));
+      this.addSolid(o, 'box', w / 2, 0.2, L / 2, { kind: 'floor', trap: true, motion: (t, s) => {
+        const p = (t * sp + ph + order[i] / 3) % 1, open = p > 0.62 && p < 0.92, warn = p > 0.44 && p <= 0.62;
+        s.enabled = !open; const target = open ? 1.45 : 0; hinge.rotation.x += (target - hinge.rotation.x) * 0.3;
+        if (warn) pm.color.setHex(Math.sin(t * 28) > 0 ? 0xff2d2d : 0xffffff); else pm.color.copy(base); } });
+    }
+  }
+  // "?" pad: sometimes a lucky super jump, sometimes a trap that throws you back
+  mysteryPad(d, x, y = 0) {
+    const g = new THREE.Group(); g.position.set(x, y + 0.15, -d);
+    const base = new THREE.Mesh(GEO.cyl, mat(0xffffff)); base.scale.set(1.3, 0.3, 1.3); g.add(base);
+    const tex = canvasTex(128, 128, (c, W, H) => { c.fillStyle = '#8a3fd6'; c.fillRect(0, 0, W, H); c.fillStyle = '#ffe600'; c.font = '900 100px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 64, 70); });
+    const tm = new THREE.MeshStandardMaterial({ map: tex, emissive: 0x4a1f80, roughness: 0.3 }); this.pulse.push({ m: tm, ph: rand(0, 6), sp: 5 });
+    const top = new THREE.Mesh(GEO.cyl, tm); top.scale.set(1.1, 0.12, 1.1); top.position.y = 0.18; g.add(top);
+    const q = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ map: tex, transparent: false })); q.position.y = 2.1; g.add(q); this.spinners.push({ o: q, sp: 2.5 });
+    return this.addSolid(g, 'cyl', 1.25, 0.15, 1.25, { kind: 'pad', pad: 15, vis: top, mystery: true });
   }
   laser(d, mode = 'updown', opts = {}) {
     const m = new THREE.Mesh(GEO.cyl, new THREE.MeshBasicMaterial({ color: opts.color || 0xff3df0 })); m.rotation.z = Math.PI / 2; m.scale.set(0.16, TRACK_W, 0.16);
@@ -1554,6 +1603,8 @@ class Course {
     if (W === 'crystal') { this.laser(48, 'updown'); this.pillars(54, 70, 7, 0x8be9ff); this.laser(78, 'updown', { speed: 1.9 }); this.laser(88, 'low', { color: 0x5ef0ff }); this.sweeper(97, 10.5, 1.5); }
     this.checkpoint(60);
     const L = this.level;
+    this.stars(46, 70, 6); this.stars(84, 100, 4); this.stars(158, 166, 3, 5.5, 0);
+    this.speedPanel(41, 50, 9.5, 8, 'fast'); if (L >= 2) this.speedPanel(76, 84, -7, 10, 'slow');
     if (L >= 3) this.pendulum(106);
     if (L >= 4) this.punchers(54, 70, L >= 6 ? 3 : 2);
     // --- Gate 1 ---
@@ -1577,26 +1628,39 @@ class Course {
     if (W === 'space') { this.laser(252, 'updown', { speed: 1.8, color: 0xffd23f }); this.movingWall(274, { color: 0x7fe7ff }); this.sweeper(288, 10.5, 1.6); this.pillars(306, 318, 4, 0x8a7bff); }
     if (W === 'crystal') { this.sweeper(252, 10.5, 1.6); this.laser(274, 'updown', { speed: 2 }); this.pushers(282, 292, 2); this.laser(308, 'updown', { color: 0x5ef0ff, speed: 1.6 }); this.pillars(312, 318, 3, 0xff9cf5); }
     this.checkpoint(266); this.checkpoint(302);
+    this.stars(261.5, 265.5, 3, 1.6); this.stars(272, 290, 5); this.stars(297.5, 301.5, 3, 1.6);
+    this.speedPanel(245, 252, -9.5, 8, 'fast'); if (L >= 2) this.speedPanel(302, 308, 6, 12, 'slow'); if (L >= 2) this.mysteryPad(268, 0);
     if (L >= 2) this.pendulum(316, { speed: 1.3 });
     if (L >= 5) this.rollers(284, 298, L >= 6 ? 3 : 2);
     // --- Gate 3 ---
     this.gate(332, 2); this.checkpoint(336.5);
     // --- Section D (344..420) ---
-    this.floor(344, 420, 0);
+    if (this.level >= 3) this.trapHole(373.5);
+    this.floorWithHoles(344, 420, 0);
+    if (this.level >= 3) this.trapPanels(373.5);
     this.pushers(350, 366, 3, W === 'block' ? { jelly: false } : {}); this.sweeper(378, 10.5, 1.4); this.bumpers(388, 404, 6, { color: th.accent });
     this.checkpoint(372);
+    this.stars(348, 366, 5); this.stars(390, 402, 4);
+    this.speedPanel(352, 360, 9.5, 8, 'fast'); if (L >= 2) { this.mysteryPad(384, -8); this.mysteryPad(384, 8); }
     if (L >= 3) this.pendulum(345, { speed: 1.4 });
     if (L >= 4) this.punchers(388, 404, L >= 6 ? 4 : 3);
     if (L >= 2) this.conveyor(404, 416, 2 + 2 * this.df);
     // --- Gate 4 ---
     this.gate(432, 3); this.checkpoint(436.5);
-    // --- Section E (444..520) ---
-    this.jumpGap(480, 2.6);
-    this.floorWithHoles(444, 520, 0);
-    this.movingWall(456, { color: th.accent }); this.sweeper(468, 6, 1.5, -5.5); this.sweeper(470, 6, 1.5, 5.5); this.bumpers(490, 506, 6, { color: th.accent });
-    this.checkpoint(486);
-    if (L >= 3) this.stompers(508, 518, L >= 5 ? 3 : 2);
-    if (L >= 5) this.rollers(484, 506, L >= 6 ? 3 : 2);
+    // --- Section E (444..520): flat for beginners, hill + floating islands from level 2 ---
+    if (L >= 2) this.sectionIslands(L, th);
+    else {
+      this.jumpGap(480, 2.6);
+      if (this.level >= 4) this.trapHole(447.5);
+      this.floorWithHoles(444, 520, 0);
+      if (this.level >= 4) this.trapPanels(447.5);
+      this.movingWall(456, { color: th.accent }); this.sweeper(468, 6, 1.5, -5.5); this.sweeper(470, 6, 1.5, 5.5); this.bumpers(490, 506, 6, { color: th.accent });
+      this.checkpoint(486);
+      this.stars(458, 476, 5); this.stars(479.5, 483.5, 3, 1.6); this.stars(490, 504, 4);
+      if (L >= 2) this.speedPanel(472, 479, -8, 10, 'slow'); this.speedPanel(484, 490, 8, 9, 'fast');
+      if (L >= 3) this.stompers(508, 518, L >= 5 ? 3 : 2);
+      if (L >= 5) this.rollers(484, 506, L >= 6 ? 3 : 2);
+    }
     // --- Gate 5 ---
     this.gate(532, 4); this.checkpoint(536.5);
     // --- Final (544..632) ---
@@ -1610,9 +1674,12 @@ class Course {
     if (W === 'crystal') { this.laser(566, 'updown', { speed: 2.2 }); this.bumpers(570, 577, 3, { color: 0x8be9ff }); }
     this.pushers(592, 602, 2, { amp: 7 });
     this.checkpoint(584);
+    this.stars(554, 560, 3, 5, -8); this.stars(554, 560, 3, 5, 8); this.stars(579.5, 583.5, 3, 1.6); this.stars(590, 606, 5);
+    this.speedPanel(546, 553, 0, 8, 'fast'); if (L >= 2) { this.speedPanel(594, 602, -8.5, 10, 'slow'); this.mysteryPad(586, 7); }
     if (L >= 2) this.pendulum(607, { speed: 1.2 });
     if (L >= 4) this.pendulum(588, { speed: 1.6 });
     if (L >= 6) this.punchers(564, 576, 2);
+    if (L >= 6) this.rollers(562, 576, 2);
     this.FINISH = 612;
     const fin = makeBannerArch('FINISH', 0xffd23f, true); fin.position.set(0, 0, -this.FINISH); this.group.add(fin);
     const endWall = new THREE.Object3D(); endWall.position.set(0, 3, -632.5); this.addSolid(endWall, 'box', HALF_W, 4, 0.5, { kind: 'rail' });
@@ -1620,6 +1687,33 @@ class Course {
     this.LENGTH = this.FINISH;
     this.sections = [0, 124, 232, 332, 432, 532, this.FINISH];
     this.buildScenery();
+  }
+  // round island you can stand on (some bob up and down, some spin)
+  island(x, d, R, y, opts = {}) {
+    const h = 1.2, c = opts.color || pick(VIVID), g = new THREE.Group(); g.position.set(x, y - h / 2, -d);
+    const top = new THREE.Mesh(GEO.cyl, opts.spin ? this.stripeMat(c, 0xffffff) : this.loud(c, 2)); top.scale.set(R, h, R); g.add(top);
+    const rim = new THREE.Mesh(GEO.torus, mat(0xffffff, { emissive: 0x555555 })); rim.scale.set(R, R, 0.5); rim.rotation.x = Math.PI / 2; rim.position.y = h / 2 - 0.05; g.add(rim);
+    const under = new THREE.Mesh(GEO.cone, mat(0xc98a5a, { roughness: 0.9 })); under.scale.set(R * 0.9, R * 1.3, R * 0.9); under.rotation.x = Math.PI; under.position.y = -h / 2 - R * 0.65; g.add(under);
+    if (opts.spin) for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2, dot = new THREE.Mesh(GEO.sphere, mat(0xffe600, { emissive: 0x7a6a00 })); dot.scale.setScalar(0.35); dot.position.set(Math.cos(a) * R * 0.7, h / 2, Math.sin(a) * R * 0.7); g.add(dot); }
+    const sp = opts.spin || 0, bob = opts.bob || 0, ph = rand(0, 6.28), y0 = y - h / 2;
+    const motion = sp || bob ? (t, s) => { if (sp) { s.obj.rotation.y = t * sp; s.angY = sp; } if (bob) s.obj.position.y = y0 + Math.sin(t * 1.1 + ph) * bob; } : null;
+    this.addSolid(g, 'cyl', R, h / 2, R, { kind: 'floor', motion });
+    if (opts.star !== false) { const m = new THREE.Mesh(GEO.star, mat(0xffe11f, { emissive: 0xb88a00, roughness: 0.25 })); m.scale.setScalar(0.62); m.position.set(x, y + 1.5, -d); this.group.add(m); this.spinners.push({ o: m, sp: 3 }); (this.starList = this.starList || []).push({ m, x, y: y + 1.5, z: -d, got: false }); }
+  }
+  sectionIslands(L, th) {
+    const Y = 4, sp = 0.5 + 0.35 * this.df;
+    this.floor(444, 450, 0); this.speedPanel(444.5, 450, 0, 10, 'fast'); this.movingWall(447, { color: th.accent });
+    this.ramp(450, 462, 0, Y); this.floor(462, 469.6, Y); this.checkpoint(465, Y);
+    this.stars(452, 460, 4, 2.4, -6); this.stars(452, 460, 4, 2.4, 6);
+    if (L >= 3) this.stompers(463.6, 468, 2, Y);
+    // safe but narrow bridge on the right; islands on the left are faster and have the stars
+    const bw = L <= 4 ? 5 : 3.8, bx = HALF_W - bw / 2 - 0.4; this.floor(469.4, 498.2, Y, { w: bw, x: bx, th: 0.8, rails: false }); this.lanesHint.push({ d0: 469, d1: 498.5, x: bx });
+    this.island(-9.5, 473, 2.5, Y); this.island(-2, 473.4, 2.5, Y);
+    this.island(-6, 479, 2.4, Y + 0.6, { bob: L >= 3 ? 0.5 : 0 });
+    this.island(-4.5, 486.6, 4.3, Y, { spin: sp, star: false }); this.stars(484.5, 488.5, 3, Y, -4.5);
+    this.island(-10.5, 493.6, 2.4, Y - 0.5, { bob: L >= 3 ? 0.6 : 0 }); this.island(0.5, 493.8, 2.4, Y + 0.4);
+    this.floor(498, 506, Y); this.checkpoint(501, Y);
+    this.ramp(506, 518, Y, 0, { slip: true }); this.floor(518, 520, 0);
   }
   floorWithHoles(d0, d1, y) {
     const holes = (this.holes || []).filter((h) => h[0] >= d0 && h[1] <= d1).sort((a, b) => a[0] - b[0]);
@@ -2149,6 +2243,7 @@ class Race {
     }
     if (this.state === 'run' || this.state === 'finished') this.raceTime += this.state === 'run' ? dt : 0;
     this.course.update(this.t, dt);
+    { const P = this.player, L = this.course.starList; if (P && L && this.state === 'run' && P.respawnT <= 0) for (const s of L) { if (s.got) continue; const dz = P.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = P.p.x - s.x, dy = P.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; this.stats.stars = (this.stats.stars || 0) + 1; this.stats.energy += 2; Sound.play('coin'); this.particles.spawn(s.x, s.y, s.z, 10, ['#ffe11f', '#fff7b0'], 4, 0.5, 0.35, 4, 2); } } }
     const running = this.state === 'run' || this.state === 'finished' || this.state === 'done';
     // player input
     const P = this.player;
@@ -2188,7 +2283,8 @@ class Race {
     let ix = r.in.x, iz = r.in.z; if (frozen || r.stunT > 0 || r.flatT > 0) { ix = 0; iz = 0; }
     const il = Math.hypot(ix, iz); if (il > 1) { ix /= il; iz /= il; }
     if (iz > 0) iz *= 0.65; // backwards is slower
-    let tx = ix * r.speed, tz = iz * r.speed;
+    const fxm = r.ground && r.gs && r.gs.fx ? (r.gs.fx === 'fast' ? 1.6 : 0.45) : 1; if (fxm > 1 && r.isPlayer && Math.random() < 0.3) this.particles.spawn(r.p.x, r.p.y - 0.4, r.p.z + 0.5, 1, ['#b6ff3f', '#ffffff'], 1.5, 0.35, 0.3, 0, 0.5);
+    let tx = ix * r.speed * fxm, tz = iz * r.speed * fxm;
     const slip = r.ground && r.gs && r.gs.slip;
     if (slip && r.gs.conv) { tz += r.gs.conv.z; }
     let acc = r.ground ? (slip ? 14 : PHYS.ACC_G) : PHYS.ACC_A; if (r.stunT > 0) acc = 5; if (r.flatT > 0) acc = 30;
@@ -2224,6 +2320,10 @@ class Race {
         if (ny > 0.55) {
           r.ground = true; r.gs = s;
           if (s.kind === 'pad') { r.v.y = s.pad; r.v.z -= 3; r.ground = false; r.gs = null; s.padAnim = 0.6; r.view.stretch(0.55); if (this.near(r)) Sound.play('pad'); this.particles.spawn(r.p.x, r.p.y - 0.4, r.p.z, 10, ['#ffffff', '#fff3a0'], 3, 0.5, 0.35, 4, 1); }
+          if (s.kind === 'pad' && s.mystery) {
+            if (Math.random() < 0.5) { r.v.z = -13; r.v.y = 17; if (r.isPlayer) { this.toast('행운의 발판! 슈웅 🚀', 'good'); Sound.play('correct'); } }
+            else { r.v.z = 13; r.v.y = 9; r.stunT = 0.7; r.view.setFace('dizzy', 1); if (r.isPlayer) { this.toast('앗, 함정 발판이었어요! 🙃'); Sound.play('wrong'); } }
+          }
           if (s.kind === 'crumble' && s.timer < 0) { s.timer = 0; if (r.isPlayer) Sound.play('crumble'); }
         } else if (ny > -0.5) {
           if (s.kind === 'bumper' && r.bounceCD <= 0) {
@@ -2460,7 +2560,7 @@ class Race {
     const rankBonus = rank === 1 ? 40 : rank <= 3 ? 25 : rank <= 10 ? 12 : 0;
     const energy = (st.energy + 20 + rankBonus + (st.maxCombo >= 3 ? 15 : 0)) * (this.subject === 'run' ? 2 : 1);
     const xp = 40 + st.correct * 15 + rankBonus + Math.round(score / 50);
-    return { rank, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
+    return { rank, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stars: st.stars || 0, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
   }
   dispose() { this.course.dispose(); this.racers.forEach((r) => { r.view.bodyMat.dispose(); }); this.scene.clear(); $('#hud').classList.add('hidden'); $('#controls').classList.add('hidden'); $('#qpanel').classList.add('hidden'); }
 }
@@ -2721,7 +2821,7 @@ const App = {
     const log = res.log.map((l) => `<div class="wn" style="padding:8px 12px"><span class="tag ${l.ok ? 'green' : 'red'}">${l.ok ? '한 번에 정답' : '오답 후 통과'}</span> ${escapeHtml(l.q)} → 정답 <b>${escapeHtml(l.answer)}</b>${l.ok ? '' : ` (처음 고른 문: ${escapeHtml(l.chosen)})`}</div>`).join('');
     this.modal(`<h2>${res.subject === 'run' ? '🔥 피버 모드 결과' : '🏁 레이스 결과'}</h2><div class="res-rank">${res.rank}등 <span style="font-size:26px;color:#a77bd0;-webkit-text-stroke:0;text-shadow:none">/ ${res.N}명</span></div>${inRoom ? '<div class="wn room-board" id="room-board"></div>' : ''}${tkTop}
       ${Online.child ? '<div class="muted" id="res-online" style="text-align:center">☁️ 기록 저장 중…</div>' : ''}
-      <div class="res-grid"><div>완주 기록<b>${tm}</b></div><div>관문 정답<b>${res.subject === 'run' ? '없음' : res.correct + '/' + res.attempts}</b></div><div>최대 콤보<b>${res.maxCombo}</b></div><div>밟기 성공<b>${res.stomps}</b></div><div>숫자 에너지<b style="color:#d89a00">+${res.energy} ⚡</b></div><div>경험치<b style="color:#d8407f">+${res.xp} XP</b></div><div>레이스 점수<b>${res.score}</b></div></div>
+      <div class="res-grid"><div>완주 기록<b>${tm}</b></div><div>관문 정답<b>${res.subject === 'run' ? '없음' : res.correct + '/' + res.attempts}</b></div><div>최대 콤보<b>${res.maxCombo}</b></div><div>밟기 성공<b>${res.stomps}</b></div><div>모은 별<b>⭐ ${res.stars || 0}</b></div><div>숫자 에너지<b style="color:#d89a00">+${res.energy} ⚡</b></div><div>경험치<b style="color:#d8407f">+${res.xp} XP</b></div><div>레이스 점수<b>${res.score}</b></div></div>
       ${S.lastCrown ? `<div class="wn" style="text-align:center;font-size:18px">👑 ${res.rank}등 축하해요! 다음 판에는 <b>${CROWN_TIERS[S.lastCrown][1]}왕관</b>을 쓰고 달려요.</div>` : ''}${tk}${log}<p class="muted">${res.subject === 'run' ? '피버 모드는 문제 없이 달리고 에너지를 2배로 받아요.' : '틀린 문제는 오답노트에 자동으로 저장돼요.'}</p>
       <div class="row" style="justify-content:center;margin-top:10px">${inRoom ? '<button class="btn" onclick="App.roomBackToLobby()">👫 방으로 돌아가기</button>' : again}<button class="btn blue" onclick="App.exitRace()">${inRoom ? '방 나가기' : '광장으로'}</button></div>`);
   },
@@ -3380,10 +3480,10 @@ Object.assign(App, {
   drawTitleOnline() {
     const b = $('#btn-online'), st = $('#title-online'); if (!b) return;
     if (!Online.enabled) { b.classList.add('hidden'); st.textContent = ''; return; }
-    b.classList.remove('hidden');
+    b.classList.remove('hidden'); $('#btn-start').classList.toggle('hidden', !Online.child);
     if (Online.child) { b.textContent = '👨‍👩‍👧 다른 아이 · 보호자'; st.textContent = `☁️ ${Online.child.nickname}(으)로 이어서 해요`; $('#btn-start').textContent = `▶ ${Online.child.nickname} 시작`; }
     else if (Online.session) { b.textContent = '👨‍👩‍👧 누가 할까요?'; st.textContent = `☁️ 보호자 로그인됨 · ${Online.email}`; $('#btn-start').textContent = '이 기기에서만 하기'; }
-    else { b.textContent = '👨‍👩‍👧 보호자 계정으로 하기'; st.textContent = '보호자 계정이 있으면 기록이 서버에 저장되고 친구와 함께 달릴 수 있어요'; $('#btn-start').textContent = '시작하기'; }
+    else { b.textContent = '✨ 회원가입 · 🔑 로그인'; st.textContent = '보호자 계정이 있으면 기록이 서버에 저장되고 친구와 함께 달릴 수 있어요'; }
   },
   async olBoot() {
     await Online.init();
@@ -3393,13 +3493,23 @@ Object.assign(App, {
     }
     this.refreshPlayerLook(); this.drawTitleOnline();
     if (Online.session && !Online.guardian && this.screen === 'title') this.olRegisterGuardian();
+    else if (Online.enabled && !Online.session && this.screen === 'title' && $('#modal').classList.contains('hidden')) this.olChoose();
   },
   olStart() { // title "start"
     if (Online.child) { if (Save.data.profile) this.enterHub(); else this.showRegister(); return; }
-    if (Online.session) { Online.goOffline(); }
+    if (Online.enabled) return this.olEntry(); // accounts only: sign up or log in, then pick a child
     if (Save.data.profile) this.enterHub(); else this.showRegister();
   },
-  olEntry() { if (!Online.session) return this.olAuth('login'); if (!Online.guardian) return this.olRegisterGuardian(); this.olPickChild(); },
+  olChoose() {
+    this.modal(`<h2>👋 말랑 레이스에 오신 걸 환영해요!</h2>
+      <p class="muted">보호자가 계정을 만들면 아이 기록이 서버에 저장되고, 랭킹에 오르고, 승인한 친구와 함께 달릴 수 있어요.</p>
+      <div class="ol-choose">
+        <button class="btn green" data-m="signup">✨ 회원가입 <small>처음이에요 (보호자가 해요)</small></button>
+        <button class="btn blue" data-m="login">🔑 로그인 <small>계정이 있어요</small></button>
+      </div>`);
+    $$('.ol-choose [data-m]').forEach((b) => (b.onclick = () => this.olAuth(b.dataset.m)));
+  },
+  olEntry() { if (!Online.session) return this.olChoose(); if (!Online.guardian) return this.olRegisterGuardian(); this.olPickChild(); },
   // ---- guardian sign in / sign up ----
   olAuth(mode = 'login', msg = '') {
     const su = mode === 'signup';

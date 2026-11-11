@@ -237,6 +237,7 @@ class Race {
     }
     if (this.state === 'run' || this.state === 'finished') this.raceTime += this.state === 'run' ? dt : 0;
     this.course.update(this.t, dt);
+    { const P = this.player, L = this.course.starList; if (P && L && this.state === 'run' && P.respawnT <= 0) for (const s of L) { if (s.got) continue; const dz = P.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = P.p.x - s.x, dy = P.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; this.stats.stars = (this.stats.stars || 0) + 1; this.stats.energy += 2; Sound.play('coin'); this.particles.spawn(s.x, s.y, s.z, 10, ['#ffe11f', '#fff7b0'], 4, 0.5, 0.35, 4, 2); } } }
     const running = this.state === 'run' || this.state === 'finished' || this.state === 'done';
     // player input
     const P = this.player;
@@ -276,7 +277,8 @@ class Race {
     let ix = r.in.x, iz = r.in.z; if (frozen || r.stunT > 0 || r.flatT > 0) { ix = 0; iz = 0; }
     const il = Math.hypot(ix, iz); if (il > 1) { ix /= il; iz /= il; }
     if (iz > 0) iz *= 0.65; // backwards is slower
-    let tx = ix * r.speed, tz = iz * r.speed;
+    const fxm = r.ground && r.gs && r.gs.fx ? (r.gs.fx === 'fast' ? 1.6 : 0.45) : 1; if (fxm > 1 && r.isPlayer && Math.random() < 0.3) this.particles.spawn(r.p.x, r.p.y - 0.4, r.p.z + 0.5, 1, ['#b6ff3f', '#ffffff'], 1.5, 0.35, 0.3, 0, 0.5);
+    let tx = ix * r.speed * fxm, tz = iz * r.speed * fxm;
     const slip = r.ground && r.gs && r.gs.slip;
     if (slip && r.gs.conv) { tz += r.gs.conv.z; }
     let acc = r.ground ? (slip ? 14 : PHYS.ACC_G) : PHYS.ACC_A; if (r.stunT > 0) acc = 5; if (r.flatT > 0) acc = 30;
@@ -312,6 +314,10 @@ class Race {
         if (ny > 0.55) {
           r.ground = true; r.gs = s;
           if (s.kind === 'pad') { r.v.y = s.pad; r.v.z -= 3; r.ground = false; r.gs = null; s.padAnim = 0.6; r.view.stretch(0.55); if (this.near(r)) Sound.play('pad'); this.particles.spawn(r.p.x, r.p.y - 0.4, r.p.z, 10, ['#ffffff', '#fff3a0'], 3, 0.5, 0.35, 4, 1); }
+          if (s.kind === 'pad' && s.mystery) {
+            if (Math.random() < 0.5) { r.v.z = -13; r.v.y = 17; if (r.isPlayer) { this.toast('행운의 발판! 슈웅 🚀', 'good'); Sound.play('correct'); } }
+            else { r.v.z = 13; r.v.y = 9; r.stunT = 0.7; r.view.setFace('dizzy', 1); if (r.isPlayer) { this.toast('앗, 함정 발판이었어요! 🙃'); Sound.play('wrong'); } }
+          }
           if (s.kind === 'crumble' && s.timer < 0) { s.timer = 0; if (r.isPlayer) Sound.play('crumble'); }
         } else if (ny > -0.5) {
           if (s.kind === 'bumper' && r.bounceCD <= 0) {
@@ -548,7 +554,7 @@ class Race {
     const rankBonus = rank === 1 ? 40 : rank <= 3 ? 25 : rank <= 10 ? 12 : 0;
     const energy = (st.energy + 20 + rankBonus + (st.maxCombo >= 3 ? 15 : 0)) * (this.subject === 'run' ? 2 : 1);
     const xp = 40 + st.correct * 15 + rankBonus + Math.round(score / 50);
-    return { rank, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
+    return { rank, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stars: st.stars || 0, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
   }
   dispose() { this.course.dispose(); this.racers.forEach((r) => { r.view.bodyMat.dispose(); }); this.scene.clear(); $('#hud').classList.add('hidden'); $('#controls').classList.add('hidden'); $('#qpanel').classList.add('hidden'); }
 }

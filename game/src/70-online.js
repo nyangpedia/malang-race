@@ -104,10 +104,10 @@ Object.assign(App, {
   drawTitleOnline() {
     const b = $('#btn-online'), st = $('#title-online'); if (!b) return;
     if (!Online.enabled) { b.classList.add('hidden'); st.textContent = ''; return; }
-    b.classList.remove('hidden');
+    b.classList.remove('hidden'); $('#btn-start').classList.toggle('hidden', !Online.child);
     if (Online.child) { b.textContent = '👨‍👩‍👧 다른 아이 · 보호자'; st.textContent = `☁️ ${Online.child.nickname}(으)로 이어서 해요`; $('#btn-start').textContent = `▶ ${Online.child.nickname} 시작`; }
     else if (Online.session) { b.textContent = '👨‍👩‍👧 누가 할까요?'; st.textContent = `☁️ 보호자 로그인됨 · ${Online.email}`; $('#btn-start').textContent = '이 기기에서만 하기'; }
-    else { b.textContent = '👨‍👩‍👧 보호자 계정으로 하기'; st.textContent = '보호자 계정이 있으면 기록이 서버에 저장되고 친구와 함께 달릴 수 있어요'; $('#btn-start').textContent = '시작하기'; }
+    else { b.textContent = '✨ 회원가입 · 🔑 로그인'; st.textContent = '보호자 계정이 있으면 기록이 서버에 저장되고 친구와 함께 달릴 수 있어요'; }
   },
   async olBoot() {
     await Online.init();
@@ -117,13 +117,23 @@ Object.assign(App, {
     }
     this.refreshPlayerLook(); this.drawTitleOnline();
     if (Online.session && !Online.guardian && this.screen === 'title') this.olRegisterGuardian();
+    else if (Online.enabled && !Online.session && this.screen === 'title' && $('#modal').classList.contains('hidden')) this.olChoose();
   },
   olStart() { // title "start"
     if (Online.child) { if (Save.data.profile) this.enterHub(); else this.showRegister(); return; }
-    if (Online.session) { Online.goOffline(); }
+    if (Online.enabled) return this.olEntry(); // accounts only: sign up or log in, then pick a child
     if (Save.data.profile) this.enterHub(); else this.showRegister();
   },
-  olEntry() { if (!Online.session) return this.olAuth('login'); if (!Online.guardian) return this.olRegisterGuardian(); this.olPickChild(); },
+  olChoose() {
+    this.modal(`<h2>👋 말랑 레이스에 오신 걸 환영해요!</h2>
+      <p class="muted">보호자가 계정을 만들면 아이 기록이 서버에 저장되고, 랭킹에 오르고, 승인한 친구와 함께 달릴 수 있어요.</p>
+      <div class="ol-choose">
+        <button class="btn green" data-m="signup">✨ 회원가입 <small>처음이에요 (보호자가 해요)</small></button>
+        <button class="btn blue" data-m="login">🔑 로그인 <small>계정이 있어요</small></button>
+      </div>`);
+    $$('.ol-choose [data-m]').forEach((b) => (b.onclick = () => this.olAuth(b.dataset.m)));
+  },
+  olEntry() { if (!Online.session) return this.olChoose(); if (!Online.guardian) return this.olRegisterGuardian(); this.olPickChild(); },
   // ---- guardian sign in / sign up ----
   olAuth(mode = 'login', msg = '') {
     const su = mode === 'signup';

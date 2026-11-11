@@ -293,15 +293,15 @@ class Course {
     }
   }
   // heavy jelly stamps that slam down; a glowing ring on the floor warns where
-  stompers(d0, d1, n) {
+  stompers(d0, d1, n, y = 0) {
     for (let i = 0; i < n; i++) {
       const d = lerp(d0, d1, (i + 0.5) / n), x = n === 1 ? 0 : rand(-8, 8), sp = rand(0.32, 0.42) * (0.8 + 0.5 * this.df), ph = rand(0, 1), hh = 1.1, low = 1.0, high = 8;
-      const c = pick(VIVID), m = new THREE.Mesh(new THREE.BoxGeometry(4.2, hh * 2, 4.2), this.loud(c, 4)); m.position.set(x, high, -d);
+      const c = pick(VIVID), m = new THREE.Mesh(new THREE.BoxGeometry(4.2, hh * 2, 4.2), this.loud(c, 4)); m.position.set(x, y + high, -d);
       const face = new THREE.Mesh(GEO.star, mat(0xffffff, { emissive: 0x777777 })); face.scale.setScalar(1.1); face.rotation.x = Math.PI / 2; face.position.y = -hh - 0.05; m.add(face);
-      const warn = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.3, 28), new THREE.MeshBasicMaterial({ color: 0xff2d6f, transparent: true, opacity: 0.4, depthWrite: false })); warn.rotation.x = -Math.PI / 2; warn.position.set(x, 0.06, -d); this.group.add(warn);
+      const warn = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.3, 28), new THREE.MeshBasicMaterial({ color: 0xff2d6f, transparent: true, opacity: 0.4, depthWrite: false })); warn.rotation.x = -Math.PI / 2; warn.position.set(x, y + 0.06, -d); this.group.add(warn);
       this.addSolid(m, 'box', 2.1, hh, 2.1, { kind: 'stomper', reach: 0, motion: (t, s) => {
         const p = (t * sp + ph) % 1; const k = p < 0.45 ? 0 : p < 0.55 ? (p - 0.45) / 0.1 : p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3; // wait up, slam, stay, rise
-        s.obj.position.y = high - (high - low - hh) * (k * k); warn.material.opacity = p > 0.3 && p < 0.55 ? 0.45 + 0.45 * Math.sin(t * 30) : 0.3; } });
+        s.obj.position.y = y + high - (high - low - hh) * (k * k); warn.material.opacity = p > 0.3 && p < 0.55 ? 0.45 + 0.45 * Math.sin(t * 30) : 0.3; } });
     }
   }
   // giant striped balls rolling down the track toward the racers
@@ -325,6 +325,54 @@ class Course {
     this.addSolid(m, 'box', w / 2, 0.06, len / 2, { kind: 'floor', conv: new THREE.Vector3(0, 0, speed) });
     (this.belts = this.belts || []).push({ tex, speed });
     for (const sd of [-1, 1]) { const e = new THREE.Mesh(GEO.box, this.stripeMat(0xffe600, 0x2a2350)); e.scale.set(0.5, 0.3, len); e.position.set(sd * (w / 2 + 0.25), y + 0.12, -(d0 + d1) / 2); this.group.add(e); }
+  }
+  // bonus stars to collect (only the player's own count)
+  stars(d0, d1, n, y = 0, x0 = null) {
+    this.starList = this.starList || []; const cx = x0 === null ? rand(-8, 8) : x0, ph = rand(0, 6.28);
+    for (let i = 0; i < n; i++) {
+      const d = lerp(d0, d1, n === 1 ? 0.5 : i / (n - 1)), x = clamp(cx + Math.sin(i * 0.9 + ph) * 3, -12.5, 12.5);
+      const m = new THREE.Mesh(GEO.star, mat(0xffe11f, { emissive: 0xb88a00, roughness: 0.25 })); m.scale.setScalar(0.62); m.position.set(x, y + 1.35, -d); this.group.add(m);
+      this.spinners.push({ o: m, sp: 3, bob: i * 0.7, y0: y + 1.35, amp: 0.22 }); this.starList.push({ m, x, y: y + 1.35, z: -d, got: false });
+    }
+  }
+  // floor strips that change running speed: 'fast' (arrows) or 'slow' (sticky goo)
+  speedPanel(d0, d1, x, w, fx, y = 0) {
+    const len = d1 - d0, fast = fx === 'fast';
+    const tex = fast ? canvasTex(128, 128, (g, W, H) => { g.fillStyle = '#00d98b'; g.fillRect(0, 0, W, H); g.strokeStyle = '#eaffb0'; g.lineWidth = 16; g.lineJoin = 'round'; for (const y0 of [18, 82]) { g.beginPath(); g.moveTo(20, y0 + 30); g.lineTo(64, y0); g.lineTo(108, y0 + 30); g.stroke(); } }, true)
+      : canvasTex(128, 128, (g, W, H) => { g.fillStyle = '#8a3fd6'; g.fillRect(0, 0, W, H); for (let i = 0; i < 16; i++) { g.fillStyle = i % 2 ? '#b77bff' : '#6a2bb0'; g.beginPath(); g.arc(RNG() * W, RNG() * H, 6 + RNG() * 12, 0, 7); g.fill(); } }, true);
+    tex.repeat.set(w / 4, len / 4);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.1, len), new THREE.MeshStandardMaterial({ map: tex, roughness: fast ? 0.4 : 0.15, envMapIntensity: 0.3, emissive: fast ? 0x0a6b45 : 0x35125e })); m.position.set(x, y + 0.05, -(d0 + d1) / 2);
+    this.addSolid(m, 'box', w / 2, 0.05, len / 2, { kind: 'floor', fx });
+    if (fast) (this.belts = this.belts || []).push({ tex, speed: -9 });
+    const em = new THREE.MeshBasicMaterial({ color: fast ? 0xb6ff3f : 0xe08bff }); this.pulse.push({ m: em, base: em.color.clone(), ph: d0, sp: fast ? 8 : 2, basic: true });
+    for (const sd of [-1, 1]) { const e = new THREE.Mesh(GEO.box, em); e.scale.set(0.25, 0.14, len); e.position.set(x + sd * w / 2, y + 0.07, -(d0 + d1) / 2); this.group.add(e); }
+  }
+  // trap doors: a gap in the floor covered by three panels that take turns dropping open (they blink red first)
+  trapHole(d, y = 0) { this.holes = this.holes || []; this.holes.push([d, d + 3.2, y]); }
+  trapPanels(d, y = 0) {
+    const L = 3.2, w = TRACK_W / 3, sp = 0.2 + 0.1 * this.df, ph = rand(0, 1), order = shuffle([0, 1, 2]);
+    for (let i = 0; i < 3; i++) {
+      const x = (i - 1) * w, base = new THREE.Color(VIVID[(i * 2 + 1) % VIVID.length]);
+      const pm = new THREE.MeshStandardMaterial({ color: base.clone(), roughness: 0.4, envMapIntensity: 0.3 });
+      const hinge = new THREE.Group(); hinge.position.set(x, y, -d); this.group.add(hinge);
+      const vis = new THREE.Mesh(new THREE.BoxGeometry(w - 0.15, 0.4, L - 0.1), pm); vis.position.set(0, -0.2, -L / 2); hinge.add(vis);
+      const mark = new THREE.Mesh(GEO.box, mat(0xffffff, { emissive: 0x666666 })); mark.scale.set(w * 0.5, 0.05, 0.35); mark.position.set(0, 0.02, -L / 2); hinge.add(mark);
+      const o = new THREE.Object3D(); o.position.set(x, y - 0.2, -(d + L / 2));
+      this.addSolid(o, 'box', w / 2, 0.2, L / 2, { kind: 'floor', trap: true, motion: (t, s) => {
+        const p = (t * sp + ph + order[i] / 3) % 1, open = p > 0.62 && p < 0.92, warn = p > 0.44 && p <= 0.62;
+        s.enabled = !open; const target = open ? 1.45 : 0; hinge.rotation.x += (target - hinge.rotation.x) * 0.3;
+        if (warn) pm.color.setHex(Math.sin(t * 28) > 0 ? 0xff2d2d : 0xffffff); else pm.color.copy(base); } });
+    }
+  }
+  // "?" pad: sometimes a lucky super jump, sometimes a trap that throws you back
+  mysteryPad(d, x, y = 0) {
+    const g = new THREE.Group(); g.position.set(x, y + 0.15, -d);
+    const base = new THREE.Mesh(GEO.cyl, mat(0xffffff)); base.scale.set(1.3, 0.3, 1.3); g.add(base);
+    const tex = canvasTex(128, 128, (c, W, H) => { c.fillStyle = '#8a3fd6'; c.fillRect(0, 0, W, H); c.fillStyle = '#ffe600'; c.font = '900 100px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', 64, 70); });
+    const tm = new THREE.MeshStandardMaterial({ map: tex, emissive: 0x4a1f80, roughness: 0.3 }); this.pulse.push({ m: tm, ph: rand(0, 6), sp: 5 });
+    const top = new THREE.Mesh(GEO.cyl, tm); top.scale.set(1.1, 0.12, 1.1); top.position.y = 0.18; g.add(top);
+    const q = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ map: tex, transparent: false })); q.position.y = 2.1; g.add(q); this.spinners.push({ o: q, sp: 2.5 });
+    return this.addSolid(g, 'cyl', 1.25, 0.15, 1.25, { kind: 'pad', pad: 15, vis: top, mystery: true });
   }
   laser(d, mode = 'updown', opts = {}) {
     const m = new THREE.Mesh(GEO.cyl, new THREE.MeshBasicMaterial({ color: opts.color || 0xff3df0 })); m.rotation.z = Math.PI / 2; m.scale.set(0.16, TRACK_W, 0.16);
@@ -378,6 +426,8 @@ class Course {
     if (W === 'crystal') { this.laser(48, 'updown'); this.pillars(54, 70, 7, 0x8be9ff); this.laser(78, 'updown', { speed: 1.9 }); this.laser(88, 'low', { color: 0x5ef0ff }); this.sweeper(97, 10.5, 1.5); }
     this.checkpoint(60);
     const L = this.level;
+    this.stars(46, 70, 6); this.stars(84, 100, 4); this.stars(158, 166, 3, 5.5, 0);
+    this.speedPanel(41, 50, 9.5, 8, 'fast'); if (L >= 2) this.speedPanel(76, 84, -7, 10, 'slow');
     if (L >= 3) this.pendulum(106);
     if (L >= 4) this.punchers(54, 70, L >= 6 ? 3 : 2);
     // --- Gate 1 ---
@@ -401,26 +451,39 @@ class Course {
     if (W === 'space') { this.laser(252, 'updown', { speed: 1.8, color: 0xffd23f }); this.movingWall(274, { color: 0x7fe7ff }); this.sweeper(288, 10.5, 1.6); this.pillars(306, 318, 4, 0x8a7bff); }
     if (W === 'crystal') { this.sweeper(252, 10.5, 1.6); this.laser(274, 'updown', { speed: 2 }); this.pushers(282, 292, 2); this.laser(308, 'updown', { color: 0x5ef0ff, speed: 1.6 }); this.pillars(312, 318, 3, 0xff9cf5); }
     this.checkpoint(266); this.checkpoint(302);
+    this.stars(261.5, 265.5, 3, 1.6); this.stars(272, 290, 5); this.stars(297.5, 301.5, 3, 1.6);
+    this.speedPanel(245, 252, -9.5, 8, 'fast'); if (L >= 2) this.speedPanel(302, 308, 6, 12, 'slow'); if (L >= 2) this.mysteryPad(268, 0);
     if (L >= 2) this.pendulum(316, { speed: 1.3 });
     if (L >= 5) this.rollers(284, 298, L >= 6 ? 3 : 2);
     // --- Gate 3 ---
     this.gate(332, 2); this.checkpoint(336.5);
     // --- Section D (344..420) ---
-    this.floor(344, 420, 0);
+    if (this.level >= 3) this.trapHole(373.5);
+    this.floorWithHoles(344, 420, 0);
+    if (this.level >= 3) this.trapPanels(373.5);
     this.pushers(350, 366, 3, W === 'block' ? { jelly: false } : {}); this.sweeper(378, 10.5, 1.4); this.bumpers(388, 404, 6, { color: th.accent });
     this.checkpoint(372);
+    this.stars(348, 366, 5); this.stars(390, 402, 4);
+    this.speedPanel(352, 360, 9.5, 8, 'fast'); if (L >= 2) { this.mysteryPad(384, -8); this.mysteryPad(384, 8); }
     if (L >= 3) this.pendulum(345, { speed: 1.4 });
     if (L >= 4) this.punchers(388, 404, L >= 6 ? 4 : 3);
     if (L >= 2) this.conveyor(404, 416, 2 + 2 * this.df);
     // --- Gate 4 ---
     this.gate(432, 3); this.checkpoint(436.5);
-    // --- Section E (444..520) ---
-    this.jumpGap(480, 2.6);
-    this.floorWithHoles(444, 520, 0);
-    this.movingWall(456, { color: th.accent }); this.sweeper(468, 6, 1.5, -5.5); this.sweeper(470, 6, 1.5, 5.5); this.bumpers(490, 506, 6, { color: th.accent });
-    this.checkpoint(486);
-    if (L >= 3) this.stompers(508, 518, L >= 5 ? 3 : 2);
-    if (L >= 5) this.rollers(484, 506, L >= 6 ? 3 : 2);
+    // --- Section E (444..520): flat for beginners, hill + floating islands from level 2 ---
+    if (L >= 2) this.sectionIslands(L, th);
+    else {
+      this.jumpGap(480, 2.6);
+      if (this.level >= 4) this.trapHole(447.5);
+      this.floorWithHoles(444, 520, 0);
+      if (this.level >= 4) this.trapPanels(447.5);
+      this.movingWall(456, { color: th.accent }); this.sweeper(468, 6, 1.5, -5.5); this.sweeper(470, 6, 1.5, 5.5); this.bumpers(490, 506, 6, { color: th.accent });
+      this.checkpoint(486);
+      this.stars(458, 476, 5); this.stars(479.5, 483.5, 3, 1.6); this.stars(490, 504, 4);
+      if (L >= 2) this.speedPanel(472, 479, -8, 10, 'slow'); this.speedPanel(484, 490, 8, 9, 'fast');
+      if (L >= 3) this.stompers(508, 518, L >= 5 ? 3 : 2);
+      if (L >= 5) this.rollers(484, 506, L >= 6 ? 3 : 2);
+    }
     // --- Gate 5 ---
     this.gate(532, 4); this.checkpoint(536.5);
     // --- Final (544..632) ---
@@ -434,9 +497,12 @@ class Course {
     if (W === 'crystal') { this.laser(566, 'updown', { speed: 2.2 }); this.bumpers(570, 577, 3, { color: 0x8be9ff }); }
     this.pushers(592, 602, 2, { amp: 7 });
     this.checkpoint(584);
+    this.stars(554, 560, 3, 5, -8); this.stars(554, 560, 3, 5, 8); this.stars(579.5, 583.5, 3, 1.6); this.stars(590, 606, 5);
+    this.speedPanel(546, 553, 0, 8, 'fast'); if (L >= 2) { this.speedPanel(594, 602, -8.5, 10, 'slow'); this.mysteryPad(586, 7); }
     if (L >= 2) this.pendulum(607, { speed: 1.2 });
     if (L >= 4) this.pendulum(588, { speed: 1.6 });
     if (L >= 6) this.punchers(564, 576, 2);
+    if (L >= 6) this.rollers(562, 576, 2);
     this.FINISH = 612;
     const fin = makeBannerArch('FINISH', 0xffd23f, true); fin.position.set(0, 0, -this.FINISH); this.group.add(fin);
     const endWall = new THREE.Object3D(); endWall.position.set(0, 3, -632.5); this.addSolid(endWall, 'box', HALF_W, 4, 0.5, { kind: 'rail' });
@@ -444,6 +510,33 @@ class Course {
     this.LENGTH = this.FINISH;
     this.sections = [0, 124, 232, 332, 432, 532, this.FINISH];
     this.buildScenery();
+  }
+  // round island you can stand on (some bob up and down, some spin)
+  island(x, d, R, y, opts = {}) {
+    const h = 1.2, c = opts.color || pick(VIVID), g = new THREE.Group(); g.position.set(x, y - h / 2, -d);
+    const top = new THREE.Mesh(GEO.cyl, opts.spin ? this.stripeMat(c, 0xffffff) : this.loud(c, 2)); top.scale.set(R, h, R); g.add(top);
+    const rim = new THREE.Mesh(GEO.torus, mat(0xffffff, { emissive: 0x555555 })); rim.scale.set(R, R, 0.5); rim.rotation.x = Math.PI / 2; rim.position.y = h / 2 - 0.05; g.add(rim);
+    const under = new THREE.Mesh(GEO.cone, mat(0xc98a5a, { roughness: 0.9 })); under.scale.set(R * 0.9, R * 1.3, R * 0.9); under.rotation.x = Math.PI; under.position.y = -h / 2 - R * 0.65; g.add(under);
+    if (opts.spin) for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2, dot = new THREE.Mesh(GEO.sphere, mat(0xffe600, { emissive: 0x7a6a00 })); dot.scale.setScalar(0.35); dot.position.set(Math.cos(a) * R * 0.7, h / 2, Math.sin(a) * R * 0.7); g.add(dot); }
+    const sp = opts.spin || 0, bob = opts.bob || 0, ph = rand(0, 6.28), y0 = y - h / 2;
+    const motion = sp || bob ? (t, s) => { if (sp) { s.obj.rotation.y = t * sp; s.angY = sp; } if (bob) s.obj.position.y = y0 + Math.sin(t * 1.1 + ph) * bob; } : null;
+    this.addSolid(g, 'cyl', R, h / 2, R, { kind: 'floor', motion });
+    if (opts.star !== false) { const m = new THREE.Mesh(GEO.star, mat(0xffe11f, { emissive: 0xb88a00, roughness: 0.25 })); m.scale.setScalar(0.62); m.position.set(x, y + 1.5, -d); this.group.add(m); this.spinners.push({ o: m, sp: 3 }); (this.starList = this.starList || []).push({ m, x, y: y + 1.5, z: -d, got: false }); }
+  }
+  sectionIslands(L, th) {
+    const Y = 4, sp = 0.5 + 0.35 * this.df;
+    this.floor(444, 450, 0); this.speedPanel(444.5, 450, 0, 10, 'fast'); this.movingWall(447, { color: th.accent });
+    this.ramp(450, 462, 0, Y); this.floor(462, 469.6, Y); this.checkpoint(465, Y);
+    this.stars(452, 460, 4, 2.4, -6); this.stars(452, 460, 4, 2.4, 6);
+    if (L >= 3) this.stompers(463.6, 468, 2, Y);
+    // safe but narrow bridge on the right; islands on the left are faster and have the stars
+    const bw = L <= 4 ? 5 : 3.8, bx = HALF_W - bw / 2 - 0.4; this.floor(469.4, 498.2, Y, { w: bw, x: bx, th: 0.8, rails: false }); this.lanesHint.push({ d0: 469, d1: 498.5, x: bx });
+    this.island(-9.5, 473, 2.5, Y); this.island(-2, 473.4, 2.5, Y);
+    this.island(-6, 479, 2.4, Y + 0.6, { bob: L >= 3 ? 0.5 : 0 });
+    this.island(-4.5, 486.6, 4.3, Y, { spin: sp, star: false }); this.stars(484.5, 488.5, 3, Y, -4.5);
+    this.island(-10.5, 493.6, 2.4, Y - 0.5, { bob: L >= 3 ? 0.6 : 0 }); this.island(0.5, 493.8, 2.4, Y + 0.4);
+    this.floor(498, 506, Y); this.checkpoint(501, Y);
+    this.ramp(506, 518, Y, 0, { slip: true }); this.floor(518, 520, 0);
   }
   floorWithHoles(d0, d1, y) {
     const holes = (this.holes || []).filter((h) => h[0] >= d0 && h[1] <= d1).sort((a, b) => a[0] - b[0]);
