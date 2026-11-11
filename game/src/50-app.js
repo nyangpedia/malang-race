@@ -68,7 +68,7 @@ const App = {
     for (let i = 0; i < 26; i++) { const o = deco.call({}, 'candy'); const a = rand(0, Math.PI * 2), r = rand(14, 40); o.position.set(Math.cos(a) * r, -0.6, Math.sin(a) * r - 10); sc.add(o); }
     const player = new MallangView(playerLookSafe(), true); player.root.scale.setScalar(1.25); sc.add(player.root);
     const friends = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 0; i++) {
       const f = new MallangView({ colorHex: AI_COLORS[(i * 3 + 1) % AI_COLORS.length], face: pick(['happy', 'wink', 'normal', 'sparkle', 'sleepy']), tuft: pick(TUFTS), pattern: 'none', scale: 0.8 }, true);
       const a = -0.9 + i * 0.36; f.home = new THREE.Vector3(Math.sin(a) * 6.5, -0.6, -4 - Math.cos(a) * 3); f.root.position.copy(f.home); f.hopT = rand(0, 2); sc.add(f.root); friends.push(f);
       f.yaw.rotation.y = Math.atan2(-f.home.x, 6 - f.home.z);

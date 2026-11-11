@@ -112,6 +112,7 @@ function arrowTexture(col) { return canvasTex(128, 128, (g) => { g.fillStyle = c
 class Course {
   constructor(scene, worldId, level = 3, opts = {}) {
     this.noGates = !!opts.noGates;
+    { const n = clamp(Math.round(level) + 4, 5, 10); this.keepGates = new Set(); for (let k = 0; k < n; k++) this.keepGates.add(n === 1 ? 0 : Math.round(k * 9 / (n - 1))); }
     this.scene = scene; this.worldId = worldId; this.th = WORLDS[worldId]; this.level = level; this.df = (level - 1) / 5; this.sp = 0.5 + 0.5 * this.df; this.easy = level <= 2;
     this.group = new THREE.Group(); scene.add(this.group);
     this.solids = []; this.moving = []; this.buckets = []; this.winds = []; this.crumbles = []; this.gates = []; this.checkpoints = []; this.lanesHint = [];
@@ -396,7 +397,7 @@ class Course {
   }
   // ---------- gate (9 doors in a single horizontal row) ----------
   gate(d, idx) {
-    if (this.noGates) { this.floor(d - 12, d + 12, 0); this.bumpers(d - 7, d + 7, 6, { color: this.th.accent }); return null; }
+    if (this.noGates || !this.keepGates.has(idx)) { this.floor(d - 12, d + 12, 0); this.bumpers(d - 7, d + 7, 6, { color: this.th.accent }); this.stars(d - 8, d + 8, 4); return null; }
     // wide plaza so the doors can be big
     this.floor(d - 12, d + 12, 0, { w: GATE_W });
     for (const dd of [d - 12, d + 12]) for (const sd of [-1, 1]) {
@@ -468,7 +469,7 @@ class Course {
     const endWall = new THREE.Object3D(); endWall.position.set(0, 3, -(F + 632.5)); this.addSolid(endWall, 'box', HALF_W, 4, 0.5, { kind: 'rail' });
     const endDeco = new THREE.Mesh(new THREE.BoxGeometry(TRACK_W, 3, 1), jellyMaterial(th.accent)); endDeco.position.set(0, 1.5, -(F + 632.6)); this.group.add(endDeco);
     this.LENGTH = this.FINISH;
-    this.sections = [0, ...gateDs, this.FINISH];
+    this.sections = [0, ...gateDs.filter((_, i) => this.noGates || this.keepGates.has(i)), this.FINISH];
     this.buildScenery();
   }
   // round island you can stand on (some bob up and down, some spin)
@@ -545,6 +546,7 @@ class Course {
     if (L >= 3) this.stompers(D(19.6), D(24), 2, Y);
     // safe but narrow bridge on the right; islands on the left are faster and have the stars
     const bw = L <= 4 ? 5 : 3.8, bx = HALF_W - bw / 2 - 0.4; this.floor(D(25.4), D(54.2), Y, { w: bw, x: bx, th: 0.8, rails: false }); this.lanesHint.push({ d0: D(25), d1: D(54.5), x: bx });
+    (this.hopHints = this.hopHints || []).push({ d0: D(22), d1: D(32), x: -2 }, { d0: D(32), d1: D(39), x: -6 }, { d0: D(39), d1: D(46), x: -4.5 }, { d0: D(46), d1: D(54.5), x: 0.5 });
     this.island(-9.5, D(29), 2.5, Y); this.island(-2, D(29.4), 2.5, Y);
     this.island(-6, D(35), 2.4, Y + 0.6, { bob: L >= 3 ? 0.5 : 0 });
     this.island(-4.5, D(42.6), 4.3, Y, { spin: sp, star: false }); this.stars(D(40.5), D(44.5), 3, Y, -4.5);
@@ -734,7 +736,7 @@ function makeBannerArch(text, color, checker) {
 // racers standing on a correct pad pass first, the others pass through the correct doors a moment later.
 const DOOR_COLORS = ['#ff5a7a', '#ffc21a', '#4fcf5f', '#3fb4ff', '#a86bff'], N_DOORS = 5;
 const GATE_W = 40, GATE_HALF = GATE_W / 2, SLOT_W = GATE_W / N_DOORS, DOOR_W = 6.4, DOOR_H = 5.6;
-const GATE_ZONE = 8, GATE_GATHER = 9, GATE_THINK = 5, GATE_COUNT = 3, GATE_HOLD = 1.5, PAD_LEN = 6.6;
+const GATE_ZONE = 10, GATE_GATHER = 10, GATE_THINK = 5, GATE_COUNT = 3, GATE_HOLD = 1.5, PAD_LEN = 6.6;
 let _portalTex = null;
 function portalTextures() {
   if (_portalTex) return _portalTex;

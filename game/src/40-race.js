@@ -163,15 +163,15 @@ class Race {
       else {
         const type = typeKeys[i % typeKeys.length], T = AI_TYPES[type];
         const L = clamp(this.level || 1, 1, 6), accBase = [0, 0.5, 0.54, 0.58, 0.62, 0.66, 0.7][L];
-        const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.4, 0.35, 0.8), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0, 6), waitX: rand(-13, 13), jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
+        const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.4, 0.35, 0.8), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0.5, 5), waitX: rand(-13.5, 13.5), hop: T.jump >= 0.9 || Math.random() < 0.45, jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
         const nm = (names[i % names.length] || '말랑') + '말랑이';
-        const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.84, 0.92) };
+        const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.7, 0.76) };
         r = new Racer(this, i, { name: nm, look, ai, speedMul: (1 + (rand(...T.speed) - 0.95) * 0.5) * ([0, 0.84, 0.88, 0.92, 0.96, 1.0, 1.03][clamp(this.level || 1, 1, 6)] + (this.subject === 'run' ? 0.04 : 0)) });
         r.baseSpeed = r.speed;
       }
       r.p.set(clamp((col - 4.5) * 2.7 + rand(-1.1, 1.1) + (row % 2) * 1.3, -13, 13), PHYS.R + 0.05, -(4 + row * 2.6 + rand(-0.9, 0.9)));
       r.yaw = Math.PI + rand(-0.6, 0.6); r.view.yaw.rotation.y = r.yaw; if (r.ai) r.ai.startT = rand(0, 0.45);
-      if (r.isPlayer) { r.view.root.scale.setScalar(0.95); r.view.setOutline(true); }
+      if (r.isPlayer) { r.view.root.scale.setScalar(0.78); r.view.setOutline(true); }
       this.racers.push(r); r.view.root.position.copy(r.p).y -= PHYS.R;
     }
   }
@@ -241,7 +241,7 @@ class Race {
     }
     if (this.state === 'run' || this.state === 'finished') this.raceTime += this.state === 'run' ? dt : 0;
     this.course.update(this.t, dt);
-    { const P = this.player, L = this.course.starList; if (P && L && this.state === 'run') for (const s of L) { if (s.got) continue; for (const r of this.racers) { if (r.respawnT > 0 || r === P) continue; const dz = r.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = r.p.x - s.x, dy = r.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; if (Math.abs(P.p.z - s.z) < 25) { Sound.play('star', 0.35); this.particles.spawn(s.x, s.y, s.z, 6, ['#ffe11f', '#fff7b0'], 3, 0.4, 0.3, 3, 2); } break; } } if (s.got || P.respawnT > 0) continue; const dz = P.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = P.p.x - s.x, dy = P.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; this.stats.stars = (this.stats.stars || 0) + 1; this.stats.energy += 2; Sound.play('star'); this.toast('⭐ 별 +10점', 'good'); this.particles.spawn(s.x, s.y, s.z, 10, ['#ffe11f', '#fff7b0'], 4, 0.5, 0.35, 4, 2); } } }
+    { const P = this.player, L = this.course.starList; if (P && L && this.state === 'run') for (const s of L) { if (s.got) continue; for (const r of this.racers) { if (r.respawnT > 0 || r === P) continue; const dz = r.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = r.p.x - s.x, dy = r.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; if (Math.abs(P.p.z - s.z) < 25) { Sound.play('star', 0.35); this.particles.spawn(s.x, s.y, s.z, 6, ['#ffe11f', '#fff7b0'], 3, 0.4, 0.3, 3, 2); } break; } } if (s.got || P.respawnT > 0) continue; const dz = P.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = P.p.x - s.x, dy = P.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; this.stats.stars = (this.stats.stars || 0) + 1; this.stats.energy += 1; Sound.play('star'); this.toast('⭐ 별 +10점', 'good'); this.particles.spawn(s.x, s.y, s.z, 10, ['#ffe11f', '#fff7b0'], 4, 0.5, 0.35, 4, 2); } } }
     const running = this.state === 'run' || this.state === 'finished' || this.state === 'done';
     // player input
     const P = this.player;
@@ -382,7 +382,7 @@ class Race {
       if (r.isPlayer) {
         r.gateResult[G.idx] = ok ? 'correct' : 'wrong'; st.attempts++; recordAnswer(G.q, dr.value, ok, 'race'); st.log.push({ q: G.q.text, chosen: dr.value, answer: G.q.answer, ok }); st.solveTimes.push(ok ? 4 : 12);
         if (ok) {
-          st.correct++; st.combo++; st.maxCombo = Math.max(st.maxCombo, st.combo); const gain = 10 + (st.combo - 1) * 5; st.energy += gain;
+          st.correct++; st.combo++; st.maxCombo = Math.max(st.maxCombo, st.combo); const gain = 3 + Math.min(st.combo - 1, 4); st.energy += gain;
           Sound.play('correct'); this.bigMsg(st.combo >= 2 ? `정답! 콤보 ×${st.combo}` : '정답!', 1.2, 'good'); this.toast(`숫자 에너지 +${gain} ⚡ 먼저 통과해요!`, 'good');
           for (let k = 0; k < 3; k++) this.particles.spawn(r.p.x, 1.5, r.p.z, 12, ['#fff38a', '#ffd23f'], 5, 0.7, 0.45, -2, 0);
         } else {
@@ -404,8 +404,8 @@ class Race {
         best.flashT = 0.5;
         const near = this.near(r);
         if (near) this.particles.spawn(r.p.x, r.p.y + 0.4, r.p.z, r.isPlayer ? 40 : 10, ['#fff38a', '#ffffff', best.color, '#9ff3ff'], r.isPlayer ? 7 : 4, 0.9, r.isPlayer ? 0.55 : 0.4, 3, 2);
-        if (r.ai) { r.ai.door = null; r.ai.waitX = rand(-13, 13); r.ai.waitB = rand(0, 6); r.ai.laneX = rand(-11, 11); }
-        if (r.isPlayer) { r.view.stretch(0.3); Sound.play('pad'); if (r.gateResult[G.idx] !== 'correct') { this.stats.energy += 3; this.bigMsg('통과!', 0.9, 'good'); this.toast('통과! +3 ⚡ (틀린 문제는 오답노트에 저장됐어요)', 'good'); } }
+        if (r.ai) { r.ai.door = null; r.ai.waitX = rand(-13.5, 13.5); r.ai.waitB = rand(0.5, 5); r.ai.laneX = rand(-11, 11); }
+        if (r.isPlayer) { r.view.stretch(0.3); Sound.play('pad'); if (r.gateResult[G.idx] !== 'correct') { this.stats.energy += 1; this.bigMsg('통과!', 0.9, 'good'); this.toast('통과! +1 ⚡ (틀린 문제는 오답노트에 저장됐어요)', 'good'); } }
       }
     }
     if (!r.finished && r.d >= this.course.FINISH) {
@@ -495,7 +495,8 @@ class Race {
     // lane selection with obstacle look-ahead
     let target = A.laneX;
     const hint = C.lanesHint.find((h) => d > h.d0 - 12 && d < h.d1 - 1);
-    if (hint && (hint.must || T.jump < 0.9)) target = hint.x;
+    const hop = A.hop && hint && !hint.must && C.hopHints ? C.hopHints.find((h) => d > h.d0 && d < h.d1) : null;
+    if (hop) target = hop.x; else if (hint && (hint.must || !A.hop)) target = hint.x;
     // aggressive racers steer toward neighbours, stompers line up behind someone
     if ((T.aggro > 0.5 || T.stomp > 0.5) && !hint) {
       let best = null, bd = 9; for (const o of this.racers) { if (o === r || o.respawnT > 0) continue; const ddz = r.p.z - o.p.z; if (ddz < 0.5 || ddz > 5) continue; const dd = Math.abs(o.p.x - r.p.x) + ddz * 0.5; if (dd < bd) { bd = dd; best = o; } }
@@ -538,7 +539,7 @@ class Race {
     const gy = this.course.groundAt(r.p.x, r.p.z, r.p.y); const i = r.idx;
     if (gy > -50) { const hgt = r.p.y - r.r - gy, s = clamp(1 - hgt * 0.12, 0.35, 1); _m4.makeScale(s, 1, s); _m4.setPosition(r.p.x, gy + 0.03, r.p.z); } else _m4.makeScale(0, 0, 0);
     this.shadows.setMatrixAt(i, _m4); this.shadows.instanceMatrix.needsUpdate = true;
-    if (r.isPlayer) { this.marker.position.set(r.p.x, r.p.y + 2.05 + Math.sin(this.t * 5) * 0.14, r.p.z); this.ring.material.opacity = 0.65 + 0.3 * Math.sin(this.t * 6); this.ring.scale.setScalar(1 + 0.08 * Math.sin(this.t * 6)); this.marker.visible = true; this.ring.visible = gy > -50; this.ring.position.set(r.p.x, gy + 0.05, r.p.z); }
+    if (r.isPlayer) { this.marker.position.set(r.p.x, r.p.y + 1.75 + Math.sin(this.t * 5) * 0.14, r.p.z); this.ring.material.opacity = 0.65 + 0.3 * Math.sin(this.t * 6); this.ring.scale.setScalar(1 + 0.08 * Math.sin(this.t * 6)); this.marker.visible = true; this.ring.visible = gy > -50; this.ring.position.set(r.p.x, gy + 0.05, r.p.z); }
     // trail cosmetic (player only)
     if (r.isPlayer && sp > 2) { r.trailT -= dt; const tr = Save.data.equip.trail; if (tr !== 'none' && r.trailT <= 0) { r.trailT = 0.05; spawnTrail(this.particles, tr, r.p); } }
   }
@@ -573,7 +574,7 @@ class Race {
     const speedScore = clamp(1 - (avgSolve - 3) / 12, 0, 1), finishScore = 1 - (rank - 1) / Math.max(1, N - 1);
     const score = pts.total;
     const rankBonus = rank === 1 ? 40 : rank <= 3 ? 25 : rank <= 10 ? 12 : 0;
-    const energy = (st.energy + 20 + rankBonus + (st.maxCombo >= 3 ? 15 : 0)) * (this.subject === 'run' ? 2 : 1);
+    const energy = (st.energy + 10 + (rank === 1 ? 20 : rank <= 3 ? 12 : rank <= 10 ? 6 : 0) + (st.maxCombo >= 3 ? 5 : 0)) * (this.subject === 'run' ? 2 : 1);
     const xp = 40 + st.correct * 15 + rankBonus + Math.round(score / 50);
     return { rank, place, pts, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stars: st.stars || 0, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
   }

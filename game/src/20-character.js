@@ -300,7 +300,7 @@ class MallangView {
     this.sy = 1; this.vy = 0; this.wob = 0; this.wobV = 0; this.flatT = 0; this.flatDur = 0.55; this.t = Math.random() * 10;
     this.leanX = 0; this.leanZ = 0;
     this.root.scale.setScalar(look.scale || 0.62);
-    this.lean.scale.set(0.86, 1.22, 0.86);
+    this.lean.scale.set(0.9, 1.12, 0.9);
   }
   // thick bright outline so my mallang stands out from the floor
   setOutline(on) {

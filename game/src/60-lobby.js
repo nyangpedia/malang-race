@@ -128,6 +128,7 @@ Object.assign(App, {
     }
     const npc = (x, z, look) => { const v = new MallangView(Object.assign({ pattern: 'none', tuft: 'none', scale: 0.62 }, look), true); v.root.position.set(x, Y0, z); v.root.scale.setScalar(1.15); v.yaw.rotation.y = 0; sc.add(v.root); v.hopT = rand(1, 3); v.hy = 0; v.vy0 = 0; v.home = v.root.position.clone(); return v; };
     const npcs = [npc(P_NOTES[0], P_NOTES[1], { colorHex: 0xffa77a, face: 'happy', glasses: 'round', hat: 'cap' }), npc(P_DAILY[0], P_DAILY[1], { colorHex: 0x5cc8ff, face: 'sparkle', hat: 'party' })];
+    for (const n of npcs) sc.remove(n.root); npcs.length = 0; // no helper mallangs either, only mine
     // 📒 book stack beside the notes teacher, 🎯 notice board beside the mission guide
     { const [x, z] = P_NOTES; [[0xff7eb6, 0], [0x5cc8ff, 0.25], [0xffd84d, -0.2], [0x5fe0b0, 0.1]].forEach(([c, r], k) => { const b = new THREE.Mesh(GEO.box, mat(c)); b.scale.set(1.3, 0.3, 0.95); b.rotation.y = r; add(b, x - 1.9, Y0 + 0.15 + k * 0.3, z - 0.2); const pg = new THREE.Mesh(GEO.box, mat(0xffffff)); pg.scale.set(1.22, 0.2, 0.9); pg.rotation.y = r; add(pg, x - 1.86, Y0 + 0.15 + k * 0.3, z - 0.16); }); const pn = new THREE.Mesh(GEO.cyl, jellyMaterial(0xffd23f)); pn.scale.set(0.13, 1.5, 0.13); pn.rotation.z = 0.35; add(pn, x - 2.9, Y0 + 0.75, z + 0.2); solids.push({ x: x - 1.9, z: z - 0.2, r: 0.8 }); }
     { const [x, z] = P_DAILY; for (const sx of [-1, 1]) { const lg = new THREE.Mesh(GEO.cyl, mat(0xd9a066)); lg.scale.set(0.08, 2.4, 0.08); add(lg, x + 2.1 + sx * 0.85, Y0 + 1.2, z - 0.2); } const bd = new THREE.Mesh(GEO.box, mat(0xfff1d6)); bd.scale.set(2.2, 1.5, 0.14); add(bd, x + 2.1, Y0 + 1.9, z - 0.2); const tg = canvasTex(256, 176, (g) => { g.fillStyle = '#fff8e6'; g.fillRect(0, 0, 256, 176); g.font = '110px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🎯', 128, 96); }); const pl = new THREE.Mesh(new THREE.PlaneGeometry(2, 1.36), new THREE.MeshBasicMaterial({ map: tg })); add(pl, x + 2.1, Y0 + 1.9, z - 0.12); solids.push({ x: x + 2.1, z: z - 0.2, r: 0.9 }); }
@@ -177,7 +178,7 @@ Object.assign(App, {
     // characters
     const player = new MallangView(playerLookSafe(), true); player.root.scale.setScalar(1.0); sc.add(player.root);
     const friends = [], csKeys = Object.keys(COSTUMES).filter((k) => k !== 'none');
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 0; i++) { // plaza shows only my mallang
       const look = { colorHex: AI_COLORS[(i * 3 + 1) % AI_COLORS.length], face: pick(['happy', 'wink', 'normal', 'sparkle', 'sleepy']), tuft: pick(TUFTS), pattern: i % 4 === 0 ? pick(['dots', 'stripes', 'stars']) : 'none', hat: i % 5 === 1 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', scale: 0.62 };
       if (i % 3 === 0) { const k = csKeys[(i * 5 + 2) % csKeys.length]; look.costume = k; if (COSTUMES[k].color) look.colorHex = COSTUMES[k].color; }
       const f = new MallangView(look, true); f.root.scale.setScalar(rand(0.72, 0.9)); f.ang = i / 12 * Math.PI * 2 + rand(-0.2, 0.2); f.rad = rand(3.6, 9.6);
@@ -272,7 +273,7 @@ Object.assign(App, {
     this.drawCloud();
     const claimable = DAILY.some((m) => (S.daily.progress[m.id] || 0) >= m.goal && !S.daily.claimed[m.id]);
     this.drawFever();
-    $('#hub-hint').innerHTML = claimable ? '🎯 미션 보상이 기다려요! 파란 말랑이에게 가 보세요' : `🏁 무지개 문으로 들어가면 레이스 · 🔥 피버 모드까지 ${S.runProgress || 0}/${RUN_NEED}판`;
+    $('#hub-hint').style.display = 'none'; if (0) $('#hub-hint').innerHTML = claimable ? '🎯 미션 보상이 기다려요! 파란 말랑이에게 가 보세요' : `🏁 무지개 문으로 들어가면 레이스 · 🔥 피버 모드까지 ${S.runProgress || 0}/${RUN_NEED}판`;
   },
   enterHub() {
     this.show('hub'); this.setHubZoom(0); this.closeModal(); $('#controls').classList.remove('hidden');
@@ -297,14 +298,14 @@ Object.assign(App, {
   },
   drawMap() {
     const S = Save.data, port = false, VW = port ? 700 : 1280, VH = port ? 1180 : 720;
-    const pos = port ? [[180, 1000], [520, 860], [190, 690], [515, 520], [195, 350], [500, 185]] : [[480, 545], [600, 275], [790, 525], [915, 285], [1105, 490], [1150, 150]];
+    const pos = port ? [[180, 1000], [520, 860], [190, 690], [515, 520], [195, 350], [500, 185]] : [[250, 500], [420, 240], [620, 490], [820, 250], [1010, 480], [1080, 150]];
     const sel = this.mapSel, si = WORLD_ORDER.indexOf(sel);
     // smooth route through the islands
     let d = `M${pos[0][0]},${pos[0][1] + 30}`;
     for (let i = 0; i < pos.length - 1; i++) { const p0 = pos[Math.max(0, i - 1)], p1 = pos[i], p2 = pos[i + 1], p3 = pos[Math.min(pos.length - 1, i + 2)]; d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + 30 + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] + 30 - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1] + 30}`; }
     const rnd = (i) => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
     let waves = ''; for (let i = 0; i < 46; i++) { const x = rnd(i) * VW, y = rnd(i + 99) * VH; waves += `<path d="M${x},${y} q10,-9 20,0 t20,0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="${0.25 + rnd(i + 7) * 0.3}"/>`; }
-    const extras = port ? [['⛵', 560, 1080, 44], ['🐳', 90, 520, 44], ['🏝️', 600, 690, 40], ['🐙', 80, 150, 38]] : [['⛵', 250, 330, 46], ['🐳', 800, 100, 46], ['🏝️', 950, 660, 40], ['🐙', 380, 130, 38], ['⛵', 120, 180, 36]];
+    const extras = port ? [['⛵', 560, 1080, 44], ['🐳', 90, 520, 44], ['🏝️', 600, 690, 40], ['🐙', 80, 150, 38]] : [['⛵', 130, 330, 46], ['🐳', 620, 110, 46], ['🏝️', 830, 640, 40], ['🐙', 250, 120, 38], ['⛵', 1180, 600, 36]];
     const isl = WORLD_ORDER.map((w, i) => {
       const W = WORLDS[w], A = MAP_ART[w], [x, y] = pos[i], un = S.unlockedWorlds.includes(w), best = S.worldBest[w];
       const stars = best ? (best.rank === 1 ? 3 : best.rank <= 3 ? 2 : 1) : 0;
