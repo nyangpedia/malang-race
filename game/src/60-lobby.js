@@ -290,7 +290,7 @@ Object.assign(App, {
   menuMap() { this.showMap(); },
   showMap(sel) {
     const S = Save.data; S.worldBest = S.worldBest || {}; this.closeModal();
-    this.mapSel = sel || this.mapSel || this._lastWorld || 'candy';
+    this.mapSel = sel || this.mapSel || this._lastWorld || 'candy'; this._mapOpen = !!sel; this._mapSubj = null;
     this.show('map'); $('#controls').classList.add('hidden'); this.drawMap();
     if (!this._mapBound) { this._mapBound = true; addEventListener('resize', () => { if (this.screen === 'map') this.drawMap(); }); }
   },
@@ -308,22 +308,33 @@ Object.assign(App, {
       const W = WORLDS[w], A = MAP_ART[w], [x, y] = pos[i], un = S.unlockedWorlds.includes(w), best = S.worldBest[w];
       const stars = best ? (best.rank === 1 ? 3 : best.rank <= 3 ? 2 : 1) : 0;
       return `<g class="isl ${un ? '' : 'locked'} ${w === sel ? 'sel' : ''}" data-w="${w}" transform="translate(${x},${y})">
-        <ellipse cx="0" cy="52" rx="128" ry="30" fill="#1f6fb8" opacity=".22"/>
+        <ellipse cx="0" cy="78" rx="150" ry="36" fill="#0d4f91" opacity=".28" filter="url(#mblur)"/>
+        <ellipse cx="0" cy="62" rx="140" ry="40" fill="none" stroke="#fff" stroke-width="3" opacity=".35" class="ripple" style="animation-delay:${-i * 0.5}s"/>
         <g class="bob" style="animation-delay:${-i * 0.7}s">
           ${w === sel ? '<ellipse cx="0" cy="24" rx="132" ry="60" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="14 12" class="selring"/>' : ''}
-          <ellipse cx="0" cy="36" rx="116" ry="44" fill="#e9cf98"/><ellipse cx="0" cy="30" rx="116" ry="44" fill="#fbe9bd"/>
-          <ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mg-${w})"/><ellipse cx="-18" cy="10" rx="62" ry="18" fill="#fff" opacity=".28"/>
-          <g class="deco">${A.deco.map(([e, dx, dy, fs]) => `<text x="${dx}" y="${dy + fs * 0.35}" font-size="${fs}" text-anchor="middle">${e}</text>`).join('')}</g>
+          <path d="M-116,30 L-116,62 A116,44 0 0 0 116,62 L116,30 Z" fill="url(#mside)"/>
+          <path d="M-116,48 A116,44 0 0 0 116,48" fill="none" stroke="#c9a46a" stroke-width="3" opacity=".6"/>
+          <ellipse cx="0" cy="30" rx="116" ry="44" fill="#fbe9bd"/>
+          <path d="M-102,22 L-102,30 A102,38 0 0 0 102,30 L102,22 Z" fill="${MAP_ART[w].c[1]}" opacity=".9" style="filter:brightness(.78)"/>
+          <ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mg-${w})"/><ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mshine)"/>
+          <ellipse cx="-30" cy="6" rx="50" ry="13" fill="#fff" opacity=".35"/>
+          <g class="deco" filter="url(#mdrop)">${A.deco.map(([e, dx, dy, fs]) => `<text x="${dx}" y="${dy + fs * 0.35}" font-size="${fs * 1.08}" text-anchor="middle">${e}</text>`).join('')}</g>
           ${un ? '' : `<g><circle cx="0" cy="6" r="30" fill="#fff" opacity=".95"/><text x="0" y="18" font-size="34" text-anchor="middle">🔒</text></g>`}
           <g class="num"><circle cx="-92" cy="-28" r="22" fill="${un ? '#ff5fa2' : '#a79fc0'}" stroke="#fff" stroke-width="5"/><text x="-92" y="-18" font-size="28" text-anchor="middle" fill="#fff">${i + 1}</text></g>
         </g>
-        <g class="tag"><rect x="-96" y="78" width="192" height="40" rx="20" fill="#fff" stroke="${w === sel ? '#ff5fa2' : '#ffffff'}" stroke-width="4"/><text x="0" y="106" font-size="23" text-anchor="middle" fill="#3d2a55">${W.name}${un ? '' : ` · ⚡${W.price}`}</text></g>
+        <g class="tag"><rect x="-96" y="84" width="192" height="40" rx="20" fill="${w === sel ? '#ff5fa2' : '#c9b8e6'}"/><rect x="-96" y="78" width="192" height="40" rx="20" fill="#fff" stroke="${w === sel ? '#ff5fa2' : '#ffffff'}" stroke-width="4"/><text x="0" y="106" font-size="23" text-anchor="middle" fill="#3d2a55">${W.name}${un ? '' : ` · ⚡${W.price}`}</text></g>
         ${stars ? `<text x="0" y="142" font-size="22" text-anchor="middle">${'⭐'.repeat(stars)}</text>` : ''}
       </g>`;
     }).join('');
     const [mx, my] = pos[si];
     $('#map-svg').innerHTML = `<svg viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-      <defs>${WORLD_ORDER.map((w) => `<linearGradient id="mg-${w}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${MAP_ART[w].c[0]}"/><stop offset="1" stop-color="${MAP_ART[w].c[1]}"/></linearGradient>`).join('')}</defs>
+      <defs><linearGradient id="mside" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c98c"/><stop offset="1" stop-color="#b98a4c"/></linearGradient>
+        <radialGradient id="mshine" cx=".35" cy=".25" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+        <radialGradient id="msea" cx=".5" cy=".55" r=".75"><stop offset="0" stop-color="#8fdcff"/><stop offset=".7" stop-color="#4fb3f0"/><stop offset="1" stop-color="#2a86d6"/></radialGradient>
+        <filter id="mblur" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="8"/></filter>
+        <filter id="mdrop" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#3d2a55" flood-opacity=".35"/></filter>
+        ${WORLD_ORDER.map((w) => `<linearGradient id="mg-${w}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${MAP_ART[w].c[0]}"/><stop offset="1" stop-color="${MAP_ART[w].c[1]}"/></linearGradient>`).join('')}</defs>
+      <rect x="-400" y="-300" width="${VW + 800}" height="${VH + 600}" fill="url(#msea)"/>
       ${waves}
       ${extras.map(([e, x, y, fs]) => `<text x="${x}" y="${y}" font-size="${fs}" text-anchor="middle" class="drift">${e}</text>`).join('')}
       <path d="${d}" fill="none" stroke="#1f6fb8" stroke-opacity=".25" stroke-width="22" stroke-linecap="round"/>
@@ -335,17 +346,19 @@ Object.assign(App, {
       <g class="mcloud" style="animation-duration:55s;animation-delay:-20s"><ellipse cx="0" cy="${VH * 0.7}" rx="100" ry="30" fill="#fff" opacity=".6"/><ellipse cx="-50" cy="${VH * 0.7 - 18}" rx="60" ry="26" fill="#fff" opacity=".6"/></g>
     </svg>`;
     $('#map-energy').innerHTML = `⚡ <b>${S.energy}</b>`;
-    $$('#map-svg .isl').forEach((g) => (g.onclick = () => { if (this.mapSel !== g.dataset.w) { this.mapSel = g.dataset.w; Sound.play('click'); this.drawMap(); } }));
+    $$('#map-svg .isl').forEach((g) => (g.onclick = () => { if (this.mapSel !== g.dataset.w || !this._mapOpen) { this.mapSel = g.dataset.w; this._mapOpen = true; this._mapSubj = null; Sound.play('click'); this.drawMap(); } }));
+    $('#map-sheet').classList.toggle('closed', !this._mapOpen);
+    if (!this._mapOpen) { $('#map-sheet').innerHTML = `<div class="ms-hint">👆 달리고 싶은 섬을 눌러 보세요!</div>`; $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); }; return; }
     // info sheet
-    const W = WORLDS[sel], un = S.unlockedWorlds.includes(sel), best = S.worldBest[sel], P = S.profile, can = S.energy >= W.price, subj = SUBJECTS[S.settings.subject] && S.settings.subject !== 'run' ? S.settings.subject : 'math';
+    const W = WORLDS[sel], un = S.unlockedWorlds.includes(sel), best = S.worldBest[sel], P = S.profile, can = S.energy >= W.price, subj = this._mapSubj;
     $('#map-sheet').innerHTML = `<div class="ms-head"><span class="ms-ic" style="background:linear-gradient(180deg,${MAP_ART[sel].c.join(',')})">${W.icon}</span><div class="ms-t"><b>${si + 1}. ${W.name}</b><small>${WORLD_FEAT[sel]}</small></div></div>
       <div class="ms-chips"><span>📚 추천 ${W.grade}학년 · ${W.topic}</span><span>🏅 ${best ? `최고 ${best.rank}등` : '아직 기록 없음'}</span></div>
-      <div class="ms-sub">${Object.keys(SUBJECTS).filter((k) => k !== 'run').map((k) => `<button class="sj ${k === subj ? 'on' : ''}" data-sj="${k}"><b>${SUBJECTS[k].icon} ${SUBJECTS[k].name}</b></button>`).join('')}</div><div class="ms-note">${SUBJECTS[subj].desc}${subj === 'math' ? ` (${P.level}학년 수준)` : ''}</div>
-      ${un ? `<button class="btn" id="map-go">🏁 여기서 레이스!</button>` : `<button class="btn yellow" id="map-unlock" ${can ? '' : 'disabled'}>🔓 ⚡${W.price}로 열기</button>${can ? '' : `<div class="ms-note">숫자 에너지가 ${W.price - S.energy}개 더 필요해요</div>`}`}
+      ${un ? `<div class="ms-ask">${subj ? '좋아요! 이제 출발해 볼까요?' : '어떤 문제로 달릴까요?'}</div><div class="ms-sub big">${Object.keys(SUBJECTS).filter((k) => k !== 'run').map((k) => `<button class="sj sj-${k} ${k === subj ? 'on' : ''}" data-sj="${k}"><i>${SUBJECTS[k].icon}</i><b>${SUBJECTS[k].name}</b></button>`).join('')}</div>
+      ${subj ? `<div class="ms-note">${SUBJECTS[subj].desc} · ${P.level}학년 수준</div><button class="btn go-pop" id="map-go">🏁 ${SUBJECTS[subj].name} 레이스 시작!</button>` : ''}` : `<button class="btn yellow" id="map-unlock" ${can ? '' : 'disabled'}>🔓 ⚡${W.price}로 열기</button>${can ? '' : `<div class="ms-note">숫자 에너지가 ${W.price - S.energy}개 더 필요해요</div>`}`}
       <div class="ms-note">나 + AI 말랑이 49명 · 온라인 대전은 아직 준비 중이에요</div>`;
-    if (un) $('#map-go').onclick = () => { this._lastWorld = sel; Sound.play('click'); this.startRace(sel, 50, subj); };
-    else $('#map-unlock').onclick = () => this.unlockWorld(sel, () => this.drawMap());
-    $$('#map-sheet .sj').forEach((b) => (b.onclick = () => { S.settings.subject = b.dataset.sj; Save.save(); Sound.play('click'); this.drawMap(); }));
+    if (un && subj) $('#map-go').onclick = () => { this._lastWorld = sel; Sound.play('click'); this.startRace(sel, 50, subj); };
+    else if (!un) $('#map-unlock').onclick = () => this.unlockWorld(sel, () => this.drawMap());
+    $$('#map-sheet .sj').forEach((b) => (b.onclick = () => { this._mapSubj = b.dataset.sj; S.settings.subject = b.dataset.sj; Save.save(); Sound.play('click'); this.drawMap(); }));
     $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); };
   },
   // ---------------- register (with starter colour) ----------------

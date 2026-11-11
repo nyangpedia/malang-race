@@ -181,7 +181,7 @@ const App = {
     S.energy -= W.price; S.unlockedWorlds.push(w); Save.save(); Sound.play('finish'); this.toastHub(`${W.name} 해금! 🎉`); after && after();
   },
   startRace(worldId, count, subject, free, extra) {
-    subject = subject || Save.data.settings.subject || 'math';
+    subject = subject || Save.data.settings.subject || 'math'; if (!SUBJECTS[subject]) subject = subject === 'capital' ? 'quiz' : 'math';
     if (!(extra && extra.room)) { if (this.room) this.leaveRoom(true); if (Online.timeLeft() <= 0) { this.olTimeUpModal(); return; } }
     if (subject === 'run' && !free) { const S = Save.data; if (!(S.runTickets > 0)) { this.closeModal(); this.enterHub(); return; } S.runTickets--; Save.save(); }
     $('#fever').classList.add('hidden'); $('#fever-mini').classList.add('hidden');
@@ -277,7 +277,7 @@ const App = {
     this.modal(`<h2>📒 나의 오답노트</h2>${tabs}${body}`);
     $$('[data-t]').forEach((b) => (b.onclick = () => this.menuNotes(b.dataset.t)));
     $$('[data-retry]').forEach((b) => (b.onclick = () => { const w = S.wrongNotes.find((x) => x.id === b.dataset.retry); this.retryNote(w); }));
-    $$('[data-sim]').forEach((b) => (b.onclick = () => { const k = b.dataset.sim, T = QTYPES[k], sj = k === '수도 퀴즈' ? 'capital' : 'quiz'; this.quiz({ title: `${T ? T.name : k} 연습`, n: 5, gen: () => (T ? makeQuestion(T.level, k) : makeQuizQuestion(sj, S.profile.level)), mode: 'practice', back: () => this.menuNotes('list') }); }));
+    $$('[data-sim]').forEach((b) => (b.onclick = () => { const k = b.dataset.sim, T = QTYPES[k], sj = k === '수도 퀴즈' ? 'capital' : k === '영어 단어' ? 'english' : 'quiz'; this.quiz({ title: `${T ? T.name : k} 연습`, n: 5, gen: () => (T ? makeQuestion(T.level, k) : makeQuizQuestion(sj, S.profile.level)), mode: 'practice', back: () => this.menuNotes('list') }); }));
   },
   retryNote(w) {
     // rebuild a question object for the stored text/answer

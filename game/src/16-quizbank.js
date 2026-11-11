@@ -148,7 +148,8 @@ const iga = (w) => { const k = w.charCodeAt(w.length - 1) - 0xac00; return w + (
 const clean = (w) => w.replace(/\(.*\)/, '');
 
 // ---------- capital questions ----------
-function capitalGen(tier) {
+function capitalGen(tier) { const q = capitalGen0(tier); q.cat = '수도'; return q; }
+function capitalGen0(tier) {
   const pool = CAPITALS.filter((c) => c[3] <= tier), c = pick(pool), r = RNG(), cities = pool.map((x) => x[1]), countries = pool.map((x) => x[0]);
   if (r < 0.5 || (r < 0.85 && tier === 1)) {
     const wr = others(cities, [c[1]], c[4] ? 3 : 4); if (c[4]) wr.unshift(c[4]);
@@ -163,9 +164,7 @@ function capitalGen(tier) {
 // ---------- general-knowledge generators: [min tier, weight, make(tier)] ----------
 const QUIZ_GENS = [
   [1, 3, (t) => { const q = pick(QUIZ.filter((x) => x[0] <= Math.min(t, 2))); return { text: q[1], answer: q[2], wrongs: shuffle(q.slice(3)), explain: `정답 → ${q[2]}`, cat: '상식' }; }],
-  [1, 3, (t) => { const pool = ENG_WORDS.filter((w) => w[0] <= t), w = pick(pool);
-    if (RNG() < 0.55) return { text: `'${w[1]}'${obj(clean(w[1])).slice(-1)} 영어로 하면?`, answer: w[2], wrongs: others(pool.map((x) => x[2]), [w[2]]), explain: `${clean(w[1])} → ${w[2]}`, cat: '영어 낱말' };
-    return { text: `영어 '${w[2]}'의 뜻은?`, answer: clean(w[1]), wrongs: others(pool.map((x) => clean(x[1])), [clean(w[1])]), explain: `${w[2]} → ${clean(w[1])}`, cat: '영어 낱말' }; }],
+  [1, 2, (t) => capitalGen(t)],
   [1, 2, (t) => { const pool = OPPOSITES.filter((w) => w[0] <= t), p = pick(pool), f = RNG() < 0.5, a = f ? p[1] : p[2], b = f ? p[2] : p[1];
     const fam = OPP_FAMILY.filter((F) => F.includes(a) || F.includes(b)).flat();
     return { text: `'${a}'의 반대말은?`, answer: b, wrongs: others(pool.flatMap((x) => [x[1], x[2]]), [a, b, ...fam]), explain: `${a} ↔ ${b}`, cat: '반대말' }; }],
@@ -210,6 +209,63 @@ const QUIZ_GENS = [
   [2, 1, () => { const k = pick(Object.keys(MATTER)), right = pick(MATTER[k]), rest = Object.keys(MATTER).filter((x) => x !== k).flatMap((x) => MATTER[x]);
     return { text: `다음 중 ${k}인 것은?`, answer: right, wrongs: others(rest, [right]), explain: `${right} → ${k}`, cat: '과학' }; }],
 ];
+
+// ---------- English sentences with a blank: the Korean meaning is always given, so only one word fits ----------
+const _ek = (en) => { const w = ENG_WORDS.find((x) => x[2] === en); return w ? clean(w[1]) : en; };
+const ieyo = (w) => { const k = w.charCodeAt(w.length - 1) - 0xac00; return w + (k >= 0 && k <= 11171 && k % 28 ? '이에요' : '예요'); };
+// [tier, english sentence with ___, korean meaning, answer, wrong-answer pool]
+const EN_SEE = ['dog', 'cat', 'bird', 'fish', 'rabbit', 'pig', 'cow', 'horse', 'bear', 'lion', 'tiger', 'monkey', 'fox', 'wolf', 'duck', 'sheep', 'mouse', 'frog', 'snake', 'turtle', 'giraffe', 'zebra', 'penguin', 'whale', 'shark', 'butterfly', 'bee'];
+const EN_MY = ['bag', 'book', 'pencil', 'ruler', 'desk', 'chair', 'hat', 'clock', 'cup', 'box', 'key', 'robot', 'doll', 'ball', 'bicycle', 'phone', 'kite', 'coat', 'shirt', 'cake'];
+const EN_LIKE = ['milk', 'water', 'juice', 'rice', 'bread', 'pizza', 'cheese', 'red', 'blue', 'yellow', 'green', 'pink', 'purple', 'spring', 'summer', 'fall', 'winter'];
+const EN_PLACE = ['school', 'park', 'zoo', 'library', 'hospital', 'bank', 'store', 'garden'];
+const EN_CAN = [['run', '달릴'], ['swim', '수영할'], ['sing', '노래할'], ['dance', '춤출'], ['jump', '점프할'], ['read', '읽을'], ['write', '쓸'], ['fly', '날'], ['walk', '걸을']];
+const EN_ADJ = [['It is a ___ dog.', '그것은 큰 개예요.', 'big'], ['It is a ___ cat.', '그것은 작은 고양이예요.', 'small'], ['It is a ___ car.', '그것은 빠른 자동차예요.', 'fast'], ['It is a ___ turtle.', '그것은 느린 거북이에요.', 'slow'],
+  ['I am ___ today.', '나는 오늘 행복해요.', 'happy'], ['She is ___ now.', '그녀는 지금 슬퍼요.', 'sad'], ['The soup is ___.', '수프가 뜨거워요.', 'hot'], ['The water is ___.', '물이 차가워요.', 'cold'],
+  ['He is very ___.', '그는 키가 아주 커요.', 'tall'], ['The river is ___.', '그 강은 길어요.', 'long'], ['This is a ___ bag.', '이것은 새 가방이에요.', 'new'], ['It is an ___ house.', '그것은 오래된 집이에요.', 'old']];
+const EN_WEATHER = [['sunny', '맑아요'], ['rainy', '비가 와요'], ['snowy', '눈이 와요'], ['windy', '바람이 불어요'], ['cloudy', '흐려요']];
+const EN_NUM = [['two', '두'], ['three', '세'], ['four', '네'], ['five', '다섯'], ['six', '여섯'], ['seven', '일곱'], ['eight', '여덟'], ['nine', '아홉'], ['ten', '열']];
+const EN_FAMILY = [['mom', '엄마'], ['dad', '아빠'], ['grandmother', '할머니'], ['grandfather', '할아버지'], ['teacher', '선생님'], ['friend', '친구']];
+// be-verbs: [subject, verb, korean subject]
+const EN_BE = [['I', 'am', '나는'], ['You', 'are', '너는'], ['He', 'is', '그는'], ['She', 'is', '그녀는'], ['We', 'are', '우리는'], ['They', 'are', '그들은']];
+const EN_BE_C = { one: [['a student', '학생이에요'], ['happy', '행복해요'], ['hungry', '배고파요'], ['tall', '키가 커요'], ['in the park', '공원에 있어요'], ['ten years old', '열 살이에요']],
+  many: [['students', '학생들이에요'], ['happy', '행복해요'], ['hungry', '배고파요'], ['friends', '친구예요'], ['in the park', '공원에 있어요']] };
+const blank = (en, ko, ans, pool, cat = '영어 문장') => ({ text: `빈칸에 알맞은 말은? ${en} (뜻: ${ko})`, answer: ans, wrongs: others(pool, [ans]), explain: `${en.replace('___', ans)} → ${ko}`, cat });
+const EN_SENT = [
+  [2, 3, () => { const a = pick(EN_SEE); return blank('I see a ___.', `나는 ${obj(_ek(a))} 봐요.`, a, EN_SEE); }],
+  [2, 3, () => { const a = pick(EN_MY); return blank('This is my ___.', `이것은 내 ${ieyo(_ek(a))}.`, a, EN_MY); }],
+  [2, 2, () => { const a = pick(EN_LIKE); return blank('I like ___.', `나는 ${obj(_ek(a))} 좋아해요.`, a, EN_LIKE); }],
+  [2, 2, () => { const a = pick(EN_PLACE); return blank("Let's go to the ___.", `${_ek(a)}에 가자.`, a, EN_PLACE); }],
+  [2, 2, () => { const a = pick(EN_CAN); return blank('I can ___.', `나는 ${a[1]} 수 있어요.`, a[0], EN_CAN.map((x) => x[0])); }],
+  [2, 1, () => { const d = pick(WEEK), en = ENG_WORDS.find((x) => x[1] === d)[2]; return blank('Today is ___.', `오늘은 ${ieyo(d)}.`, en, WEEK.map((w) => ENG_WORDS.find((x) => x[1] === w)[2])); }],
+  [2, 2, () => { const n = pick(EN_NUM), f = pick(['apples', 'cats', 'books', 'balls']), fk = { apples: '사과가', cats: '고양이가', books: '책이', balls: '공이' }[f]; return blank(`I have ___ ${f}.`, `나에게는 ${fk} ${n[1]} 개 있어요.`.replace('고양이가 ' + n[1] + ' 개', '고양이가 ' + n[1] + ' 마리').replace('책이 ' + n[1] + ' 개', '책이 ' + n[1] + ' 권'), n[0], EN_NUM.map((x) => x[0])); }],
+  [3, 2, () => { const a = pick(EN_ADJ); const close = { big: ['tall', 'long'], tall: ['big', 'long'], long: ['big', 'tall'], old: ['new'], new: ['old'] }[a[2]] || []; return blank(a[0], a[1], a[2], EN_ADJ.map((x) => x[2]).filter((x) => !close.includes(x))); }],
+  [3, 1, () => { const w = pick(EN_WEATHER); return blank("It's ___ today.", `오늘은 ${w[1]}.`, w[0], EN_WEATHER.map((x) => x[0])); }],
+  [3, 1, () => { const w = pick(EN_FAMILY); return blank('This is my ___.', `이분은 우리 ${ieyo(w[1])}.`.replace('우리 친구예요', '내 친구예요').replace('이분은 우리 친구', '이 아이는 내 친구'), w[0], EN_FAMILY.map((x) => x[0])); }],
+  [3, 3, () => { const b = pick(EN_BE), c = pick(b[0] === 'I' || b[0] === 'He' || b[0] === 'She' ? EN_BE_C.one : EN_BE_C.many);
+    return { text: `빈칸에 알맞은 말은? ${b[0]} ___ ${c[0]}. (뜻: ${b[2]} ${c[1]}.)`, answer: b[1], wrongs: shuffle(['am', 'is', 'are', 'be', 'do'].filter((x) => x !== b[1])), explain: `${b[0]} ${b[1]} ${c[0]}. → ${b[0]}에는 ${b[1]}`, cat: '영어 문장' }; }],
+  [3, 2, () => { const q = pick([['What ___ is it?', '그것은 무슨 색이에요?', 'color', ['animal', 'time', 'day', 'food']], ['What ___ is it?', '지금 몇 시예요?', 'time', ['color', 'animal', 'day', 'food']],
+      ['How ___ are you?', '너는 몇 살이니?', 'old', ['many', 'much', 'big', 'tall']], ['How ___ apples?', '사과가 몇 개예요?', 'many', ['old', 'much', 'big', 'long']], ['___ is your name?', '네 이름은 뭐니?', 'What', ['Who', 'Where', 'When', 'How']],
+      ['___ are you from?', '너는 어디에서 왔니?', 'Where', ['What', 'Who', 'When', 'How']], ['___ is he?', '그는 누구예요?', 'Who', ['What', 'Where', 'When', 'Why']], ['___ are you?', '어떻게 지내니?', 'How', ['What', 'Who', 'Where', 'When']],
+      ['Nice to ___ you.', '만나서 반가워요.', 'meet', ['see', 'eat', 'run', 'go']], ['Thank ___.', '고마워요.', 'you', ['me', 'he', 'she', 'it']], ['Good ___!', '좋은 아침이에요!', 'morning', ['night', 'day', 'school', 'bye']],
+      ['See you ___.', '나중에 봐요.', 'later', ['now', 'then', 'today', 'here']], ['I am ___.', '미안해요.', 'sorry', ['happy', 'fine', 'tall', 'hungry']], ["Let's ___ soccer.", '축구 하자.', 'play', ['go', 'eat', 'make', 'read']],
+      ['Open the ___, please.', '문을 열어 주세요.', 'door', ['book', 'cup', 'bag', 'ball']], ['Sit ___, please.', '앉아 주세요.', 'down', ['up', 'in', 'on', 'out']], ['Stand ___, please.', '일어서 주세요.', 'up', ['down', 'in', 'on', 'out']]]);
+    return { text: `빈칸에 알맞은 말은? ${q[0]} (뜻: ${q[1]})`, answer: q[2], wrongs: shuffle(q[3].slice()), explain: `${q[0].replace('___', q[2])} → ${q[1]}`, cat: '영어 문장' }; }],
+];
+// English-word subject: meaning both ways + spelling (from grade 3)
+const misspell = (w) => { const out = new Set(), L = w.length, low = w.toLowerCase();
+  for (let i = 0; i < L - 1; i++) if (w[i] !== w[i + 1]) out.add(w.slice(0, i) + w[i + 1] + w[i] + w.slice(i + 2));
+  for (let i = 1; i < L; i++) out.add(w.slice(0, i) + w.slice(i + 1));
+  for (let i = 1; i < L; i++) if (/[a-z]/.test(w[i])) out.add(w.slice(0, i) + w[i] + w.slice(i));
+  const vow = { a: 'e', e: 'a', i: 'e', o: 'u', u: 'o' }; for (let i = 0; i < L; i++) if (vow[w[i]]) out.add(w.slice(0, i) + vow[w[i]] + w.slice(i + 1));
+  const real = new Set(ENG_WORDS.map((x) => x[2].toLowerCase())); return shuffle([...out].filter((x) => x.length >= 2 && x.toLowerCase() !== low && !real.has(x.toLowerCase()) && !/\s\s|^\s|\s$/.test(x))); };
+const ENGLISH_GENS = [
+  [1, (t, L) => (L <= 2 ? 5 : t === 2 ? 3 : 1), (t, L) => { const pool = ENG_WORDS.filter((w) => w[0] <= (L === 2 ? 2 : t)), w = pick(pool);
+    if (RNG() < 0.55) return { text: `'${w[1]}'${obj(clean(w[1])).slice(-1)} 영어로 하면?`, answer: w[2], wrongs: others(pool.map((x) => x[2]), [w[2]]), explain: `${clean(w[1])} → ${w[2]}`, cat: '영어 낱말' };
+    return { text: `영어 '${w[2]}'의 뜻은?`, answer: clean(w[1]), wrongs: others(pool.map((x) => clean(x[1])), [clean(w[1])]), explain: `${w[2]} → ${clean(w[1])}`, cat: '영어 낱말' }; }],
+  [2, (t) => (t === 2 ? 2 : 1), (t) => { const pool = ENG_WORDS.filter((w) => w[0] <= t && w[2].length >= 3 && !w[2].includes(' ')), w = pick(pool), wr = misspell(w[2]).slice(0, 4);
+    return { text: `'${w[1]}'${obj(clean(w[1])).slice(-1)} 영어로 바르게 쓴 것은?`, answer: w[2], wrongs: wr, explain: `${clean(w[1])} → ${w[2]}`, cat: '영어 철자' }; }],
+  ...EN_SENT.map(([mt, w, fn], i) => [i < 2 ? 1 : mt, (t, L) => (L === 1 ? 0 : L === 2 ? (i < 2 ? 1 : 0) : t >= 3 ? w * 1.6 : w * 0.5), fn]),
+];
 // remembers the last questions so one race does not repeat itself
 const _recentQ = [];
 function makeQuizQuestion(subject, level) {
@@ -217,10 +273,10 @@ function makeQuizQuestion(subject, level) {
   for (let k = 0; k < 30; k++) {
     let q;
     if (subject === 'capital') q = capitalGen(t);
-    else { const gens = QUIZ_GENS.filter((g) => g[0] <= t); let w = RNG() * gens.reduce((a, g) => a + g[1], 0), g = gens[0]; for (const x of gens) { w -= x[1]; if (w <= 0) { g = x; break; } } q = g[2](t); }
+    else { const gens = (subject === 'english' ? ENGLISH_GENS : QUIZ_GENS).filter((g) => g[0] <= t); const wt = (g) => (typeof g[1] === 'function' ? g[1](t, level) : g[1]); let w = RNG() * gens.reduce((a, g) => a + wt(g), 0), g = gens[0]; for (const x of gens) { w -= wt(x); if (w <= 0) { g = x; break; } } q = g[2](t, level); }
     if (!q || q.wrongs.length < 4 || q.wrongs.includes(q.answer)) continue;
     if (_recentQ.includes(q.text) && k < 29) continue;
     _recentQ.push(q.text); if (_recentQ.length > 60) _recentQ.shift();
-    return { text: q.text, answer: q.answer, wrongs: q.wrongs.slice(0, 6), type: subject === 'capital' ? '수도 퀴즈' : '상식 퀴즈', cat: q.cat, level, textAnswer: true, explain: q.explain };
+    return { text: q.text, answer: q.answer, wrongs: q.wrongs.slice(0, 6), type: subject === 'english' ? '영어 단어' : q.cat === '수도' ? '수도 퀴즈' : '상식 퀴즈', cat: q.cat, level, textAnswer: true, explain: q.explain };
   }
 }

@@ -194,7 +194,7 @@ Object.assign(App, {
       <p class="muted">${R.isHost ? '친구에게 방 코드를 알려 주세요. 친구 화면에도 초대가 떠요.' : `<b>${escapeHtml(R.hostNick)}</b>의 방이에요. 방장이 출발을 누르면 시작해요.`}</p>
       <div class="room-mem">${ms.map((m) => { const b = R.bubbles[m.key]; return `<div class="${m.key === R.key ? 'me' : ''}">${b && b.until > now ? `<i class="bub">${b.e}</i>` : ''}${blobHtml(m.look ? hexCss(m.look.colorHex || 0xff7eb6) : '#ff7eb6', 48)}<b>${escapeHtml(m.nick)}</b><small>${m.host ? '👑 방장' : ''}${m.st === 'race' ? ' 🏃 달리는 중' : ''}</small></div>`; }).join('')}</div>
       <div class="room-set"><div><small>월드</small><div class="row">${ws.map((w) => `<button class="chip sm ${w === R.world ? 'on' : ''}" ${R.isHost ? `data-rw="${w}"` : ''}>${WORLDS[w].icon} ${WORLDS[w].name}</button>`).join('')}</div></div>
-      <div><small>문제</small><div class="row">${['math', 'capital', 'quiz'].map((s) => `<button class="chip sm ${s === R.subject ? 'on' : ''}" ${R.isHost ? `data-rs="${s}"` : ''}>${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div></div></div>
+      <div><small>문제</small><div class="row">${['math', 'english', 'quiz'].map((s) => `<button class="chip sm ${s === R.subject ? 'on' : ''}" ${R.isHost ? `data-rs="${s}"` : ''}>${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div></div></div>
       <p class="muted">산수 문제는 각자 자기 학년 수준으로 나와요. 코스는 모두 같아요.</p>
       ${this.emoteRow()}
       <div class="row" style="justify-content:center;margin-top:10px">${R.isHost ? `<button class="btn" id="rm-go" ${canGo ? '' : 'disabled'}>${ms.length < 2 ? '친구를 기다리는 중…' : allBack ? `🏁 출발! (${ms.length}명)` : '친구가 돌아오길 기다려요…'}</button>` : ''}<button class="btn sm gray" id="rm-out">방 나가기</button></div></div>`);

@@ -148,7 +148,7 @@ class Race {
     this.marker = new THREE.Mesh(GEO.cone, new THREE.MeshBasicMaterial({ color: 0xff3d8f })); this.marker.scale.set(0.26, 0.38, 0.26); this.marker.rotation.x = Math.PI; this.scene.add(this.marker);
     const ringGeo = new THREE.RingGeometry(0.75, 0.95, 32); ringGeo.rotateX(-Math.PI / 2); this.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xff5fa2, transparent: true, opacity: 0.7, depthWrite: false })); this.scene.add(this.ring);
     this.camPos = new THREE.Vector3(); this.camLook = new THREE.Vector3(); this.snapCamera();
-    this.hudT = 0; this.rankT = 0; this.order = this.racers.slice();
+    this.hudT = 0; this.rankT = 0; this.order = this.racers.slice(); $('#leaderboard').onclick = () => { $('#leaderboard').classList.toggle('full'); this.updateHUD(); };
     this.buildHUD();
     this.toastQ = [];
   }
@@ -201,7 +201,8 @@ class Race {
     $('#hud-gap').innerHTML = `<span>▲ 앞 ${ahead ? fmt(ahead) : '없음'}</span><span>▼ 뒤 ${behind ? fmt(behind) : '없음'}</span>`;
     // mini leaderboard: top3 + around me
     const rows = []; const add = (i) => { const o = this.order[i]; if (!o || rows.some((r) => r.i === i)) return; rows.push({ i, o }); };
-    add(0); add(1); add(2); add(rank - 2); add(rank - 1); add(rank);
+    // compact by default (1st + the racers right around me) so it does not hide the course; tap to see more
+    const full = $('#leaderboard').classList.contains('full'); add(0); if (full) { add(1); add(2); } add(rank - 2); add(rank - 1); add(rank);
     rows.sort((a, b) => a.i - b.i);
     let html = ''; let last = -1;
     for (const { i, o } of rows) { if (i - last > 1) html += `<div class="lb-gap">⋯</div>`; html += `<div class="lb-row ${o.isPlayer ? 'me' : ''}"><span class="lb-n">${i + 1}</span><span class="lb-dot" style="background:#${o.color.toString(16).padStart(6, '0')}"></span><span class="lb-name">${escapeHtml(o.isPlayer ? o.name + ' (나)' : o.name)}</span>${o.finished ? '<span class="lb-f">🏁</span>' : ''}</div>`; last = i; }

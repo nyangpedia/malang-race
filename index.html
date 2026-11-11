@@ -143,6 +143,15 @@ body:has(#modal:not(.hidden)) #controls{display:none}
 #map-svg .mcloud{animation:mcl 40s linear infinite}
 @keyframes mcl{from{transform:translateX(-200px)}to{transform:translateX(1500px)}}
 #map-sheet{width:min(720px,100%);display:flex;flex-direction:column;gap:8px;align-items:stretch;padding:12px 16px;z-index:2;border:3px solid #fff}
+#map-sheet.closed{width:auto;padding:10px 18px}.ms-hint{font-size:18px;font-weight:800;color:#3d2a55;animation:mhop 1.2s ease-in-out infinite}
+.ms-ask{text-align:center;font-weight:800;font-size:15px;color:#3d2a55}
+.ms-sub.big{grid-template-columns:repeat(3,1fr);gap:8px}.ms-sub.big .sj{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 2px 8px;font-size:15px;border:none;border-radius:16px;color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.18),inset 0 3px 0 rgba(255,255,255,.45);transform:translateY(0);transition:transform .12s}
+.ms-sub.big .sj i{font-style:normal;font-size:28px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.15))}.ms-sub.big .sj:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.ms-sub.big .sj-math,.ms-sub.big .sj-math.on{background:linear-gradient(180deg,#ffa06b,#ff6f61)}.ms-sub.big .sj-english,.ms-sub.big .sj-english.on{background:linear-gradient(180deg,#6fd0ff,#3f8cff)}.ms-sub.big .sj-quiz,.ms-sub.big .sj-quiz.on{background:linear-gradient(180deg,#9be35a,#3fb86a)}.ms-sub.big .sj:not(.on){opacity:.82}.ms-sub.big:not(:has(.on)) .sj{opacity:1}
+.ms-sub.big .sj.on{outline:4px solid #fff;outline-offset:-4px;transform:translateY(-3px) scale(1.05);color:#fff;box-shadow:0 8px 0 rgba(0,0,0,.2),0 0 0 4px #ff5fa2}
+.go-pop{animation:gopop .35s ease-out}@keyframes gopop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+#map-svg .ripple{animation:ripple 3s ease-out infinite;transform-origin:0 62px}@keyframes ripple{0%{transform:scale(.85);opacity:.5}100%{transform:scale(1.15);opacity:0}}
+#map-svg svg{transform:perspective(1600px) rotateX(12deg);transform-origin:50% 70%}
 .ms-head{display:flex;gap:12px;align-items:center}.ms-ic{width:56px;height:56px;border-radius:20px;display:grid;place-items:center;font-size:32px;border:3px solid #fff;box-shadow:0 4px 0 rgba(120,80,170,.2);flex:none}
 .ms-t b{font-size:22px;display:block}.ms-t small{font-size:13px;color:var(--ink2)}
 .ms-chips{display:flex;flex-wrap:wrap;gap:6px}.ms-chips span{background:#f3ecff;border-radius:12px;padding:4px 10px;font-size:13px}
@@ -210,6 +219,7 @@ input[type=range]{width:100%;accent-color:var(--pink)}
 .hud-tr{position:absolute;right:max(12px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 #pausebtn{pointer-events:auto;width:46px;height:46px;border-radius:50%;background:#fffd;font-size:20px;box-shadow:0 3px 0 rgba(120,80,170,.2)}
 #leaderboard{background:#3d2a55bb;border-radius:16px;padding:6px 8px;color:#fff;font-size:13px;min-width:150px;max-width:190px}
+#leaderboard.lb-c{background:#3d2a5577;min-width:0;max-width:128px;font-size:11px;padding:3px 5px;cursor:pointer;backdrop-filter:blur(2px)}#leaderboard.lb-c .lb-row{padding:1px 3px}#leaderboard.lb-c .lb-gap{font-size:10px;line-height:1}#leaderboard.full{max-width:170px;background:#3d2a55bb}
 .lb-row{display:flex;align-items:center;gap:6px;padding:2px 4px;border-radius:8px}.lb-row.me{background:#ff6fae}
 .lb-n{width:20px;text-align:right;color:#ffd23f}.lb-dot{width:10px;height:10px;border-radius:50%;flex:none}.lb-name{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .lb-gap{text-align:center;opacity:.7;font-size:12px}
@@ -362,7 +372,7 @@ body:has(#modal:not(.hidden)) #roomcall{display:none}
 <div id="hud" class="hidden">
   <div class="hud-tl"><div id="hud-rank"></div><div class="hud-chip" id="hud-sec"></div><div class="hud-chip" id="hud-energy"></div><div class="hud-chip" id="hud-gap"></div><div class="hud-chip" id="hud-combo" style="background:#ffe17a"></div></div>
   <div class="hud-tc"><div id="hud-time">00:00</div><div class="prog"><div id="prog-marks"></div><div id="prog-lead"></div><div id="prog-me"></div><span class="flag">🏁</span></div><div class="hud-chip" id="hud-world" style="font-size:13px"></div><div class="hud-chip" id="hud-sim" style="font-size:12px;opacity:.85"></div></div>
-  <div class="hud-tr"><button id="pausebtn">⏸</button><div id="leaderboard"></div></div>
+  <div class="hud-tr"><button id="pausebtn">⏸</button><div id="leaderboard" class="lb-c" title="눌러서 순위 더 보기"></div></div>
 </div>
 <div id="qpanel" class="hidden"></div>
 <div id="roomhud" class="hidden"></div><div id="emotebar" class="hidden"></div><div id="roomcall" class="hidden"></div>
@@ -797,8 +807,8 @@ function promotionStatus() {
 const RUN_NEED = 5; // normal races needed for one free-run ticket
 const SUBJECTS = {
   math: { name: '산수', icon: '🔢', desc: '내 학년에 맞는 계산 문제' },
-  capital: { name: '수도', icon: '🌍', desc: '나라와 수도 맞히기' },
-  quiz: { name: '상식 퀴즈', icon: '💡', desc: '동물·영어·속담·우주 등 상식 퀴즈' },
+  english: { name: '영어 단어', icon: '🔤', desc: '낱말 뜻, 철자, 문장 빈칸 맞히기' },
+  quiz: { name: '상식', icon: '💡', desc: '수도·동물·속담·우주 등 상식 퀴즈' },
   run: { name: '피버 모드', icon: '🔥', desc: '문제 없이 장애물만 달리는 보너스 레이스' },
 };
 // [tier, question, answer, ...wrong answers]
@@ -840,7 +850,7 @@ const QUIZ = [
   [2, '한글의 기본 모음은 몇 개일까요?', '10개', '14개', '24개', '8개', '21개'], [2, '세종대왕이 만든 한글의 원래 이름은?', '훈민정음', '용비어천가', '동국정운', '석보상절', '월인석보'],
 ];
 function josa(w) { const k = w.charCodeAt(w.length - 1) - 0xAC00; return w + (k >= 0 && k <= 11171 && k % 28 ? '은' : '는'); }
-function makeSubjectQuestion(subject, level) { return subject === 'capital' || subject === 'quiz' ? makeQuizQuestion(subject, level) : makeQuestion(level); }
+function makeSubjectQuestion(subject, level) { if (subject === 'capital') subject = 'quiz'; return subject === 'english' || subject === 'quiz' ? makeQuizQuestion(subject, level) : makeQuestion(level); }
 
 // ---- 16-quizbank.js
 // ================================================================
@@ -993,7 +1003,8 @@ const iga = (w) => { const k = w.charCodeAt(w.length - 1) - 0xac00; return w + (
 const clean = (w) => w.replace(/\(.*\)/, '');
 
 // ---------- capital questions ----------
-function capitalGen(tier) {
+function capitalGen(tier) { const q = capitalGen0(tier); q.cat = '수도'; return q; }
+function capitalGen0(tier) {
   const pool = CAPITALS.filter((c) => c[3] <= tier), c = pick(pool), r = RNG(), cities = pool.map((x) => x[1]), countries = pool.map((x) => x[0]);
   if (r < 0.5 || (r < 0.85 && tier === 1)) {
     const wr = others(cities, [c[1]], c[4] ? 3 : 4); if (c[4]) wr.unshift(c[4]);
@@ -1008,9 +1019,7 @@ function capitalGen(tier) {
 // ---------- general-knowledge generators: [min tier, weight, make(tier)] ----------
 const QUIZ_GENS = [
   [1, 3, (t) => { const q = pick(QUIZ.filter((x) => x[0] <= Math.min(t, 2))); return { text: q[1], answer: q[2], wrongs: shuffle(q.slice(3)), explain: `정답 → ${q[2]}`, cat: '상식' }; }],
-  [1, 3, (t) => { const pool = ENG_WORDS.filter((w) => w[0] <= t), w = pick(pool);
-    if (RNG() < 0.55) return { text: `'${w[1]}'${obj(clean(w[1])).slice(-1)} 영어로 하면?`, answer: w[2], wrongs: others(pool.map((x) => x[2]), [w[2]]), explain: `${clean(w[1])} → ${w[2]}`, cat: '영어 낱말' };
-    return { text: `영어 '${w[2]}'의 뜻은?`, answer: clean(w[1]), wrongs: others(pool.map((x) => clean(x[1])), [clean(w[1])]), explain: `${w[2]} → ${clean(w[1])}`, cat: '영어 낱말' }; }],
+  [1, 2, (t) => capitalGen(t)],
   [1, 2, (t) => { const pool = OPPOSITES.filter((w) => w[0] <= t), p = pick(pool), f = RNG() < 0.5, a = f ? p[1] : p[2], b = f ? p[2] : p[1];
     const fam = OPP_FAMILY.filter((F) => F.includes(a) || F.includes(b)).flat();
     return { text: `'${a}'의 반대말은?`, answer: b, wrongs: others(pool.flatMap((x) => [x[1], x[2]]), [a, b, ...fam]), explain: `${a} ↔ ${b}`, cat: '반대말' }; }],
@@ -1055,6 +1064,63 @@ const QUIZ_GENS = [
   [2, 1, () => { const k = pick(Object.keys(MATTER)), right = pick(MATTER[k]), rest = Object.keys(MATTER).filter((x) => x !== k).flatMap((x) => MATTER[x]);
     return { text: `다음 중 ${k}인 것은?`, answer: right, wrongs: others(rest, [right]), explain: `${right} → ${k}`, cat: '과학' }; }],
 ];
+
+// ---------- English sentences with a blank: the Korean meaning is always given, so only one word fits ----------
+const _ek = (en) => { const w = ENG_WORDS.find((x) => x[2] === en); return w ? clean(w[1]) : en; };
+const ieyo = (w) => { const k = w.charCodeAt(w.length - 1) - 0xac00; return w + (k >= 0 && k <= 11171 && k % 28 ? '이에요' : '예요'); };
+// [tier, english sentence with ___, korean meaning, answer, wrong-answer pool]
+const EN_SEE = ['dog', 'cat', 'bird', 'fish', 'rabbit', 'pig', 'cow', 'horse', 'bear', 'lion', 'tiger', 'monkey', 'fox', 'wolf', 'duck', 'sheep', 'mouse', 'frog', 'snake', 'turtle', 'giraffe', 'zebra', 'penguin', 'whale', 'shark', 'butterfly', 'bee'];
+const EN_MY = ['bag', 'book', 'pencil', 'ruler', 'desk', 'chair', 'hat', 'clock', 'cup', 'box', 'key', 'robot', 'doll', 'ball', 'bicycle', 'phone', 'kite', 'coat', 'shirt', 'cake'];
+const EN_LIKE = ['milk', 'water', 'juice', 'rice', 'bread', 'pizza', 'cheese', 'red', 'blue', 'yellow', 'green', 'pink', 'purple', 'spring', 'summer', 'fall', 'winter'];
+const EN_PLACE = ['school', 'park', 'zoo', 'library', 'hospital', 'bank', 'store', 'garden'];
+const EN_CAN = [['run', '달릴'], ['swim', '수영할'], ['sing', '노래할'], ['dance', '춤출'], ['jump', '점프할'], ['read', '읽을'], ['write', '쓸'], ['fly', '날'], ['walk', '걸을']];
+const EN_ADJ = [['It is a ___ dog.', '그것은 큰 개예요.', 'big'], ['It is a ___ cat.', '그것은 작은 고양이예요.', 'small'], ['It is a ___ car.', '그것은 빠른 자동차예요.', 'fast'], ['It is a ___ turtle.', '그것은 느린 거북이에요.', 'slow'],
+  ['I am ___ today.', '나는 오늘 행복해요.', 'happy'], ['She is ___ now.', '그녀는 지금 슬퍼요.', 'sad'], ['The soup is ___.', '수프가 뜨거워요.', 'hot'], ['The water is ___.', '물이 차가워요.', 'cold'],
+  ['He is very ___.', '그는 키가 아주 커요.', 'tall'], ['The river is ___.', '그 강은 길어요.', 'long'], ['This is a ___ bag.', '이것은 새 가방이에요.', 'new'], ['It is an ___ house.', '그것은 오래된 집이에요.', 'old']];
+const EN_WEATHER = [['sunny', '맑아요'], ['rainy', '비가 와요'], ['snowy', '눈이 와요'], ['windy', '바람이 불어요'], ['cloudy', '흐려요']];
+const EN_NUM = [['two', '두'], ['three', '세'], ['four', '네'], ['five', '다섯'], ['six', '여섯'], ['seven', '일곱'], ['eight', '여덟'], ['nine', '아홉'], ['ten', '열']];
+const EN_FAMILY = [['mom', '엄마'], ['dad', '아빠'], ['grandmother', '할머니'], ['grandfather', '할아버지'], ['teacher', '선생님'], ['friend', '친구']];
+// be-verbs: [subject, verb, korean subject]
+const EN_BE = [['I', 'am', '나는'], ['You', 'are', '너는'], ['He', 'is', '그는'], ['She', 'is', '그녀는'], ['We', 'are', '우리는'], ['They', 'are', '그들은']];
+const EN_BE_C = { one: [['a student', '학생이에요'], ['happy', '행복해요'], ['hungry', '배고파요'], ['tall', '키가 커요'], ['in the park', '공원에 있어요'], ['ten years old', '열 살이에요']],
+  many: [['students', '학생들이에요'], ['happy', '행복해요'], ['hungry', '배고파요'], ['friends', '친구예요'], ['in the park', '공원에 있어요']] };
+const blank = (en, ko, ans, pool, cat = '영어 문장') => ({ text: `빈칸에 알맞은 말은? ${en} (뜻: ${ko})`, answer: ans, wrongs: others(pool, [ans]), explain: `${en.replace('___', ans)} → ${ko}`, cat });
+const EN_SENT = [
+  [2, 3, () => { const a = pick(EN_SEE); return blank('I see a ___.', `나는 ${obj(_ek(a))} 봐요.`, a, EN_SEE); }],
+  [2, 3, () => { const a = pick(EN_MY); return blank('This is my ___.', `이것은 내 ${ieyo(_ek(a))}.`, a, EN_MY); }],
+  [2, 2, () => { const a = pick(EN_LIKE); return blank('I like ___.', `나는 ${obj(_ek(a))} 좋아해요.`, a, EN_LIKE); }],
+  [2, 2, () => { const a = pick(EN_PLACE); return blank("Let's go to the ___.", `${_ek(a)}에 가자.`, a, EN_PLACE); }],
+  [2, 2, () => { const a = pick(EN_CAN); return blank('I can ___.', `나는 ${a[1]} 수 있어요.`, a[0], EN_CAN.map((x) => x[0])); }],
+  [2, 1, () => { const d = pick(WEEK), en = ENG_WORDS.find((x) => x[1] === d)[2]; return blank('Today is ___.', `오늘은 ${ieyo(d)}.`, en, WEEK.map((w) => ENG_WORDS.find((x) => x[1] === w)[2])); }],
+  [2, 2, () => { const n = pick(EN_NUM), f = pick(['apples', 'cats', 'books', 'balls']), fk = { apples: '사과가', cats: '고양이가', books: '책이', balls: '공이' }[f]; return blank(`I have ___ ${f}.`, `나에게는 ${fk} ${n[1]} 개 있어요.`.replace('고양이가 ' + n[1] + ' 개', '고양이가 ' + n[1] + ' 마리').replace('책이 ' + n[1] + ' 개', '책이 ' + n[1] + ' 권'), n[0], EN_NUM.map((x) => x[0])); }],
+  [3, 2, () => { const a = pick(EN_ADJ); const close = { big: ['tall', 'long'], tall: ['big', 'long'], long: ['big', 'tall'], old: ['new'], new: ['old'] }[a[2]] || []; return blank(a[0], a[1], a[2], EN_ADJ.map((x) => x[2]).filter((x) => !close.includes(x))); }],
+  [3, 1, () => { const w = pick(EN_WEATHER); return blank("It's ___ today.", `오늘은 ${w[1]}.`, w[0], EN_WEATHER.map((x) => x[0])); }],
+  [3, 1, () => { const w = pick(EN_FAMILY); return blank('This is my ___.', `이분은 우리 ${ieyo(w[1])}.`.replace('우리 친구예요', '내 친구예요').replace('이분은 우리 친구', '이 아이는 내 친구'), w[0], EN_FAMILY.map((x) => x[0])); }],
+  [3, 3, () => { const b = pick(EN_BE), c = pick(b[0] === 'I' || b[0] === 'He' || b[0] === 'She' ? EN_BE_C.one : EN_BE_C.many);
+    return { text: `빈칸에 알맞은 말은? ${b[0]} ___ ${c[0]}. (뜻: ${b[2]} ${c[1]}.)`, answer: b[1], wrongs: shuffle(['am', 'is', 'are', 'be', 'do'].filter((x) => x !== b[1])), explain: `${b[0]} ${b[1]} ${c[0]}. → ${b[0]}에는 ${b[1]}`, cat: '영어 문장' }; }],
+  [3, 2, () => { const q = pick([['What ___ is it?', '그것은 무슨 색이에요?', 'color', ['animal', 'time', 'day', 'food']], ['What ___ is it?', '지금 몇 시예요?', 'time', ['color', 'animal', 'day', 'food']],
+      ['How ___ are you?', '너는 몇 살이니?', 'old', ['many', 'much', 'big', 'tall']], ['How ___ apples?', '사과가 몇 개예요?', 'many', ['old', 'much', 'big', 'long']], ['___ is your name?', '네 이름은 뭐니?', 'What', ['Who', 'Where', 'When', 'How']],
+      ['___ are you from?', '너는 어디에서 왔니?', 'Where', ['What', 'Who', 'When', 'How']], ['___ is he?', '그는 누구예요?', 'Who', ['What', 'Where', 'When', 'Why']], ['___ are you?', '어떻게 지내니?', 'How', ['What', 'Who', 'Where', 'When']],
+      ['Nice to ___ you.', '만나서 반가워요.', 'meet', ['see', 'eat', 'run', 'go']], ['Thank ___.', '고마워요.', 'you', ['me', 'he', 'she', 'it']], ['Good ___!', '좋은 아침이에요!', 'morning', ['night', 'day', 'school', 'bye']],
+      ['See you ___.', '나중에 봐요.', 'later', ['now', 'then', 'today', 'here']], ['I am ___.', '미안해요.', 'sorry', ['happy', 'fine', 'tall', 'hungry']], ["Let's ___ soccer.", '축구 하자.', 'play', ['go', 'eat', 'make', 'read']],
+      ['Open the ___, please.', '문을 열어 주세요.', 'door', ['book', 'cup', 'bag', 'ball']], ['Sit ___, please.', '앉아 주세요.', 'down', ['up', 'in', 'on', 'out']], ['Stand ___, please.', '일어서 주세요.', 'up', ['down', 'in', 'on', 'out']]]);
+    return { text: `빈칸에 알맞은 말은? ${q[0]} (뜻: ${q[1]})`, answer: q[2], wrongs: shuffle(q[3].slice()), explain: `${q[0].replace('___', q[2])} → ${q[1]}`, cat: '영어 문장' }; }],
+];
+// English-word subject: meaning both ways + spelling (from grade 3)
+const misspell = (w) => { const out = new Set(), L = w.length, low = w.toLowerCase();
+  for (let i = 0; i < L - 1; i++) if (w[i] !== w[i + 1]) out.add(w.slice(0, i) + w[i + 1] + w[i] + w.slice(i + 2));
+  for (let i = 1; i < L; i++) out.add(w.slice(0, i) + w.slice(i + 1));
+  for (let i = 1; i < L; i++) if (/[a-z]/.test(w[i])) out.add(w.slice(0, i) + w[i] + w.slice(i));
+  const vow = { a: 'e', e: 'a', i: 'e', o: 'u', u: 'o' }; for (let i = 0; i < L; i++) if (vow[w[i]]) out.add(w.slice(0, i) + vow[w[i]] + w.slice(i + 1));
+  const real = new Set(ENG_WORDS.map((x) => x[2].toLowerCase())); return shuffle([...out].filter((x) => x.length >= 2 && x.toLowerCase() !== low && !real.has(x.toLowerCase()) && !/\s\s|^\s|\s$/.test(x))); };
+const ENGLISH_GENS = [
+  [1, (t, L) => (L <= 2 ? 5 : t === 2 ? 3 : 1), (t, L) => { const pool = ENG_WORDS.filter((w) => w[0] <= (L === 2 ? 2 : t)), w = pick(pool);
+    if (RNG() < 0.55) return { text: `'${w[1]}'${obj(clean(w[1])).slice(-1)} 영어로 하면?`, answer: w[2], wrongs: others(pool.map((x) => x[2]), [w[2]]), explain: `${clean(w[1])} → ${w[2]}`, cat: '영어 낱말' };
+    return { text: `영어 '${w[2]}'의 뜻은?`, answer: clean(w[1]), wrongs: others(pool.map((x) => clean(x[1])), [clean(w[1])]), explain: `${w[2]} → ${clean(w[1])}`, cat: '영어 낱말' }; }],
+  [2, (t) => (t === 2 ? 2 : 1), (t) => { const pool = ENG_WORDS.filter((w) => w[0] <= t && w[2].length >= 3 && !w[2].includes(' ')), w = pick(pool), wr = misspell(w[2]).slice(0, 4);
+    return { text: `'${w[1]}'${obj(clean(w[1])).slice(-1)} 영어로 바르게 쓴 것은?`, answer: w[2], wrongs: wr, explain: `${clean(w[1])} → ${w[2]}`, cat: '영어 철자' }; }],
+  ...EN_SENT.map(([mt, w, fn], i) => [i < 2 ? 1 : mt, (t, L) => (L === 1 ? 0 : L === 2 ? (i < 2 ? 1 : 0) : t >= 3 ? w * 1.6 : w * 0.5), fn]),
+];
 // remembers the last questions so one race does not repeat itself
 const _recentQ = [];
 function makeQuizQuestion(subject, level) {
@@ -1062,11 +1128,11 @@ function makeQuizQuestion(subject, level) {
   for (let k = 0; k < 30; k++) {
     let q;
     if (subject === 'capital') q = capitalGen(t);
-    else { const gens = QUIZ_GENS.filter((g) => g[0] <= t); let w = RNG() * gens.reduce((a, g) => a + g[1], 0), g = gens[0]; for (const x of gens) { w -= x[1]; if (w <= 0) { g = x; break; } } q = g[2](t); }
+    else { const gens = (subject === 'english' ? ENGLISH_GENS : QUIZ_GENS).filter((g) => g[0] <= t); const wt = (g) => (typeof g[1] === 'function' ? g[1](t, level) : g[1]); let w = RNG() * gens.reduce((a, g) => a + wt(g), 0), g = gens[0]; for (const x of gens) { w -= wt(x); if (w <= 0) { g = x; break; } } q = g[2](t, level); }
     if (!q || q.wrongs.length < 4 || q.wrongs.includes(q.answer)) continue;
     if (_recentQ.includes(q.text) && k < 29) continue;
     _recentQ.push(q.text); if (_recentQ.length > 60) _recentQ.shift();
-    return { text: q.text, answer: q.answer, wrongs: q.wrongs.slice(0, 6), type: subject === 'capital' ? '수도 퀴즈' : '상식 퀴즈', cat: q.cat, level, textAnswer: true, explain: q.explain };
+    return { text: q.text, answer: q.answer, wrongs: q.wrongs.slice(0, 6), type: subject === 'english' ? '영어 단어' : q.cat === '수도' ? '수도 퀴즈' : '상식 퀴즈', cat: q.cat, level, textAnswer: true, explain: q.explain };
   }
 }
 
@@ -2425,7 +2491,7 @@ class Race {
     this.marker = new THREE.Mesh(GEO.cone, new THREE.MeshBasicMaterial({ color: 0xff3d8f })); this.marker.scale.set(0.26, 0.38, 0.26); this.marker.rotation.x = Math.PI; this.scene.add(this.marker);
     const ringGeo = new THREE.RingGeometry(0.75, 0.95, 32); ringGeo.rotateX(-Math.PI / 2); this.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xff5fa2, transparent: true, opacity: 0.7, depthWrite: false })); this.scene.add(this.ring);
     this.camPos = new THREE.Vector3(); this.camLook = new THREE.Vector3(); this.snapCamera();
-    this.hudT = 0; this.rankT = 0; this.order = this.racers.slice();
+    this.hudT = 0; this.rankT = 0; this.order = this.racers.slice(); $('#leaderboard').onclick = () => { $('#leaderboard').classList.toggle('full'); this.updateHUD(); };
     this.buildHUD();
     this.toastQ = [];
   }
@@ -2478,7 +2544,8 @@ class Race {
     $('#hud-gap').innerHTML = `<span>▲ 앞 ${ahead ? fmt(ahead) : '없음'}</span><span>▼ 뒤 ${behind ? fmt(behind) : '없음'}</span>`;
     // mini leaderboard: top3 + around me
     const rows = []; const add = (i) => { const o = this.order[i]; if (!o || rows.some((r) => r.i === i)) return; rows.push({ i, o }); };
-    add(0); add(1); add(2); add(rank - 2); add(rank - 1); add(rank);
+    // compact by default (1st + the racers right around me) so it does not hide the course; tap to see more
+    const full = $('#leaderboard').classList.contains('full'); add(0); if (full) { add(1); add(2); } add(rank - 2); add(rank - 1); add(rank);
     rows.sort((a, b) => a.i - b.i);
     let html = ''; let last = -1;
     for (const { i, o } of rows) { if (i - last > 1) html += `<div class="lb-gap">⋯</div>`; html += `<div class="lb-row ${o.isPlayer ? 'me' : ''}"><span class="lb-n">${i + 1}</span><span class="lb-dot" style="background:#${o.color.toString(16).padStart(6, '0')}"></span><span class="lb-name">${escapeHtml(o.isPlayer ? o.name + ' (나)' : o.name)}</span>${o.finished ? '<span class="lb-f">🏁</span>' : ''}</div>`; last = i; }
@@ -3064,7 +3131,7 @@ const App = {
     S.energy -= W.price; S.unlockedWorlds.push(w); Save.save(); Sound.play('finish'); this.toastHub(`${W.name} 해금! 🎉`); after && after();
   },
   startRace(worldId, count, subject, free, extra) {
-    subject = subject || Save.data.settings.subject || 'math';
+    subject = subject || Save.data.settings.subject || 'math'; if (!SUBJECTS[subject]) subject = subject === 'capital' ? 'quiz' : 'math';
     if (!(extra && extra.room)) { if (this.room) this.leaveRoom(true); if (Online.timeLeft() <= 0) { this.olTimeUpModal(); return; } }
     if (subject === 'run' && !free) { const S = Save.data; if (!(S.runTickets > 0)) { this.closeModal(); this.enterHub(); return; } S.runTickets--; Save.save(); }
     $('#fever').classList.add('hidden'); $('#fever-mini').classList.add('hidden');
@@ -3160,7 +3227,7 @@ const App = {
     this.modal(`<h2>📒 나의 오답노트</h2>${tabs}${body}`);
     $$('[data-t]').forEach((b) => (b.onclick = () => this.menuNotes(b.dataset.t)));
     $$('[data-retry]').forEach((b) => (b.onclick = () => { const w = S.wrongNotes.find((x) => x.id === b.dataset.retry); this.retryNote(w); }));
-    $$('[data-sim]').forEach((b) => (b.onclick = () => { const k = b.dataset.sim, T = QTYPES[k], sj = k === '수도 퀴즈' ? 'capital' : 'quiz'; this.quiz({ title: `${T ? T.name : k} 연습`, n: 5, gen: () => (T ? makeQuestion(T.level, k) : makeQuizQuestion(sj, S.profile.level)), mode: 'practice', back: () => this.menuNotes('list') }); }));
+    $$('[data-sim]').forEach((b) => (b.onclick = () => { const k = b.dataset.sim, T = QTYPES[k], sj = k === '수도 퀴즈' ? 'capital' : k === '영어 단어' ? 'english' : 'quiz'; this.quiz({ title: `${T ? T.name : k} 연습`, n: 5, gen: () => (T ? makeQuestion(T.level, k) : makeQuizQuestion(sj, S.profile.level)), mode: 'practice', back: () => this.menuNotes('list') }); }));
   },
   retryNote(w) {
     // rebuild a question object for the stored text/answer
@@ -3565,7 +3632,7 @@ Object.assign(App, {
   menuMap() { this.showMap(); },
   showMap(sel) {
     const S = Save.data; S.worldBest = S.worldBest || {}; this.closeModal();
-    this.mapSel = sel || this.mapSel || this._lastWorld || 'candy';
+    this.mapSel = sel || this.mapSel || this._lastWorld || 'candy'; this._mapOpen = !!sel; this._mapSubj = null;
     this.show('map'); $('#controls').classList.add('hidden'); this.drawMap();
     if (!this._mapBound) { this._mapBound = true; addEventListener('resize', () => { if (this.screen === 'map') this.drawMap(); }); }
   },
@@ -3583,22 +3650,33 @@ Object.assign(App, {
       const W = WORLDS[w], A = MAP_ART[w], [x, y] = pos[i], un = S.unlockedWorlds.includes(w), best = S.worldBest[w];
       const stars = best ? (best.rank === 1 ? 3 : best.rank <= 3 ? 2 : 1) : 0;
       return `<g class="isl ${un ? '' : 'locked'} ${w === sel ? 'sel' : ''}" data-w="${w}" transform="translate(${x},${y})">
-        <ellipse cx="0" cy="52" rx="128" ry="30" fill="#1f6fb8" opacity=".22"/>
+        <ellipse cx="0" cy="78" rx="150" ry="36" fill="#0d4f91" opacity=".28" filter="url(#mblur)"/>
+        <ellipse cx="0" cy="62" rx="140" ry="40" fill="none" stroke="#fff" stroke-width="3" opacity=".35" class="ripple" style="animation-delay:${-i * 0.5}s"/>
         <g class="bob" style="animation-delay:${-i * 0.7}s">
           ${w === sel ? '<ellipse cx="0" cy="24" rx="132" ry="60" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="14 12" class="selring"/>' : ''}
-          <ellipse cx="0" cy="36" rx="116" ry="44" fill="#e9cf98"/><ellipse cx="0" cy="30" rx="116" ry="44" fill="#fbe9bd"/>
-          <ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mg-${w})"/><ellipse cx="-18" cy="10" rx="62" ry="18" fill="#fff" opacity=".28"/>
-          <g class="deco">${A.deco.map(([e, dx, dy, fs]) => `<text x="${dx}" y="${dy + fs * 0.35}" font-size="${fs}" text-anchor="middle">${e}</text>`).join('')}</g>
+          <path d="M-116,30 L-116,62 A116,44 0 0 0 116,62 L116,30 Z" fill="url(#mside)"/>
+          <path d="M-116,48 A116,44 0 0 0 116,48" fill="none" stroke="#c9a46a" stroke-width="3" opacity=".6"/>
+          <ellipse cx="0" cy="30" rx="116" ry="44" fill="#fbe9bd"/>
+          <path d="M-102,22 L-102,30 A102,38 0 0 0 102,30 L102,22 Z" fill="${MAP_ART[w].c[1]}" opacity=".9" style="filter:brightness(.78)"/>
+          <ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mg-${w})"/><ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mshine)"/>
+          <ellipse cx="-30" cy="6" rx="50" ry="13" fill="#fff" opacity=".35"/>
+          <g class="deco" filter="url(#mdrop)">${A.deco.map(([e, dx, dy, fs]) => `<text x="${dx}" y="${dy + fs * 0.35}" font-size="${fs * 1.08}" text-anchor="middle">${e}</text>`).join('')}</g>
           ${un ? '' : `<g><circle cx="0" cy="6" r="30" fill="#fff" opacity=".95"/><text x="0" y="18" font-size="34" text-anchor="middle">🔒</text></g>`}
           <g class="num"><circle cx="-92" cy="-28" r="22" fill="${un ? '#ff5fa2' : '#a79fc0'}" stroke="#fff" stroke-width="5"/><text x="-92" y="-18" font-size="28" text-anchor="middle" fill="#fff">${i + 1}</text></g>
         </g>
-        <g class="tag"><rect x="-96" y="78" width="192" height="40" rx="20" fill="#fff" stroke="${w === sel ? '#ff5fa2' : '#ffffff'}" stroke-width="4"/><text x="0" y="106" font-size="23" text-anchor="middle" fill="#3d2a55">${W.name}${un ? '' : ` · ⚡${W.price}`}</text></g>
+        <g class="tag"><rect x="-96" y="84" width="192" height="40" rx="20" fill="${w === sel ? '#ff5fa2' : '#c9b8e6'}"/><rect x="-96" y="78" width="192" height="40" rx="20" fill="#fff" stroke="${w === sel ? '#ff5fa2' : '#ffffff'}" stroke-width="4"/><text x="0" y="106" font-size="23" text-anchor="middle" fill="#3d2a55">${W.name}${un ? '' : ` · ⚡${W.price}`}</text></g>
         ${stars ? `<text x="0" y="142" font-size="22" text-anchor="middle">${'⭐'.repeat(stars)}</text>` : ''}
       </g>`;
     }).join('');
     const [mx, my] = pos[si];
     $('#map-svg').innerHTML = `<svg viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-      <defs>${WORLD_ORDER.map((w) => `<linearGradient id="mg-${w}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${MAP_ART[w].c[0]}"/><stop offset="1" stop-color="${MAP_ART[w].c[1]}"/></linearGradient>`).join('')}</defs>
+      <defs><linearGradient id="mside" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c98c"/><stop offset="1" stop-color="#b98a4c"/></linearGradient>
+        <radialGradient id="mshine" cx=".35" cy=".25" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+        <radialGradient id="msea" cx=".5" cy=".55" r=".75"><stop offset="0" stop-color="#8fdcff"/><stop offset=".7" stop-color="#4fb3f0"/><stop offset="1" stop-color="#2a86d6"/></radialGradient>
+        <filter id="mblur" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="8"/></filter>
+        <filter id="mdrop" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#3d2a55" flood-opacity=".35"/></filter>
+        ${WORLD_ORDER.map((w) => `<linearGradient id="mg-${w}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${MAP_ART[w].c[0]}"/><stop offset="1" stop-color="${MAP_ART[w].c[1]}"/></linearGradient>`).join('')}</defs>
+      <rect x="-400" y="-300" width="${VW + 800}" height="${VH + 600}" fill="url(#msea)"/>
       ${waves}
       ${extras.map(([e, x, y, fs]) => `<text x="${x}" y="${y}" font-size="${fs}" text-anchor="middle" class="drift">${e}</text>`).join('')}
       <path d="${d}" fill="none" stroke="#1f6fb8" stroke-opacity=".25" stroke-width="22" stroke-linecap="round"/>
@@ -3610,17 +3688,19 @@ Object.assign(App, {
       <g class="mcloud" style="animation-duration:55s;animation-delay:-20s"><ellipse cx="0" cy="${VH * 0.7}" rx="100" ry="30" fill="#fff" opacity=".6"/><ellipse cx="-50" cy="${VH * 0.7 - 18}" rx="60" ry="26" fill="#fff" opacity=".6"/></g>
     </svg>`;
     $('#map-energy').innerHTML = `⚡ <b>${S.energy}</b>`;
-    $$('#map-svg .isl').forEach((g) => (g.onclick = () => { if (this.mapSel !== g.dataset.w) { this.mapSel = g.dataset.w; Sound.play('click'); this.drawMap(); } }));
+    $$('#map-svg .isl').forEach((g) => (g.onclick = () => { if (this.mapSel !== g.dataset.w || !this._mapOpen) { this.mapSel = g.dataset.w; this._mapOpen = true; this._mapSubj = null; Sound.play('click'); this.drawMap(); } }));
+    $('#map-sheet').classList.toggle('closed', !this._mapOpen);
+    if (!this._mapOpen) { $('#map-sheet').innerHTML = `<div class="ms-hint">👆 달리고 싶은 섬을 눌러 보세요!</div>`; $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); }; return; }
     // info sheet
-    const W = WORLDS[sel], un = S.unlockedWorlds.includes(sel), best = S.worldBest[sel], P = S.profile, can = S.energy >= W.price, subj = SUBJECTS[S.settings.subject] && S.settings.subject !== 'run' ? S.settings.subject : 'math';
+    const W = WORLDS[sel], un = S.unlockedWorlds.includes(sel), best = S.worldBest[sel], P = S.profile, can = S.energy >= W.price, subj = this._mapSubj;
     $('#map-sheet').innerHTML = `<div class="ms-head"><span class="ms-ic" style="background:linear-gradient(180deg,${MAP_ART[sel].c.join(',')})">${W.icon}</span><div class="ms-t"><b>${si + 1}. ${W.name}</b><small>${WORLD_FEAT[sel]}</small></div></div>
       <div class="ms-chips"><span>📚 추천 ${W.grade}학년 · ${W.topic}</span><span>🏅 ${best ? `최고 ${best.rank}등` : '아직 기록 없음'}</span></div>
-      <div class="ms-sub">${Object.keys(SUBJECTS).filter((k) => k !== 'run').map((k) => `<button class="sj ${k === subj ? 'on' : ''}" data-sj="${k}"><b>${SUBJECTS[k].icon} ${SUBJECTS[k].name}</b></button>`).join('')}</div><div class="ms-note">${SUBJECTS[subj].desc}${subj === 'math' ? ` (${P.level}학년 수준)` : ''}</div>
-      ${un ? `<button class="btn" id="map-go">🏁 여기서 레이스!</button>` : `<button class="btn yellow" id="map-unlock" ${can ? '' : 'disabled'}>🔓 ⚡${W.price}로 열기</button>${can ? '' : `<div class="ms-note">숫자 에너지가 ${W.price - S.energy}개 더 필요해요</div>`}`}
+      ${un ? `<div class="ms-ask">${subj ? '좋아요! 이제 출발해 볼까요?' : '어떤 문제로 달릴까요?'}</div><div class="ms-sub big">${Object.keys(SUBJECTS).filter((k) => k !== 'run').map((k) => `<button class="sj sj-${k} ${k === subj ? 'on' : ''}" data-sj="${k}"><i>${SUBJECTS[k].icon}</i><b>${SUBJECTS[k].name}</b></button>`).join('')}</div>
+      ${subj ? `<div class="ms-note">${SUBJECTS[subj].desc} · ${P.level}학년 수준</div><button class="btn go-pop" id="map-go">🏁 ${SUBJECTS[subj].name} 레이스 시작!</button>` : ''}` : `<button class="btn yellow" id="map-unlock" ${can ? '' : 'disabled'}>🔓 ⚡${W.price}로 열기</button>${can ? '' : `<div class="ms-note">숫자 에너지가 ${W.price - S.energy}개 더 필요해요</div>`}`}
       <div class="ms-note">나 + AI 말랑이 49명 · 온라인 대전은 아직 준비 중이에요</div>`;
-    if (un) $('#map-go').onclick = () => { this._lastWorld = sel; Sound.play('click'); this.startRace(sel, 50, subj); };
-    else $('#map-unlock').onclick = () => this.unlockWorld(sel, () => this.drawMap());
-    $$('#map-sheet .sj').forEach((b) => (b.onclick = () => { S.settings.subject = b.dataset.sj; Save.save(); Sound.play('click'); this.drawMap(); }));
+    if (un && subj) $('#map-go').onclick = () => { this._lastWorld = sel; Sound.play('click'); this.startRace(sel, 50, subj); };
+    else if (!un) $('#map-unlock').onclick = () => this.unlockWorld(sel, () => this.drawMap());
+    $$('#map-sheet .sj').forEach((b) => (b.onclick = () => { this._mapSubj = b.dataset.sj; S.settings.subject = b.dataset.sj; Save.save(); Sound.play('click'); this.drawMap(); }));
     $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); };
   },
   // ---------------- register (with starter colour) ----------------
@@ -4279,7 +4359,7 @@ Object.assign(App, {
       <p class="muted">${R.isHost ? '친구에게 방 코드를 알려 주세요. 친구 화면에도 초대가 떠요.' : `<b>${escapeHtml(R.hostNick)}</b>의 방이에요. 방장이 출발을 누르면 시작해요.`}</p>
       <div class="room-mem">${ms.map((m) => { const b = R.bubbles[m.key]; return `<div class="${m.key === R.key ? 'me' : ''}">${b && b.until > now ? `<i class="bub">${b.e}</i>` : ''}${blobHtml(m.look ? hexCss(m.look.colorHex || 0xff7eb6) : '#ff7eb6', 48)}<b>${escapeHtml(m.nick)}</b><small>${m.host ? '👑 방장' : ''}${m.st === 'race' ? ' 🏃 달리는 중' : ''}</small></div>`; }).join('')}</div>
       <div class="room-set"><div><small>월드</small><div class="row">${ws.map((w) => `<button class="chip sm ${w === R.world ? 'on' : ''}" ${R.isHost ? `data-rw="${w}"` : ''}>${WORLDS[w].icon} ${WORLDS[w].name}</button>`).join('')}</div></div>
-      <div><small>문제</small><div class="row">${['math', 'capital', 'quiz'].map((s) => `<button class="chip sm ${s === R.subject ? 'on' : ''}" ${R.isHost ? `data-rs="${s}"` : ''}>${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div></div></div>
+      <div><small>문제</small><div class="row">${['math', 'english', 'quiz'].map((s) => `<button class="chip sm ${s === R.subject ? 'on' : ''}" ${R.isHost ? `data-rs="${s}"` : ''}>${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div></div></div>
       <p class="muted">산수 문제는 각자 자기 학년 수준으로 나와요. 코스는 모두 같아요.</p>
       ${this.emoteRow()}
       <div class="row" style="justify-content:center;margin-top:10px">${R.isHost ? `<button class="btn" id="rm-go" ${canGo ? '' : 'disabled'}>${ms.length < 2 ? '친구를 기다리는 중…' : allBack ? `🏁 출발! (${ms.length}명)` : '친구가 돌아오길 기다려요…'}</button>` : ''}<button class="btn sm gray" id="rm-out">방 나가기</button></div></div>`);

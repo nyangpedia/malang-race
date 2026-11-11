@@ -239,7 +239,7 @@ declare lvl int; finish real; acc real; sc int;
 begin
   if not public.is_my_child(child) then return jsonb_build_object('ok', false, 'err', 'not_mine'); end if;
   if world not in ('candy', 'block', 'jungle', 'cloud', 'crystal', 'space')
-     or subject not in ('math', 'capital', 'quiz', 'run')
+     or subject not in ('math', 'capital', 'english', 'quiz', 'run')
      or n not between 2 and 50 or rnk not between 1 and n
      or time_s not between 45 and 1200
      or attempts not between 0 and 10 or correct not between 0 and attempts

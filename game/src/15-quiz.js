@@ -4,8 +4,8 @@
 const RUN_NEED = 5; // normal races needed for one free-run ticket
 const SUBJECTS = {
   math: { name: '산수', icon: '🔢', desc: '내 학년에 맞는 계산 문제' },
-  capital: { name: '수도', icon: '🌍', desc: '나라와 수도 맞히기' },
-  quiz: { name: '상식 퀴즈', icon: '💡', desc: '동물·영어·속담·우주 등 상식 퀴즈' },
+  english: { name: '영어 단어', icon: '🔤', desc: '낱말 뜻, 철자, 문장 빈칸 맞히기' },
+  quiz: { name: '상식', icon: '💡', desc: '수도·동물·속담·우주 등 상식 퀴즈' },
   run: { name: '피버 모드', icon: '🔥', desc: '문제 없이 장애물만 달리는 보너스 레이스' },
 };
 // [tier, question, answer, ...wrong answers]
@@ -47,4 +47,4 @@ const QUIZ = [
   [2, '한글의 기본 모음은 몇 개일까요?', '10개', '14개', '24개', '8개', '21개'], [2, '세종대왕이 만든 한글의 원래 이름은?', '훈민정음', '용비어천가', '동국정운', '석보상절', '월인석보'],
 ];
 function josa(w) { const k = w.charCodeAt(w.length - 1) - 0xAC00; return w + (k >= 0 && k <= 11171 && k % 28 ? '은' : '는'); }
-function makeSubjectQuestion(subject, level) { return subject === 'capital' || subject === 'quiz' ? makeQuizQuestion(subject, level) : makeQuestion(level); }
+function makeSubjectQuestion(subject, level) { if (subject === 'capital') subject = 'quiz'; return subject === 'english' || subject === 'quiz' ? makeQuizQuestion(subject, level) : makeQuestion(level); }

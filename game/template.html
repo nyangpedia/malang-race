@@ -143,6 +143,15 @@ body:has(#modal:not(.hidden)) #controls{display:none}
 #map-svg .mcloud{animation:mcl 40s linear infinite}
 @keyframes mcl{from{transform:translateX(-200px)}to{transform:translateX(1500px)}}
 #map-sheet{width:min(720px,100%);display:flex;flex-direction:column;gap:8px;align-items:stretch;padding:12px 16px;z-index:2;border:3px solid #fff}
+#map-sheet.closed{width:auto;padding:10px 18px}.ms-hint{font-size:18px;font-weight:800;color:#3d2a55;animation:mhop 1.2s ease-in-out infinite}
+.ms-ask{text-align:center;font-weight:800;font-size:15px;color:#3d2a55}
+.ms-sub.big{grid-template-columns:repeat(3,1fr);gap:8px}.ms-sub.big .sj{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 2px 8px;font-size:15px;border:none;border-radius:16px;color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.18),inset 0 3px 0 rgba(255,255,255,.45);transform:translateY(0);transition:transform .12s}
+.ms-sub.big .sj i{font-style:normal;font-size:28px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.15))}.ms-sub.big .sj:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.ms-sub.big .sj-math,.ms-sub.big .sj-math.on{background:linear-gradient(180deg,#ffa06b,#ff6f61)}.ms-sub.big .sj-english,.ms-sub.big .sj-english.on{background:linear-gradient(180deg,#6fd0ff,#3f8cff)}.ms-sub.big .sj-quiz,.ms-sub.big .sj-quiz.on{background:linear-gradient(180deg,#9be35a,#3fb86a)}.ms-sub.big .sj:not(.on){opacity:.82}.ms-sub.big:not(:has(.on)) .sj{opacity:1}
+.ms-sub.big .sj.on{outline:4px solid #fff;outline-offset:-4px;transform:translateY(-3px) scale(1.05);color:#fff;box-shadow:0 8px 0 rgba(0,0,0,.2),0 0 0 4px #ff5fa2}
+.go-pop{animation:gopop .35s ease-out}@keyframes gopop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+#map-svg .ripple{animation:ripple 3s ease-out infinite;transform-origin:0 62px}@keyframes ripple{0%{transform:scale(.85);opacity:.5}100%{transform:scale(1.15);opacity:0}}
+#map-svg svg{transform:perspective(1600px) rotateX(12deg);transform-origin:50% 70%}
 .ms-head{display:flex;gap:12px;align-items:center}.ms-ic{width:56px;height:56px;border-radius:20px;display:grid;place-items:center;font-size:32px;border:3px solid #fff;box-shadow:0 4px 0 rgba(120,80,170,.2);flex:none}
 .ms-t b{font-size:22px;display:block}.ms-t small{font-size:13px;color:var(--ink2)}
 .ms-chips{display:flex;flex-wrap:wrap;gap:6px}.ms-chips span{background:#f3ecff;border-radius:12px;padding:4px 10px;font-size:13px}
@@ -210,6 +219,7 @@ input[type=range]{width:100%;accent-color:var(--pink)}
 .hud-tr{position:absolute;right:max(12px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 #pausebtn{pointer-events:auto;width:46px;height:46px;border-radius:50%;background:#fffd;font-size:20px;box-shadow:0 3px 0 rgba(120,80,170,.2)}
 #leaderboard{background:#3d2a55bb;border-radius:16px;padding:6px 8px;color:#fff;font-size:13px;min-width:150px;max-width:190px}
+#leaderboard.lb-c{background:#3d2a5577;min-width:0;max-width:128px;font-size:11px;padding:3px 5px;cursor:pointer;backdrop-filter:blur(2px)}#leaderboard.lb-c .lb-row{padding:1px 3px}#leaderboard.lb-c .lb-gap{font-size:10px;line-height:1}#leaderboard.full{max-width:170px;background:#3d2a55bb}
 .lb-row{display:flex;align-items:center;gap:6px;padding:2px 4px;border-radius:8px}.lb-row.me{background:#ff6fae}
 .lb-n{width:20px;text-align:right;color:#ffd23f}.lb-dot{width:10px;height:10px;border-radius:50%;flex:none}.lb-name{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .lb-gap{text-align:center;opacity:.7;font-size:12px}
@@ -362,7 +372,7 @@ body:has(#modal:not(.hidden)) #roomcall{display:none}
 <div id="hud" class="hidden">
   <div class="hud-tl"><div id="hud-rank"></div><div class="hud-chip" id="hud-sec"></div><div class="hud-chip" id="hud-energy"></div><div class="hud-chip" id="hud-gap"></div><div class="hud-chip" id="hud-combo" style="background:#ffe17a"></div></div>
   <div class="hud-tc"><div id="hud-time">00:00</div><div class="prog"><div id="prog-marks"></div><div id="prog-lead"></div><div id="prog-me"></div><span class="flag">🏁</span></div><div class="hud-chip" id="hud-world" style="font-size:13px"></div><div class="hud-chip" id="hud-sim" style="font-size:12px;opacity:.85"></div></div>
-  <div class="hud-tr"><button id="pausebtn">⏸</button><div id="leaderboard"></div></div>
+  <div class="hud-tr"><button id="pausebtn">⏸</button><div id="leaderboard" class="lb-c" title="눌러서 순위 더 보기"></div></div>
 </div>
 <div id="qpanel" class="hidden"></div>
 <div id="roomhud" class="hidden"></div><div id="emotebar" class="hidden"></div><div id="roomcall" class="hidden"></div>
