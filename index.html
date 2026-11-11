@@ -423,7 +423,7 @@ const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 const damp = (a, b, lambda, dt) => lerp(a, b, 1 - Math.exp(-lambda * dt));
 const approach = (v, target, step) => (v < target ? Math.min(v + step, target) : Math.max(v - step, target));
-function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(RNG() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function todayStr() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 const FONT = "'Jua', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'WenQuanYi Zen Hei', sans-serif";
@@ -1603,66 +1603,20 @@ class Course {
     if (W === 'crystal') { this.laser(48, 'updown'); this.pillars(54, 70, 7, 0x8be9ff); this.laser(78, 'updown', { speed: 1.9 }); this.laser(88, 'low', { color: 0x5ef0ff }); this.sweeper(97, 10.5, 1.5); }
     this.checkpoint(60);
     const L = this.level;
-    this.stars(46, 70, 6); this.stars(84, 100, 4); this.stars(158, 166, 3, 5.5, 0);
+    this.stars(46, 70, 6); this.stars(84, 100, 4);
     this.speedPanel(41, 50, 9.5, 8, 'fast'); if (L >= 2) this.speedPanel(76, 84, -7, 10, 'slow');
     if (L >= 3) this.pendulum(106);
     if (L >= 4) this.punchers(54, 70, L >= 6 ? 3 : 2);
     // --- Gate 1 ---
     this.gate(124, 0); this.checkpoint(128.5);
-    // --- Section B (136..220): ramp up, plateau with pads, gap challenge, slide down ---
-    this.floor(136, 142, 0); this.ramp(142, 154, 0, 3); this.floor(154, 170, 3);
-    this.jumpPad(160, -7, 3); this.jumpPad(160, 7, 3); this.checkpoint(162, 3);
-    if (this.easy) { this.floor(170, 188, 3); this.bumpers(173, 186, 5, { y: 3 }); } else if (W === 'block' || (W === 'crystal')) { this.crumbleBridge(170, 188, 3); } else { this.gapPlatforms(170, 188, 3, 3); }
-    this.floor(188, 196, 3); this.checkpoint(190, 3);
-    if (W === 'crystal' && !this.easy) this.gapPlatforms(196, 206, 3, 1, { color: 0x8be9ff, bridgeX: -9.6 }), this.floor(206, 208, 3), this.ramp(208, 216, 3, 0, { slip: true }), this.floor(216, 220, 0);
-    else { this.ramp(196, 214, 3, 0, { slip: true }); this.floor(214, 220, 0); }
-    // --- Gate 2 ---
-    this.gate(232, 1); this.checkpoint(236.5);
-    // --- Section C (244..320) ---
-    this.jumpGap(262, 2.6); this.jumpGap(298, 2.8);
-    this.floorWithHoles(244, 320, 0);
-    if (W === 'candy') { this.sweeper(252, 10.5, 1.3); this.bumpers(270, 292, 6); this.sweeper(308, 6, 1.6, -5.5); this.sweeper(310, 6, 1.6, 5.5); }
-    if (W === 'block') { this.sweeper(252, 6, 1.5, -5.5); this.sweeper(254, 6, 1.5, 5.5); this.pushers(270, 292, 3, { jelly: false }); this.movingWall(310, { color: 0x5fe0b0 }); }
-    if (W === 'cloud') { this.windZone(244, 296, 9); this.sweeper(276, 10.5, 1.2); this.bumpers(302, 316, 5, { color: 0xffffff }); }
-    if (W === 'jungle') { this.sweeper(252, 6, 1.4, -5.5); this.sweeper(254, 6, 1.4, 5.5); this.bumpers(270, 292, 7, { color: 0xff6b5a }); this.pushers(304, 316, 2); }
-    if (W === 'space') { this.laser(252, 'updown', { speed: 1.8, color: 0xffd23f }); this.movingWall(274, { color: 0x7fe7ff }); this.sweeper(288, 10.5, 1.6); this.pillars(306, 318, 4, 0x8a7bff); }
-    if (W === 'crystal') { this.sweeper(252, 10.5, 1.6); this.laser(274, 'updown', { speed: 2 }); this.pushers(282, 292, 2); this.laser(308, 'updown', { color: 0x5ef0ff, speed: 1.6 }); this.pillars(312, 318, 3, 0xff9cf5); }
-    this.checkpoint(266); this.checkpoint(302);
-    this.stars(261.5, 265.5, 3, 1.6); this.stars(272, 290, 5); this.stars(297.5, 301.5, 3, 1.6);
-    this.speedPanel(245, 252, -9.5, 8, 'fast'); if (L >= 2) this.speedPanel(302, 308, 6, 12, 'slow'); if (L >= 2) this.mysteryPad(268, 0);
-    if (L >= 2) this.pendulum(316, { speed: 1.3 });
-    if (L >= 5) this.rollers(284, 298, L >= 6 ? 3 : 2);
-    // --- Gate 3 ---
-    this.gate(332, 2); this.checkpoint(336.5);
-    // --- Section D (344..420) ---
-    if (this.level >= 3) this.trapHole(373.5);
-    this.floorWithHoles(344, 420, 0);
-    if (this.level >= 3) this.trapPanels(373.5);
-    this.pushers(350, 366, 3, W === 'block' ? { jelly: false } : {}); this.sweeper(378, 10.5, 1.4); this.bumpers(388, 404, 6, { color: th.accent });
-    this.checkpoint(372);
-    this.stars(348, 366, 5); this.stars(390, 402, 4);
-    this.speedPanel(352, 360, 9.5, 8, 'fast'); if (L >= 2) { this.mysteryPad(384, -8); this.mysteryPad(384, 8); }
-    if (L >= 3) this.pendulum(345, { speed: 1.4 });
-    if (L >= 4) this.punchers(388, 404, L >= 6 ? 4 : 3);
-    if (L >= 2) this.conveyor(404, 416, 2 + 2 * this.df);
-    // --- Gate 4 ---
-    this.gate(432, 3); this.checkpoint(436.5);
-    // --- Section E (444..520): flat for beginners, hill + floating islands from level 2 ---
-    if (L >= 2) this.sectionIslands(L, th);
-    else {
-      this.jumpGap(480, 2.6);
-      if (this.level >= 4) this.trapHole(447.5);
-      this.floorWithHoles(444, 520, 0);
-      if (this.level >= 4) this.trapPanels(447.5);
-      this.movingWall(456, { color: th.accent }); this.sweeper(468, 6, 1.5, -5.5); this.sweeper(470, 6, 1.5, 5.5); this.bumpers(490, 506, 6, { color: th.accent });
-      this.checkpoint(486);
-      this.stars(458, 476, 5); this.stars(479.5, 483.5, 3, 1.6); this.stars(490, 504, 4);
-      if (L >= 2) this.speedPanel(472, 479, -8, 10, 'slow'); this.speedPanel(484, 490, 8, 9, 'fast');
-      if (L >= 3) this.stompers(508, 518, L >= 5 ? 3 : 2);
-      if (L >= 5) this.rollers(484, 506, L >= 6 ? 3 : 2);
-    }
-    // --- Gate 5 ---
-    this.gate(532, 4); this.checkpoint(536.5);
+    // --- four middle sections: picked and ordered differently for every map number ---
+    const pool = ['hill', 'holes', 'gauntlet', 'flat', 'zigzag', 'twinHill']; if (L >= 2) pool.push('islands');
+    this.plan = shuffle(pool).slice(0, 4);
+    [[136, 1, 232], [244, 2, 332], [344, 3, 432], [444, 4, 532]].forEach(([d0, gi, gd], i) => {
+      this['mod_' + this.plan[i]](d0, L, th, W);
+      if (i === 0) { this.floor(212, 220, 0); this.stars(213, 219, 3); }
+      this.gate(gd, gi); this.checkpoint(gd + 4.5);
+    });
     // --- Final (544..632) ---
     this.jumpGap(580, 2.6);
     this.floorWithHoles(544, 632, 0);
@@ -1700,20 +1654,104 @@ class Course {
     this.addSolid(g, 'cyl', R, h / 2, R, { kind: 'floor', motion });
     if (opts.star !== false) { const m = new THREE.Mesh(GEO.star, mat(0xffe11f, { emissive: 0xb88a00, roughness: 0.25 })); m.scale.setScalar(0.62); m.position.set(x, y + 1.5, -d); this.group.add(m); this.spinners.push({ o: m, sp: 3 }); (this.starList = this.starList || []).push({ m, x, y: y + 1.5, z: -d, got: false }); }
   }
-  sectionIslands(L, th) {
-    const Y = 4, sp = 0.5 + 0.35 * this.df;
-    this.floor(444, 450, 0); this.speedPanel(444.5, 450, 0, 10, 'fast'); this.movingWall(447, { color: th.accent });
-    this.ramp(450, 462, 0, Y); this.floor(462, 469.6, Y); this.checkpoint(465, Y);
-    this.stars(452, 460, 4, 2.4, -6); this.stars(452, 460, 4, 2.4, 6);
-    if (L >= 3) this.stompers(463.6, 468, 2, Y);
+  // ===== section modules: each fills 76 m starting at d0 =====
+  starAt(x, y, d) { const m = new THREE.Mesh(GEO.star, mat(0xffe11f, { emissive: 0xb88a00, roughness: 0.25 })); m.scale.setScalar(0.62); m.position.set(x, y, -d); this.group.add(m); this.spinners.push({ o: m, sp: 3 }); (this.starList = this.starList || []).push({ m, x, y, z: -d, got: false }); }
+  // world-flavoured obstacles between a and b (flat ground)
+  kit(W, a, b) {
+    if (W === 'candy') this.bumpers(a, b, 6);
+    else if (W === 'block') this.pushers(a, b, 3, { jelly: false });
+    else if (W === 'cloud') { this.windZone(a, b, 9); this.bumpers(a, b, 5, { color: 0xffffff }); }
+    else if (W === 'jungle') this.bumpers(a, b, 7, { color: 0xff6b5a });
+    else if (W === 'space') { this.movingWall((a + b) / 2, { color: 0x7fe7ff }); this.pillars(a, b, 4, 0x8a7bff); }
+    else { this.laser(a + 2, 'updown'); this.pillars(a + 4, b - 2, 4, 0x8be9ff); this.laser(b, 'updown', { speed: 2 }); }
+  }
+  mod_hill(d0, L, th, W) {
+    const D = (u) => d0 + u;
+    this.floor(D(0), D(6), 0); this.ramp(D(6), D(18), 0, 3); this.floor(D(18), D(34), 3);
+    this.jumpPad(D(24), -7, 3); this.jumpPad(D(24), 7, 3); this.checkpoint(D(26), 3); this.stars(D(22), D(30), 3, 8.5, 0);
+    if (this.easy) { this.floor(D(34), D(52), 3); this.bumpers(D(37), D(50), 5, { y: 3 }); } else if (W === 'block' || W === 'crystal') this.crumbleBridge(D(34), D(52), 3); else this.gapPlatforms(D(34), D(52), 3, 3);
+    this.floor(D(52), D(60), 3); this.checkpoint(D(54), 3);
+    this.ramp(D(60), D(74), 3, 0, { slip: true }); this.floor(D(74), D(76), 0);
+  }
+  mod_holes(d0, L, th, W) {
+    const D = (u) => d0 + u;
+    this.jumpGap(D(18), 2.6); this.jumpGap(D(54), 2.8); this.floorWithHoles(D(0), D(76), 0);
+    this.sweeper(D(8), 10.5, 1.3); this.kit(W, D(26), D(48)); this.sweeper(D(64), 6, 1.6, -5.5); this.sweeper(D(66), 6, 1.6, 5.5);
+    this.checkpoint(D(22)); this.checkpoint(D(58));
+    this.stars(D(17.5), D(21.5), 3, 1.6); this.stars(D(28), D(46), 5); this.stars(D(53.5), D(57.5), 3, 1.6);
+    this.speedPanel(D(1), D(8), -9.5, 8, 'fast'); if (L >= 2) { this.speedPanel(D(58), D(64), 6, 12, 'slow'); this.mysteryPad(D(24), 0); }
+    if (L >= 2) this.pendulum(D(72), { speed: 1.3 });
+    if (L >= 5) this.rollers(D(40), D(54), L >= 6 ? 3 : 2);
+  }
+  mod_gauntlet(d0, L, th, W) {
+    const D = (u) => d0 + u;
+    if (L >= 3) this.trapHole(D(29.5));
+    this.floorWithHoles(D(0), D(76), 0);
+    if (L >= 3) this.trapPanels(D(29.5));
+    this.pushers(D(6), D(22), 3, W === 'block' ? { jelly: false } : {}); this.sweeper(D(34), 10.5, 1.4); this.bumpers(D(44), D(60), 6, { color: th.accent });
+    this.checkpoint(D(28));
+    this.stars(D(4), D(22), 5); this.stars(D(46), D(58), 4);
+    this.speedPanel(D(8), D(16), 9.5, 8, 'fast'); if (L >= 2) { this.mysteryPad(D(40), -8); this.mysteryPad(D(40), 8); }
+    if (L >= 3) this.pendulum(D(1), { speed: 1.4 });
+    if (L >= 4) this.punchers(D(44), D(60), L >= 6 ? 4 : 3);
+    if (L >= 2) this.conveyor(D(60), D(72), 2 + 2 * this.df);
+  }
+  mod_flat(d0, L, th, W) {
+    const D = (u) => d0 + u;
+    this.jumpGap(D(36), 2.6);
+    if (L >= 4) this.trapHole(D(3.5));
+    this.floorWithHoles(D(0), D(76), 0);
+    if (L >= 4) this.trapPanels(D(3.5));
+    this.movingWall(D(12), { color: th.accent }); this.sweeper(D(24), 6, 1.5, -5.5); this.sweeper(D(26), 6, 1.5, 5.5); this.kit(W, D(46), D(62));
+    this.checkpoint(D(42));
+    this.stars(D(14), D(32), 5); this.stars(D(35.5), D(39.5), 3, 1.6); this.stars(D(46), D(60), 4);
+    if (L >= 2) this.speedPanel(D(28), D(35), -8, 10, 'slow'); this.speedPanel(D(40), D(46), 8, 9, 'fast');
+    if (L >= 3) this.stompers(D(64), D(74), L >= 5 ? 3 : 2);
+  }
+  mod_islands(d0, L, th, W) {
+    const D = (u) => d0 + u, Y = 4, sp = 0.5 + 0.35 * this.df;
+    this.floor(D(0), D(6), 0); this.speedPanel(D(0.5), D(6), 0, 10, 'fast'); this.movingWall(D(3), { color: th.accent });
+    this.ramp(D(6), D(18), 0, Y); this.floor(D(18), D(25.6), Y); this.checkpoint(D(21), Y);
+    this.stars(D(8), D(16), 4, 2.4, -6); this.stars(D(8), D(16), 4, 2.4, 6);
+    if (L >= 3) this.stompers(D(19.6), D(24), 2, Y);
     // safe but narrow bridge on the right; islands on the left are faster and have the stars
-    const bw = L <= 4 ? 5 : 3.8, bx = HALF_W - bw / 2 - 0.4; this.floor(469.4, 498.2, Y, { w: bw, x: bx, th: 0.8, rails: false }); this.lanesHint.push({ d0: 469, d1: 498.5, x: bx });
-    this.island(-9.5, 473, 2.5, Y); this.island(-2, 473.4, 2.5, Y);
-    this.island(-6, 479, 2.4, Y + 0.6, { bob: L >= 3 ? 0.5 : 0 });
-    this.island(-4.5, 486.6, 4.3, Y, { spin: sp, star: false }); this.stars(484.5, 488.5, 3, Y, -4.5);
-    this.island(-10.5, 493.6, 2.4, Y - 0.5, { bob: L >= 3 ? 0.6 : 0 }); this.island(0.5, 493.8, 2.4, Y + 0.4);
-    this.floor(498, 506, Y); this.checkpoint(501, Y);
-    this.ramp(506, 518, Y, 0, { slip: true }); this.floor(518, 520, 0);
+    const bw = L <= 4 ? 5 : 3.8, bx = HALF_W - bw / 2 - 0.4; this.floor(D(25.4), D(54.2), Y, { w: bw, x: bx, th: 0.8, rails: false }); this.lanesHint.push({ d0: D(25), d1: D(54.5), x: bx });
+    this.island(-9.5, D(29), 2.5, Y); this.island(-2, D(29.4), 2.5, Y);
+    this.island(-6, D(35), 2.4, Y + 0.6, { bob: L >= 3 ? 0.5 : 0 });
+    this.island(-4.5, D(42.6), 4.3, Y, { spin: sp, star: false }); this.stars(D(40.5), D(44.5), 3, Y, -4.5);
+    this.island(-10.5, D(49.6), 2.4, Y - 0.5, { bob: L >= 3 ? 0.6 : 0 }); this.island(0.5, D(49.8), 2.4, Y + 0.4);
+    this.floor(D(54), D(62), Y); this.checkpoint(D(57), Y);
+    this.ramp(D(62), D(74), Y, 0, { slip: true }); this.floor(D(74), D(76), 0);
+  }
+  // winding path over open air: S-curve or zigzag, narrower at higher levels
+  mod_zigzag(d0, L, th, W) {
+    const D = (u) => d0 + u, w = [14, 13, 11.5, 10.5, 9.5, 8.5][L - 1], A = Math.min(8.5, 14.5 - w / 2), kind = RNG() < 0.5 ? 'S' : 'Z', flip = RNG() < 0.5 ? -1 : 1, legs = kind === 'S' ? 1.5 : 2;
+    const U0 = 8, U1 = 68, c = (u) => { const p = clamp((u - U0) / (U1 - U0), 0, 1), env = Math.min(1, p * 6, (1 - p) * 6); if (kind === 'S') return flip * A * Math.sin(p * Math.PI * 2 * legs) * env; const q = (p * legs * 2) % 2, tri = q < 1 ? q * 2 - 1 : 3 - q * 2; return flip * A * tri * env; };
+    this.floor(D(0), D(U0), 0); this.checkpoint(D(3));
+    const z = this.zoneAt(D(38)), step = 3;
+    for (let u = U0; u < U1; u += step) {
+      const x0 = c(u), x1 = c(u + step), dx = x1 - x0, len = Math.hypot(dx, step) + 0.9;
+      const top = this.matTop.clone(); top.map = z.tex.clone(); top.map.needsUpdate = true; top.map.repeat.set(w / 7.5, len / 7.5);
+      const m = this.boxMesh(w, 1, len, z.side, top); m.position.set((x0 + x1) / 2, -0.5, -D(u + step / 2)); m.rotation.y = Math.atan2(-dx, step);
+      this.addSolid(m, 'box', w / 2, 0.5, len / 2, { kind: 'floor' });
+      this.lanesHint.push({ d0: D(u), d1: D(u + step) + 1, x: x1, must: true });
+      if (Math.round((u - U0) / step) % 2 === 0) this.starAt((x0 + x1) / 2, 1.35, D(u + step / 2));
+      for (const sd of [-1, 1]) { const post = new THREE.Mesh(GEO.cyl, this.loud(VIVID[Math.round(u / step) % VIVID.length], 4)); post.scale.set(0.3, 1.1, 0.3); const nx = Math.cos(m.rotation.y), nz = -Math.sin(m.rotation.y); post.position.set((x0 + x1) / 2 + sd * nx * (w / 2 - 0.3), 0.55, -D(u + step / 2) + sd * nz * (w / 2 - 0.3)); this.group.add(post); }
+    }
+    const mid = U0 + Math.round((U1 - U0) / 2 / step) * step; this.checkpoints.push({ d: D(mid), y: 0, x: c(mid) }); this.checkpoints.sort((p, q) => p.d - q.d);
+    this.floor(D(U1), D(76), 0); this.checkpoint(D(71)); this.stars(D(69), D(75), 3);
+    if (L >= 4) this.pendulum(D(72.5), { speed: 1.3 });
+  }
+  // two climbs and a long slide
+  mod_twinHill(d0, L, th, W) {
+    const D = (u) => d0 + u;
+    this.floor(D(0), D(4), 0); this.ramp(D(4), D(14), 0, 3); this.floor(D(14), D(30), 3); this.checkpoint(D(16), 3);
+    this.bumpers(D(18), D(28), 4, { y: 3 }); this.stars(D(16), D(28), 4, 3);
+    this.ramp(D(30), D(40), 3, 6); this.floor(D(40), D(54), 6); this.checkpoint(D(42), 6);
+    if (L >= 3) this.stompers(D(44), D(52), 2, 6); else this.bumpers(D(44), D(52), 3, { y: 6 });
+    this.jumpPad(D(51), -9, 6); this.jumpPad(D(51), 9, 6); this.stars(D(50), D(56), 3, 11, -9); this.stars(D(50), D(56), 3, 11, 9);
+    this.ramp(D(54), D(72), 6, 0, { slip: true }); this.floor(D(72), D(76), 0);
+    this.speedPanel(D(0.3), D(4), 0, 10, 'fast');
   }
   floorWithHoles(d0, d1, y) {
     const holes = (this.holes || []).filter((h) => h[0] >= d0 && h[1] <= d1).sort((a, b) => a[0] - b[0]);
@@ -2141,7 +2179,7 @@ class Race {
     this.useShadow = App.renderer.shadowMap.enabled;
     if (this.useShadow) { sun.castShadow = true; { const ms = Save.data.settings.quality === 'high' || Math.min(innerWidth, innerHeight) >= 600 ? 2048 : 1024; sun.shadow.mapSize.set(ms, ms); } const c = sun.shadow.camera; c.left = -30; c.right = 30; c.top = 34; c.bottom = -26; c.near = 1; c.far = 120; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03; sun.shadow.radius = 4; }
     this.camera = new THREE.PerspectiveCamera(62, 1, 0.1, 700);
-    this.subject = opts.subject || 'math'; this.room = opts.room || null; this.course = withSeed(opts.seed, () => new Course(this.scene, this.worldId, opts.courseLevel || this.level, { noGates: this.subject === 'run' }));
+    this.subject = opts.subject || 'math'; this.room = opts.room || null; this.mapNo = 0; if (!opts.seed) { do { this.mapNo = opts.mapNo || 1 + Math.floor(Math.random() * MAPS_PER_LEVEL); } while (!opts.mapNo && this.mapNo === App._lastMap); App._lastMap = this.mapNo; } const seed = opts.seed || mapSeed(this.worldId, opts.courseLevel || this.level, this.mapNo); this.course = withSeed(seed, () => new Course(this.scene, this.worldId, opts.courseLevel || this.level, { noGates: this.subject === 'run' }));
     { const used = new Set(); this.course.qmaker = (lvl) => { let q; for (let k = 0; k < 10; k++) { q = makeSubjectQuestion(this.subject, lvl); if (!used.has(q.text)) break; } used.add(q.text); return q; }; }
     this.particles = new Particles(this.scene);
     this.racers = []; this.t = 0; this.state = 'countdown'; this.cd = 3.6; this.finishCount = 0; this.raceTime = 0;
@@ -2182,7 +2220,7 @@ class Race {
   // ---------- HUD ----------
   buildHUD() {
     $('#hud').classList.remove('hidden'); $('#controls').classList.remove('hidden');
-    $('#hud-world').textContent = `${WORLDS[this.worldId].icon} ${WORLDS[this.worldId].name}`;
+    $('#hud-world').textContent = `${WORLDS[this.worldId].icon} ${WORLDS[this.worldId].name}${this.mapNo ? ' · 맵 ' + this.mapNo : ''}`;
     $('#hud-sim').textContent = this.subject === 'run' ? '🔥 피버 모드 · 에너지 2배' : `${SUBJECTS[this.subject].icon} ${SUBJECTS[this.subject].name} · AI ${this.N - 1}명`;
     $('#qpanel').classList.add('hidden'); $('#bigmsg').classList.add('hidden');
     const bar = $('#prog-marks'); bar.innerHTML = '';
@@ -2350,8 +2388,8 @@ class Race {
   near(r) { return Math.abs(r.p.z - this.player.p.z) < 25; }
   respawn(r) {
     const cp = this.course.checkpoints[r.cp];
-    r.p.set(rand(-6, 6), cp.y + 2.2, -cp.d); r.v.set(0, 0, 0); r.stunT = 0; r.flatT = 0; r.immuneT = 1.5; r.view.stretch(0.3);
-    if (r.ai) { r.ai.laneX = rand(-6, 6); }
+    r.p.set(cp.x != null ? cp.x + rand(-1.5, 1.5) : rand(-6, 6), cp.y + 2.2, -cp.d); r.v.set(0, 0, 0); r.stunT = 0; r.flatT = 0; r.immuneT = 1.5; r.view.stretch(0.3);
+    if (r.ai) { r.ai.laneX = cp.x != null ? cp.x : rand(-6, 6); }
     this.particles.spawn(r.p.x, r.p.y, r.p.z, 12, ['#ffffff', '#c9b6ff'], 3, 0.6, 0.4, 2, 1);
   }
   // doors are walls until this racer has been let through by a reveal
@@ -2491,7 +2529,7 @@ class Race {
     // lane selection with obstacle look-ahead
     let target = A.laneX;
     const hint = C.lanesHint.find((h) => d > h.d0 - 12 && d < h.d1 - 1);
-    if (hint && T.jump < 0.9) target = hint.x;
+    if (hint && (hint.must || T.jump < 0.9)) target = hint.x;
     // aggressive racers steer toward neighbours, stompers line up behind someone
     if ((T.aggro > 0.5 || T.stomp > 0.5) && !hint) {
       let best = null, bd = 9; for (const o of this.racers) { if (o === r || o.respawnT > 0) continue; const ddz = r.p.z - o.p.z; if (ddz < 0.5 || ddz > 5) continue; const dd = Math.abs(o.p.x - r.p.x) + ddz * 0.5; if (dd < bd) { bd = dd; best = o; } }
@@ -3794,6 +3832,8 @@ const EMOTES = ['😀', '😂', '😮', '😢', '😡', '👍', '🎉', '❤️'
 const ROOM_MAX = 8, ROOM_HZ = 6;
 
 // run fn with Math.random replaced by a seeded generator (so every client builds the same course)
+const MAPS_PER_LEVEL = 30;
+function mapSeed(world, level, no) { return 100000 + WORLD_ORDER.indexOf(world) * 10000 + level * 1000 + no * 7; }
 function withSeed(seed, fn) {
   if (!seed) return fn();
   let a = seed >>> 0; const orig = RNG;

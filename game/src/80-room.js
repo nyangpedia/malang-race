@@ -8,6 +8,8 @@ const EMOTES = ['😀', '😂', '😮', '😢', '😡', '👍', '🎉', '❤️'
 const ROOM_MAX = 8, ROOM_HZ = 6;
 
 // run fn with Math.random replaced by a seeded generator (so every client builds the same course)
+const MAPS_PER_LEVEL = 30;
+function mapSeed(world, level, no) { return 100000 + WORLD_ORDER.indexOf(world) * 10000 + level * 1000 + no * 7; }
 function withSeed(seed, fn) {
   if (!seed) return fn();
   let a = seed >>> 0; const orig = RNG;

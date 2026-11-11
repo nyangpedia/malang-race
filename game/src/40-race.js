@@ -135,7 +135,7 @@ class Race {
     this.useShadow = App.renderer.shadowMap.enabled;
     if (this.useShadow) { sun.castShadow = true; { const ms = Save.data.settings.quality === 'high' || Math.min(innerWidth, innerHeight) >= 600 ? 2048 : 1024; sun.shadow.mapSize.set(ms, ms); } const c = sun.shadow.camera; c.left = -30; c.right = 30; c.top = 34; c.bottom = -26; c.near = 1; c.far = 120; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03; sun.shadow.radius = 4; }
     this.camera = new THREE.PerspectiveCamera(62, 1, 0.1, 700);
-    this.subject = opts.subject || 'math'; this.room = opts.room || null; this.course = withSeed(opts.seed, () => new Course(this.scene, this.worldId, opts.courseLevel || this.level, { noGates: this.subject === 'run' }));
+    this.subject = opts.subject || 'math'; this.room = opts.room || null; this.mapNo = 0; if (!opts.seed) { do { this.mapNo = opts.mapNo || 1 + Math.floor(Math.random() * MAPS_PER_LEVEL); } while (!opts.mapNo && this.mapNo === App._lastMap); App._lastMap = this.mapNo; } const seed = opts.seed || mapSeed(this.worldId, opts.courseLevel || this.level, this.mapNo); this.course = withSeed(seed, () => new Course(this.scene, this.worldId, opts.courseLevel || this.level, { noGates: this.subject === 'run' }));
     { const used = new Set(); this.course.qmaker = (lvl) => { let q; for (let k = 0; k < 10; k++) { q = makeSubjectQuestion(this.subject, lvl); if (!used.has(q.text)) break; } used.add(q.text); return q; }; }
     this.particles = new Particles(this.scene);
     this.racers = []; this.t = 0; this.state = 'countdown'; this.cd = 3.6; this.finishCount = 0; this.raceTime = 0;
@@ -176,7 +176,7 @@ class Race {
   // ---------- HUD ----------
   buildHUD() {
     $('#hud').classList.remove('hidden'); $('#controls').classList.remove('hidden');
-    $('#hud-world').textContent = `${WORLDS[this.worldId].icon} ${WORLDS[this.worldId].name}`;
+    $('#hud-world').textContent = `${WORLDS[this.worldId].icon} ${WORLDS[this.worldId].name}${this.mapNo ? ' · 맵 ' + this.mapNo : ''}`;
     $('#hud-sim').textContent = this.subject === 'run' ? '🔥 피버 모드 · 에너지 2배' : `${SUBJECTS[this.subject].icon} ${SUBJECTS[this.subject].name} · AI ${this.N - 1}명`;
     $('#qpanel').classList.add('hidden'); $('#bigmsg').classList.add('hidden');
     const bar = $('#prog-marks'); bar.innerHTML = '';
@@ -344,8 +344,8 @@ class Race {
   near(r) { return Math.abs(r.p.z - this.player.p.z) < 25; }
   respawn(r) {
     const cp = this.course.checkpoints[r.cp];
-    r.p.set(rand(-6, 6), cp.y + 2.2, -cp.d); r.v.set(0, 0, 0); r.stunT = 0; r.flatT = 0; r.immuneT = 1.5; r.view.stretch(0.3);
-    if (r.ai) { r.ai.laneX = rand(-6, 6); }
+    r.p.set(cp.x != null ? cp.x + rand(-1.5, 1.5) : rand(-6, 6), cp.y + 2.2, -cp.d); r.v.set(0, 0, 0); r.stunT = 0; r.flatT = 0; r.immuneT = 1.5; r.view.stretch(0.3);
+    if (r.ai) { r.ai.laneX = cp.x != null ? cp.x : rand(-6, 6); }
     this.particles.spawn(r.p.x, r.p.y, r.p.z, 12, ['#ffffff', '#c9b6ff'], 3, 0.6, 0.4, 2, 1);
   }
   // doors are walls until this racer has been let through by a reveal
@@ -485,7 +485,7 @@ class Race {
     // lane selection with obstacle look-ahead
     let target = A.laneX;
     const hint = C.lanesHint.find((h) => d > h.d0 - 12 && d < h.d1 - 1);
-    if (hint && T.jump < 0.9) target = hint.x;
+    if (hint && (hint.must || T.jump < 0.9)) target = hint.x;
     // aggressive racers steer toward neighbours, stompers line up behind someone
     if ((T.aggro > 0.5 || T.stomp > 0.5) && !hint) {
       let best = null, bd = 9; for (const o of this.racers) { if (o === r || o.respawnT > 0) continue; const ddz = r.p.z - o.p.z; if (ddz < 0.5 || ddz > 5) continue; const dd = Math.abs(o.p.x - r.p.x) + ddz * 0.5; if (dd < bd) { bd = dd; best = o; } }
