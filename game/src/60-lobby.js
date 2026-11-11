@@ -276,7 +276,7 @@ Object.assign(App, {
   enterHub() {
     this.show('hub'); this.setHubZoom(0); this.closeModal(); $('#controls').classList.remove('hidden');
     const H = this.hub; if (Math.hypot(H.pp.x, H.pp.z + 15) < 3.4) { H.pp.set(0, H.Y0, -10.5); H.pv.set(0, 0, 0); }
-    this.checkDaily(); this.drawHub(); Sound.startMusic(MUSIC.hub);
+    this.checkDaily(); this.drawHub(); Sound.startMusic(MUSIC.hub); setTimeout(() => this.olNotice(), 1200);
     { const S = Save.data; if (S.profile && S.runTickets > 0 && !S.feverSeen && $('#modal').classList.contains('hidden')) this.feverModal(); }
   },
   menuDaily() {

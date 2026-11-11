@@ -10,9 +10,9 @@ const ROOM_MAX = 8, ROOM_HZ = 6;
 // run fn with Math.random replaced by a seeded generator (so every client builds the same course)
 function withSeed(seed, fn) {
   if (!seed) return fn();
-  let a = seed >>> 0; const orig = Math.random;
-  Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  try { return fn(); } finally { Math.random = orig; }
+  let a = seed >>> 0; const orig = RNG;
+  RNG = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try { return fn(); } finally { RNG = orig; }
 }
 const _emoTex = {};
 function emoteSprite(e) {

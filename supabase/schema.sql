@@ -428,8 +428,118 @@ do $$ begin
   end if;
 end $$;
 
+-- ---------- 관리자 (게임 운영자) ----------
+-- 운영자 지정: 아래 한 줄의 이메일을 내 보호자 계정 이메일로 바꿔 SQL Editor에서 한 번 실행하세요.
+--   insert into public.admins(user_id) select id from auth.users where email = '내이메일@example.com' on conflict do nothing;
+create table if not exists public.admins (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table public.admins enable row level security;
+
+create table if not exists public.notices (
+  id bigint generated always as identity primary key,
+  body text not null check (char_length(body) between 1 and 200),
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table public.notices enable row level security;
+
+create or replace function public.is_admin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.admins where user_id = auth.uid())
+$$;
+
+create or replace function public.admin_stats() returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare today timestamptz := date_trunc('day', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul';
+begin
+  if not public.is_admin() then return jsonb_build_object('ok', false, 'err', 'not_admin'); end if;
+  return jsonb_build_object('ok', true,
+    'guardians', (select count(*) from public.guardians),
+    'children', (select count(*) from public.children),
+    'new_children_7d', (select count(*) from public.children where created_at >= now() - interval '7 days'),
+    'games_today', (select count(*) from public.scores where created_at >= today),
+    'players_today', (select count(distinct child_id) from public.scores where created_at >= today),
+    'games_7d', (select count(*) from public.scores where created_at >= now() - interval '7 days'),
+    'room_games_7d', (select count(*) from public.scores where in_room and created_at >= now() - interval '7 days'),
+    'friendships', (select count(*) from public.friendships where status = 'approved'),
+    'pending_friends', (select count(*) from public.friendships where status = 'pending'),
+    'rooms_open', (select count(*) from public.rooms where created_at >= now() - interval '2 hours'),
+    'daily', (select coalesce(jsonb_agg(jsonb_build_object('d', d, 'n', n) order by d), '[]'::jsonb) from (
+      select to_char(created_at at time zone 'Asia/Seoul', 'MM-DD') as d, count(*) as n from public.scores
+      where created_at >= today - interval '13 days' group by 1) x));
+end $$;
+
+create or replace function public.admin_find_children(q text default '')
+returns table (id uuid, nickname text, friend_code text, level int, created_at timestamptz, games bigint, best int)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_admin() then return; end if;
+  return query
+  select c.id, c.nickname, c.friend_code, c.level, c.created_at, count(s.id), max(s.score)
+  from public.children c left join public.scores s on s.child_id = c.id
+  where coalesce(btrim(q), '') = '' or c.nickname ilike '%' || btrim(q) || '%' or c.friend_code = upper(btrim(q))
+  group by c.id order by c.created_at desc limit 60;
+end $$;
+
+create or replace function public.admin_child_scores(child uuid)
+returns table (id bigint, world text, subject text, score int, rnk int, n int, time_s real, created_at timestamptz)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_admin() then return; end if;
+  return query select s.id, s.world, s.subject, s.score, s.rank, s.n, s.time_s, s.created_at
+  from public.scores s where s.child_id = child order by s.score desc, s.created_at desc limit 40;
+end $$;
+
+create or replace function public.admin_rename_child(child uuid, nick text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then return jsonb_build_object('ok', false, 'err', 'not_admin'); end if;
+  nick := btrim(nick);
+  if not public._nick_ok(nick) then return jsonb_build_object('ok', false, 'err', 'nick'); end if;
+  update public.children set nickname = nick where id = child;
+  return jsonb_build_object('ok', found);
+end $$;
+
+create or replace function public.admin_delete_score(score_id bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then return jsonb_build_object('ok', false, 'err', 'not_admin'); end if;
+  delete from public.scores where id = score_id;
+  return jsonb_build_object('ok', found);
+end $$;
+
+create or replace function public.admin_clear_scores(child uuid) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare k int;
+begin
+  if not public.is_admin() then return jsonb_build_object('ok', false, 'err', 'not_admin'); end if;
+  delete from public.scores where child_id = child; get diagnostics k = row_count;
+  return jsonb_build_object('ok', true, 'deleted', k);
+end $$;
+
+create or replace function public.admin_set_notice(body text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then return jsonb_build_object('ok', false, 'err', 'not_admin'); end if;
+  update public.notices set active = false where active;
+  body := btrim(coalesce(body, ''));
+  if body = '' then return jsonb_build_object('ok', true, 'cleared', true); end if;
+  if char_length(body) > 200 then return jsonb_build_object('ok', false, 'err', 'too_long'); end if;
+  insert into public.notices(body) values (body);
+  return jsonb_build_object('ok', true);
+end $$;
+
+create or replace function public.get_notice()
+returns table (id bigint, body text, created_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select n.id, n.body, n.created_at from public.notices n where n.active order by n.id desc limit 1
+$$;
+
 -- ---------- who may call what ----------
 revoke execute on all functions in schema public from public, anon;
 grant execute on all functions in schema public to authenticated;
 revoke execute on function public._pin_ok(text) from authenticated;
 revoke execute on function public._new_code(int) from authenticated;
+grant execute on function public.get_notice() to anon;

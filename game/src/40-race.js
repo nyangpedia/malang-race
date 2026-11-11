@@ -127,11 +127,11 @@ class Race {
   constructor(opts) {
     this.opts = opts; this.worldId = opts.worldId; this.level = opts.level; this.N = opts.count;
     this.scene = new THREE.Scene(); const th = WORLDS[this.worldId]; this.gMul = th.gravity || 1;
-    this.scene.fog = new THREE.Fog(th.fog, 60, 230);
-    this.scene.add(makeSky(th.skyTop, th.skyBot));
+    this.scene.fog = new THREE.Fog(th.fog, 90, 330);
+    this.scene.add(makeSky(th.skyTop, th.skyBot, th.skyMid));
     this.scene.environment = App.envMap;
-    const hemi = new THREE.HemisphereLight(0xffffff, th.ground || 0xcfd8ff, 0.6); this.scene.add(hemi);
-    const sun = new THREE.DirectionalLight(0xfff1dc, 2.4); sun.position.set(-20, 40, 25); this.scene.add(sun); this.scene.add(sun.target); this.sun = sun;
+    const hemi = new THREE.HemisphereLight(0xffffff, th.ground || 0xcfd8ff, 0.45); this.scene.add(hemi);
+    const sun = new THREE.DirectionalLight(0xfff1dc, 2.0); sun.position.set(-20, 40, 25); this.scene.add(sun); this.scene.add(sun.target); this.sun = sun;
     this.useShadow = App.renderer.shadowMap.enabled;
     if (this.useShadow) { sun.castShadow = true; { const ms = Save.data.settings.quality === 'high' || Math.min(innerWidth, innerHeight) >= 600 ? 2048 : 1024; sun.shadow.mapSize.set(ms, ms); } const c = sun.shadow.camera; c.left = -30; c.right = 30; c.top = 34; c.bottom = -26; c.near = 1; c.far = 120; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03; sun.shadow.radius = 4; }
     this.camera = new THREE.PerspectiveCamera(62, 1, 0.1, 700);
@@ -259,6 +259,8 @@ class Race {
     this.showQuestion(nextG);
     // views
     for (const r of this.racers) this.updateView(r, dt);
+    this.fwT = (this.fwT || 0) - dt;
+    if (this.fwT <= 0 && (this.state === 'run' || this.state === 'finished')) { this.fwT = this.state === 'finished' ? 0.35 : rand(1.2, 2.4); const P = this.player; if (P) { const cs = pick([['#ff3b5c', '#ffe11f'], ['#20b8ff', '#ffffff'], ['#8a5cff', '#ff4fd8'], ['#3fd35a', '#ffe11f'], ['#ff9a1f', '#ff3b5c']]); this.particles.spawn(rand(-45, 45), rand(26, 40), P.p.z - rand(50, 110), 46, cs, 16, 1.5, 2.2, 4, 0); } }
     this.particles.update(dt);
     // ranking
     this.rankT -= dt; if (this.rankT <= 0) { this.rankT = 0.25; this.order = this.racers.slice().sort((a, b) => b.progress() - a.progress()); }
@@ -289,6 +291,7 @@ class Race {
       if (r.isPlayer) Sound.play('jump');
     }
     r.lastVy = r.v.y;
+    if (r.ground && r.gs && r.gs.conv && !r.gs.slip) r.p.addScaledVector(r.gs.conv, dt); // conveyor belt
     r.p.addScaledVector(r.v, dt);
     // collisions
     const wasGround = r.ground; r.ground = false; r.gs = null;
@@ -302,6 +305,10 @@ class Race {
         r.p.x += nx * depth; r.p.y += ny * depth; r.p.z += nz * depth;
         const vn = r.v.x * nx + r.v.y * ny + r.v.z * nz;
         if (vn < 0) { r.v.x -= nx * vn; r.v.y -= ny * vn; r.v.z -= nz * vn; }
+        if (s.kind === 'stomper' && ny < -0.3 && s.vel.y < -2 && r.bounceCD <= 0) {
+          r.view.flatten(0.7); r.flatT = 0.7; r.bounceCD = 0.8; r.v.x = (r.p.x >= s.c.x ? 1 : -1) * 7; r.v.z = 2; r.view.setFace('dizzy', 1);
+          if (this.near(r)) Sound.play('squished'); this.particles.spawn(r.p.x, r.p.y, r.p.z, 10, ['#ffffff', '#ffe680'], 4, 0.4, 0.3, 6, 1);
+        }
         if (ny > 0.55) {
           r.ground = true; r.gs = s;
           if (s.kind === 'pad') { r.v.y = s.pad; r.v.z -= 3; r.ground = false; r.gs = null; s.padAnim = 0.6; r.view.stretch(0.55); if (this.near(r)) Sound.play('pad'); this.particles.spawn(r.p.x, r.p.y - 0.4, r.p.z, 10, ['#ffffff', '#fff3a0'], 3, 0.5, 0.35, 4, 1); }
@@ -554,12 +561,26 @@ function spawnTrail(P, kind, p) {
   if (kind === 'rainbow') P.spawn(x, y, z, 2, ['#ff5a7a', '#ff9a3c', '#ffd23f', '#5fd35f', '#3fc2ff', '#a86bff'], 0.3, 0.7, 0.4, 0, 0.2);
   if (kind === 'numbers') P.spawn(x, y, z, 1, ['#7fe7ff', '#fff38a'], 1.2, 0.5, 0.3, -1, 1);
 }
-function makeSky(top, bot) {
-  const g = new THREE.SphereGeometry(500, 24, 16);
-  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { top: { value: new THREE.Color(top) }, bot: { value: new THREE.Color(bot) } },
+function makeSky(top, bot, mid) {
+  const g = new THREE.SphereGeometry(500, 32, 20);
+  const u = { top: { value: new THREE.Color(top) }, bot: { value: new THREE.Color(bot) }, mid: { value: new THREE.Color(mid == null ? new THREE.Color(top).lerp(new THREE.Color(bot), 0.5) : mid) }, t: { value: 0 }, fx: { value: mid == null ? 0 : 1 } };
+  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: u,
     vertexShader: 'varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
-    fragmentShader: 'uniform vec3 top; uniform vec3 bot; varying vec3 vP; void main(){ float h=clamp(vP.y*1.6+0.25,0.0,1.0); gl_FragColor=vec4(mix(bot,top,h),1.0); }' });
-  const s = new THREE.Mesh(g, m); s.renderOrder = -1; return s;
+    fragmentShader: [
+      'uniform vec3 top; uniform vec3 bot; uniform vec3 mid; uniform float t; uniform float fx; varying vec3 vP;',
+      'void main(){',
+      ' float h=clamp(vP.y*1.5+0.3,0.0,1.0);',
+      ' vec3 c = h<0.5 ? mix(bot,mid,h*2.0) : mix(mid,top,(h-0.5)*2.0);',
+      ' vec3 sd=normalize(vec3(0.0,0.18,-1.0)); float a=acos(clamp(dot(vP,sd),-1.0,1.0));',
+      ' vec3 q=vP-sd*dot(vP,sd); float ang=atan(q.y,q.x);',
+      ' float rays=smoothstep(0.55,1.0,sin(ang*12.0+t*0.25))*smoothstep(1.3,0.15,a)*0.22*fx;',
+      ' float sun=smoothstep(0.14,0.10,a)*fx; float halo=smoothstep(0.6,0.0,a)*0.35*fx;',
+      ' float band=smoothstep(0.06,0.0,abs(vP.y-0.02))*0.25*fx;',
+      ' c += vec3(1.0,0.95,0.8)*(rays+halo+band); c=mix(c,vec3(1.0,0.98,0.85),sun);',
+      ' gl_FragColor=vec4(c,1.0); }'].join('\n') });
+  const s = new THREE.Mesh(g, m); s.renderOrder = -1; s.frustumCulled = false;
+  s.onBeforeRender = (r, sc, cam) => { u.t.value = performance.now() / 1000; s.position.copy(cam.position); };
+  return s;
 }
 function playerLook() {
   const S = Save.data, e = S.equip;

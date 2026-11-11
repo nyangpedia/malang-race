@@ -9,7 +9,7 @@ const OL_ERR = {
   exists: '이미 친구이거나 신청한 친구예요.', too_many: '승인을 기다리는 신청이 너무 많아요.',
   not_friend: '보호자님이 승인한 친구의 방만 들어갈 수 있어요.', no_room: '방이 없거나 이미 닫혔어요.',
   rooms_off: '보호자님이 친구 방을 꺼 두었어요.', not_mine: '권한이 없어요.', auth: '로그인이 필요해요.',
-  invalid: '기록을 확인하지 못했어요.', too_fast: '', net: '서버에 연결하지 못했어요. 인터넷을 확인해 주세요.',
+  invalid: '기록을 확인하지 못했어요.', not_admin: '관리자만 할 수 있어요.', too_long: '공지는 200글자까지 쓸 수 있어요.', too_fast: '', net: '서버에 연결하지 못했어요. 인터넷을 확인해 주세요.',
 };
 const olErr = (e) => (e && e.err ? OL_ERR[e.err] || e.err : e && e.message ? (/fetch|network|Failed/i.test(e.message) ? OL_ERR.net : e.message) : OL_ERR.net);
 const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
@@ -41,6 +41,7 @@ const Online = {
     const g = await this.sb.from('guardians').select('id,consent_at').maybeSingle(); if (g.error) throw g.error; this.guardian = g.data || null;
     const c = await this.sb.from('children').select('id,nickname,friend_code,look,level,controls,created_at').order('created_at'); if (c.error) throw c.error;
     this.children = c.data || [];
+    try { this.admin = !!(await this.rpc('is_admin')); } catch (e) { this.admin = false; }
     if (this.child) this.child = this.children.find((k) => k.id === this.child.id) || null;
   },
   lastChildId() { return LS.get('malangrace.child'); },
@@ -234,8 +235,61 @@ Object.assign(App, {
     });
   },
   // ---------------- guardian menu ----------------
+  // ---------- operator (admin) screen: only accounts listed in public.admins ----------
+  async olAdmin(q = '') {
+    const back = '<div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm gray" id="ad-back">← 보호자 메뉴</button></div>';
+    this.modal('<h2>🛠️ 관리자 모드</h2><p class="muted">불러오는 중…</p>');
+    let st, kids, notice;
+    try { [st, kids, notice] = await Promise.all([Online.call('admin_stats'), Online.rpc('admin_find_children', { q }), Online.rpc('get_notice')]); }
+    catch (e) { this.modal(`<h2>🛠️ 관리자 모드</h2><p class="ol-msg bad">${olErr(e)}</p>${back}`); $('#ad-back').onclick = () => this.olParent('kids'); return; }
+    const box = (n, l) => `<div class="ad-stat"><b>${(+n || 0).toLocaleString('ko-KR')}</b><span>${l}</span></div>`;
+    const days = st.daily || [], mx = Math.max(1, ...days.map((d) => d.n));
+    const nt = notice && notice[0];
+    this.modal(`<h2>🛠️ 관리자 모드</h2>
+      <div class="ad-grid">${box(st.guardians, '보호자 계정')}${box(st.children, '아이')}${box(st.new_children_7d, '7일 새 아이')}${box(st.players_today, '오늘 플레이한 아이')}${box(st.games_today, '오늘 판 수')}${box(st.games_7d, '7일 판 수')}${box(st.room_games_7d, '7일 친구 방 판')}${box(st.friendships, '친구 맺기')}</div>
+      <h3>최근 14일 판 수</h3><div class="ad-bars">${days.length ? days.map((d) => `<div title="${d.d} · ${d.n}판"><i style="height:${Math.round(d.n / mx * 100)}%"></i><small>${d.d.slice(3)}</small></div>`).join('') : '<p class="muted">아직 기록이 없어요.</p>'}</div>
+      <h3>📢 공지</h3><p class="muted">모든 아이가 광장에 들어올 때 한 번 보여요. 비워서 저장하면 공지를 내려요.</p>
+      <div class="row"><input class="ol-inline" id="ad-notice" maxlength="200" style="flex:1" value="${escapeHtml(nt ? nt.body : '')}" placeholder="예: 이번 주말에 새 월드가 열려요!"><button class="btn sm blue" id="ad-nsave">저장</button></div>
+      <h3>👧 아이 찾기</h3><div class="row"><input class="ol-inline" id="ad-q" style="flex:1" value="${escapeHtml(q)}" placeholder="닉네임 또는 친구 코드"><button class="btn sm blue" id="ad-find">찾기</button></div>
+      <div class="ad-list">${(kids || []).map((k) => `<div class="wn ol-row" data-ak="${k.id}"><span><b>${escapeHtml(k.nickname)}</b> <span class="muted">LV${k.level} · ${k.friend_code} · ${new Date(k.created_at).toLocaleDateString('ko-KR')}</span></span><span class="muted">${k.games}판 · 최고 ${k.best || 0}점 ›</span></div>`).join('') || '<p class="muted">찾은 아이가 없어요.</p>'}</div>
+      <div class="ol-msg" id="ol-msg"></div>${back}`);
+    const msg = (t) => { $('#ol-msg').textContent = t; };
+    $('#ad-back').onclick = () => this.olParent('kids');
+    $('#ad-find').onclick = () => this.olAdmin($('#ad-q').value.trim());
+    $('#ad-q').onkeydown = (e) => { if (e.key === 'Enter') $('#ad-find').click(); };
+    $('#ad-nsave').onclick = async () => { try { const r = await Online.call('admin_set_notice', { body: $('#ad-notice').value }); msg(r.cleared ? '공지를 내렸어요.' : '공지를 올렸어요.'); } catch (e) { msg(olErr(e)); } };
+    $$('[data-ak]').forEach((r) => (r.onclick = () => this.olAdminKid(r.dataset.ak, q)));
+  },
+  async olAdminKid(id, q) {
+    let sc = [], k;
+    try { [sc, k] = await Promise.all([Online.rpc('admin_child_scores', { child: id }), Online.rpc('admin_find_children', { q }).then((l) => (l || []).find((x) => x.id === id))]); } catch (e) { return this.olAdmin(q); }
+    if (!k) return this.olAdmin(q);
+    this.modal(`<h2>🛠️ ${escapeHtml(k.nickname)}</h2><p class="muted">LV${k.level} · 친구 코드 ${k.friend_code} · 가입 ${new Date(k.created_at).toLocaleDateString('ko-KR')} · ${k.games}판</p>
+      <div class="switch"><span>닉네임 바꾸기</span><span class="row"><input class="ol-inline" id="ad-nick" maxlength="10" value="${escapeHtml(k.nickname)}"><button class="btn sm blue" id="ad-ren">바꾸기</button></span></div>
+      <div class="switch"><span>이 아이 점수 모두 지우기 <span class="muted">(랭킹에서 빠져요)</span></span><button class="btn sm gray" id="ad-clr">모두 지우기</button></div>
+      <h3>점수 (높은 순)</h3>${sc.length ? sc.map((s) => `<div class="wn ol-row"><span>${WORLDS[s.world] ? WORLDS[s.world].icon : ''} <b>${s.score}점</b> <span class="muted">${s.rnk}/${s.n}등 · ${fmtTime(s.time_s)} · ${new Date(s.created_at).toLocaleString('ko-KR')}</span></span><button class="btn sm gray" data-ds="${s.id}">지우기</button></div>`).join('') : '<p class="muted">점수가 없어요.</p>'}
+      <div class="ol-msg" id="ol-msg"></div><div class="row" style="justify-content:center;margin-top:10px"><button class="btn sm gray" id="ad-back">← 관리자 모드</button></div>`);
+    const msg = (t) => { $('#ol-msg').textContent = t; };
+    $('#ad-back').onclick = () => this.olAdmin(q);
+    $('#ad-ren').onclick = async () => { try { await Online.call('admin_rename_child', { child: id, nick: $('#ad-nick').value }); msg('닉네임을 바꿨어요.'); } catch (e) { msg(olErr(e)); } };
+    $('#ad-clr').onclick = async (e) => { const b = e.currentTarget; if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = '정말 지울까요?'; return; } try { await Online.call('admin_clear_scores', { child: id }); this.olAdminKid(id, q); } catch (er) { msg(olErr(er)); } };
+    $$('[data-ds]').forEach((b) => (b.onclick = async () => { try { await Online.call('admin_delete_score', { score_id: +b.dataset.ds }); this.olAdminKid(id, q); } catch (er) { msg(olErr(er)); } }));
+  },
+  // notice from the operator, shown once when a child enters the plaza
+  async olNotice() {
+    if (!Online.enabled || !Online.ready || this._noticeBusy) return; this._noticeBusy = true;
+    try {
+      const r = await Online.rpc('get_notice'); const n = r && r[0];
+      if (n && String(n.id) !== LS.get('malangrace.notice') && this.screen === 'hub' && $('#modal').classList.contains('hidden')) {
+        this.modal(`<h2>📢 알림</h2><p style="font-size:20px;line-height:1.5">${escapeHtml(n.body)}</p><div class="row" style="justify-content:center"><button class="btn" id="nt-ok">알겠어요</button></div>`);
+        $('#nt-ok').onclick = () => { LS.set('malangrace.notice', String(n.id)); this.closeModal(); };
+      }
+    } catch (e) {}
+    this._noticeBusy = false;
+  },
   async olParent(tab = 'kids') {
-    const tabs = [['kids', '📊 아이 기록'], ['friends', '🤝 친구 승인'], ['rules', '⏰ 사용 규칙'], ['account', '🔑 계정']];
+    if (tab === 'admin') return this.olAdmin();
+    const tabs = [['kids', '📊 아이 기록'], ['friends', '🤝 친구 승인'], ['rules', '⏰ 사용 규칙'], ['account', '🔑 계정']]; if (Online.admin) tabs.push(['admin', '🛠️ 관리자']);
     const head = `<h2>👨‍👩‍👧 보호자 메뉴</h2><div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-pt="${k}">${n}</button>`).join('')}</div>`;
     this.modal(head + '<p class="muted">불러오는 중…</p>');
     const bind = () => { $$('[data-pt]').forEach((b) => (b.onclick = () => this.olPin(() => this.olParent(b.dataset.pt)))); if ($('#ol-back')) $('#ol-back').onclick = () => this.olPickChild(); };
