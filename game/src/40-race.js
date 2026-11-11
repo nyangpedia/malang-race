@@ -538,12 +538,14 @@ class Race {
     if (this.useShadow) { const sx = Math.round(P.p.x / 2) * 2, sz = Math.round(P.p.z / 2) * 2; this.sun.target.position.set(sx, 0, sz - 8); this.sun.position.set(sx - 18, 42, sz + 14); }
     const G = this.course.gates.find((g) => !g.passed.has(P) && g.d - P.d < 24 && g.d - P.d > -1);
     const k = G ? clamp((24 - (G.d - P.d)) / 10, 0, 1) : 0; this.gateK = damp(this.gateK || 0, k, 3, dt); const gk = this.gateK;
-    const back = (port ? 11.5 : 9.6) + gk * (port ? 13 : 6.5), hgt = (port ? 6.4 : 5.4) + gk * (port ? 11 : 5.5);
+    const small = Math.min(innerWidth, innerHeight) < 500; // phones: sit a little closer so the mallang looks bigger
+    const back = (port ? 11.5 : small ? 8.2 : 9.6) + gk * (port ? 13 : 6.5), hgt = (port ? 6.4 : small ? 4.7 : 5.4) + gk * (port ? 11 : 5.5);
     const tx = lerp(P.p.x * 0.85, P.p.x * (port ? 0.8 : 0.4), gk), ty = Math.max(P.p.y, (P.ground ? P.p.y : P.p.y - 0.5)) + hgt, tz = P.p.z + back;
     this.camPos.x = damp(this.camPos.x, tx, 6, dt); this.camPos.z = damp(this.camPos.z, tz, 7, dt); this.camPos.y = damp(this.camPos.y, ty, 3.2, dt);
     this.camLook.x = damp(this.camLook.x, lerp(P.p.x * 0.9, P.p.x * (port ? 0.8 : 0.3), gk), 7, dt); this.camLook.y = damp(this.camLook.y, P.p.y + 0.8, 4, dt); this.camLook.z = damp(this.camLook.z, P.p.z - 7, 8, dt);
     this.camera.position.copy(this.camPos); this.camera.lookAt(this.camLook);
-    this.camera.fov = port ? 70 : 62; this.camera.updateProjectionMatrix();
+    const asp = App.aspect || 16 / 9, vf = port ? 70 : asp > 16 / 9 ? 2 * Math.atan(Math.tan(31 * Math.PI / 180) * (16 / 9) / asp) * 180 / Math.PI : 62;
+    this.camera.fov = Math.max(46, vf); this.camera.updateProjectionMatrix();
   }
   results() {
     const P = this.player, N = this.racers.length, st = this.stats;

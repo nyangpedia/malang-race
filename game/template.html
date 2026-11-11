@@ -331,6 +331,25 @@ body:has(#modal:not(.hidden)) #fever,body:has(#modal:not(.hidden)) #fever-mini{d
 #roomcall .rc-x{width:30px;height:30px;border-radius:50%;background:#f3ecff;font-size:14px}
 body:has(#modal:not(.hidden)) #roomcall{display:none}
 @container stage (max-height:520px){ #roomhud{top:calc(max(6px,env(safe-area-inset-top)) + 150px);font-size:11px;min-width:120px;padding:4px 8px} .ol-stats{grid-template-columns:repeat(5,1fr)} .emotes button{width:40px;height:40px;font-size:22px} #emotebar .eb-t{width:44px;height:44px;font-size:24px} }
+
+/* phones held sideways: keep the plaza and the race view clear */
+@container stage (max-height:430px){
+  #hub-top .pcard{padding:3px 10px 3px 4px;gap:6px;border-width:2px;border-radius:16px}#hub-top .pcard .blob{width:28px;height:26px}.pc-t{gap:1px}.pc-t b{font-size:13px}.pc-lv{font-size:10px}.pc-lv .xpbar{width:46px}
+  .admin-badge{font-size:10px;padding:1px 7px;border-width:1px;border-radius:8px}
+  .pills{gap:4px}.pills .pill{font-size:11px;padding:3px 8px;border-width:2px}
+  .hub-hint{display:none}
+  #leaderboard.lb-c{max-width:112px;font-size:10px}
+  #hud-rank{font-size:20px;padding:1px 10px}#hud-rank small{font-size:11px}
+  #hud-gap{font-size:11px}
+}
+/* world map: the subject panel opens in the middle of the screen */
+#map-dim{position:absolute;inset:0;background:#2a1b4a55;z-index:2;opacity:0;pointer-events:none;transition:opacity .2s}
+#map-dim.on{opacity:1;pointer-events:auto}
+#map-sheet.center{position:absolute;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(440px,92cqw);max-height:94cqh;overflow:auto;z-index:3;box-shadow:0 12px 40px rgba(40,20,80,.35);animation:sheetIn .22s ease-out}
+@keyframes sheetIn{from{transform:translate(-50%,-44%) scale(.92);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+#map-sheet .ms-x{position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;background:#f3ecff;font-size:16px;line-height:30px;text-align:center}
+#map-sheet.closed{left:50%;bottom:12px;transform:translateX(-50%)}
+@container stage (max-height:430px){ #map-sheet.center{width:min(400px,70cqw);padding:8px 12px;gap:5px} #map-sheet.center .ms-chips{display:none} .ms-sub.big .sj{padding:6px 2px 5px;font-size:13px} .ms-sub.big .sj i{font-size:22px} }
 </style>
 </head>
 <body>
@@ -367,7 +386,7 @@ body:has(#modal:not(.hidden)) #roomcall{display:none}
 <section id="screen-map" class="screen hidden">
   <div class="map-top"><button class="btn sm gray" id="map-back">← 광장</button><div class="map-title">🗺️ 말랑 행성 지도</div><div class="pill en" id="map-energy"></div></div>
   <div id="map-svg"></div>
-  <div class="card" id="map-sheet"></div>
+  <div id="map-dim"></div><div class="card" id="map-sheet"></div>
 </section>
 
 <div id="hud" class="hidden">

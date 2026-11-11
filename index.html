@@ -331,6 +331,25 @@ body:has(#modal:not(.hidden)) #fever,body:has(#modal:not(.hidden)) #fever-mini{d
 #roomcall .rc-x{width:30px;height:30px;border-radius:50%;background:#f3ecff;font-size:14px}
 body:has(#modal:not(.hidden)) #roomcall{display:none}
 @container stage (max-height:520px){ #roomhud{top:calc(max(6px,env(safe-area-inset-top)) + 150px);font-size:11px;min-width:120px;padding:4px 8px} .ol-stats{grid-template-columns:repeat(5,1fr)} .emotes button{width:40px;height:40px;font-size:22px} #emotebar .eb-t{width:44px;height:44px;font-size:24px} }
+
+/* phones held sideways: keep the plaza and the race view clear */
+@container stage (max-height:430px){
+  #hub-top .pcard{padding:3px 10px 3px 4px;gap:6px;border-width:2px;border-radius:16px}#hub-top .pcard .blob{width:28px;height:26px}.pc-t{gap:1px}.pc-t b{font-size:13px}.pc-lv{font-size:10px}.pc-lv .xpbar{width:46px}
+  .admin-badge{font-size:10px;padding:1px 7px;border-width:1px;border-radius:8px}
+  .pills{gap:4px}.pills .pill{font-size:11px;padding:3px 8px;border-width:2px}
+  .hub-hint{display:none}
+  #leaderboard.lb-c{max-width:112px;font-size:10px}
+  #hud-rank{font-size:20px;padding:1px 10px}#hud-rank small{font-size:11px}
+  #hud-gap{font-size:11px}
+}
+/* world map: the subject panel opens in the middle of the screen */
+#map-dim{position:absolute;inset:0;background:#2a1b4a55;z-index:2;opacity:0;pointer-events:none;transition:opacity .2s}
+#map-dim.on{opacity:1;pointer-events:auto}
+#map-sheet.center{position:absolute;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(440px,92cqw);max-height:94cqh;overflow:auto;z-index:3;box-shadow:0 12px 40px rgba(40,20,80,.35);animation:sheetIn .22s ease-out}
+@keyframes sheetIn{from{transform:translate(-50%,-44%) scale(.92);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+#map-sheet .ms-x{position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;background:#f3ecff;font-size:16px;line-height:30px;text-align:center}
+#map-sheet.closed{left:50%;bottom:12px;transform:translateX(-50%)}
+@container stage (max-height:430px){ #map-sheet.center{width:min(400px,70cqw);padding:8px 12px;gap:5px} #map-sheet.center .ms-chips{display:none} .ms-sub.big .sj{padding:6px 2px 5px;font-size:13px} .ms-sub.big .sj i{font-size:22px} }
 </style>
 </head>
 <body>
@@ -367,7 +386,7 @@ body:has(#modal:not(.hidden)) #roomcall{display:none}
 <section id="screen-map" class="screen hidden">
   <div class="map-top"><button class="btn sm gray" id="map-back">← 광장</button><div class="map-title">🗺️ 말랑 행성 지도</div><div class="pill en" id="map-energy"></div></div>
   <div id="map-svg"></div>
-  <div class="card" id="map-sheet"></div>
+  <div id="map-dim"></div><div class="card" id="map-sheet"></div>
 </section>
 
 <div id="hud" class="hidden">
@@ -2882,12 +2901,14 @@ class Race {
     if (this.useShadow) { const sx = Math.round(P.p.x / 2) * 2, sz = Math.round(P.p.z / 2) * 2; this.sun.target.position.set(sx, 0, sz - 8); this.sun.position.set(sx - 18, 42, sz + 14); }
     const G = this.course.gates.find((g) => !g.passed.has(P) && g.d - P.d < 24 && g.d - P.d > -1);
     const k = G ? clamp((24 - (G.d - P.d)) / 10, 0, 1) : 0; this.gateK = damp(this.gateK || 0, k, 3, dt); const gk = this.gateK;
-    const back = (port ? 11.5 : 9.6) + gk * (port ? 13 : 6.5), hgt = (port ? 6.4 : 5.4) + gk * (port ? 11 : 5.5);
+    const small = Math.min(innerWidth, innerHeight) < 500; // phones: sit a little closer so the mallang looks bigger
+    const back = (port ? 11.5 : small ? 8.2 : 9.6) + gk * (port ? 13 : 6.5), hgt = (port ? 6.4 : small ? 4.7 : 5.4) + gk * (port ? 11 : 5.5);
     const tx = lerp(P.p.x * 0.85, P.p.x * (port ? 0.8 : 0.4), gk), ty = Math.max(P.p.y, (P.ground ? P.p.y : P.p.y - 0.5)) + hgt, tz = P.p.z + back;
     this.camPos.x = damp(this.camPos.x, tx, 6, dt); this.camPos.z = damp(this.camPos.z, tz, 7, dt); this.camPos.y = damp(this.camPos.y, ty, 3.2, dt);
     this.camLook.x = damp(this.camLook.x, lerp(P.p.x * 0.9, P.p.x * (port ? 0.8 : 0.3), gk), 7, dt); this.camLook.y = damp(this.camLook.y, P.p.y + 0.8, 4, dt); this.camLook.z = damp(this.camLook.z, P.p.z - 7, 8, dt);
     this.camera.position.copy(this.camPos); this.camera.lookAt(this.camLook);
-    this.camera.fov = port ? 70 : 62; this.camera.updateProjectionMatrix();
+    const asp = App.aspect || 16 / 9, vf = port ? 70 : asp > 16 / 9 ? 2 * Math.atan(Math.tan(31 * Math.PI / 180) * (16 / 9) / asp) * 180 / Math.PI : 62;
+    this.camera.fov = Math.max(46, vf); this.camera.updateProjectionMatrix();
   }
   results() {
     const P = this.player, N = this.racers.length, st = this.stats;
@@ -3691,11 +3712,12 @@ Object.assign(App, {
     </svg>`;
     $('#map-energy').innerHTML = `⚡ <b>${S.energy}</b>`;
     $$('#map-svg .isl').forEach((g) => (g.onclick = () => { if (this.mapSel !== g.dataset.w || !this._mapOpen) { this.mapSel = g.dataset.w; this._mapOpen = true; this._mapSubj = null; Sound.play('click'); this.drawMap(); } }));
-    $('#map-sheet').classList.toggle('closed', !this._mapOpen);
+    $('#map-sheet').classList.toggle('closed', !this._mapOpen); $('#map-sheet').classList.toggle('center', !!this._mapOpen); $('#map-dim').classList.toggle('on', !!this._mapOpen);
+    $('#map-dim').onclick = () => { this._mapOpen = false; this._mapSubj = null; Sound.play('click'); this.drawMap(); };
     if (!this._mapOpen) { $('#map-sheet').innerHTML = `<div class="ms-hint">👆 달리고 싶은 섬을 눌러 보세요!</div>`; $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); }; return; }
     // info sheet
     const W = WORLDS[sel], un = S.unlockedWorlds.includes(sel), best = S.worldBest[sel], P = S.profile, can = S.energy >= W.price, subj = this._mapSubj;
-    $('#map-sheet').innerHTML = `<div class="ms-head"><span class="ms-ic" style="background:linear-gradient(180deg,${MAP_ART[sel].c.join(',')})">${W.icon}</span><div class="ms-t"><b>${si + 1}. ${W.name}</b><small>${WORLD_FEAT[sel]}</small></div></div>
+    $('#map-sheet').innerHTML = `<button class="ms-x" id="ms-x" aria-label="닫기">✕</button><div class="ms-head"><span class="ms-ic" style="background:linear-gradient(180deg,${MAP_ART[sel].c.join(',')})">${W.icon}</span><div class="ms-t"><b>${si + 1}. ${W.name}</b><small>${WORLD_FEAT[sel]}</small></div></div>
       <div class="ms-chips"><span>📚 추천 ${W.grade}학년 · ${W.topic}</span><span>🏅 ${best ? `최고 ${best.rank}등` : '아직 기록 없음'}</span></div>
       ${un ? `<div class="ms-ask">${subj ? '좋아요! 이제 출발해 볼까요?' : '어떤 문제로 달릴까요?'}</div><div class="ms-sub big">${Object.keys(SUBJECTS).filter((k) => k !== 'run').map((k) => `<button class="sj sj-${k} ${k === subj ? 'on' : ''}" data-sj="${k}"><i>${SUBJECTS[k].icon}</i><b>${SUBJECTS[k].name}</b></button>`).join('')}</div>
       ${subj ? `<div class="ms-note">${SUBJECTS[subj].desc} · ${P.level}학년 수준</div><button class="btn go-pop" id="map-go">🏁 ${SUBJECTS[subj].name} 레이스 시작!</button>` : ''}` : `<button class="btn yellow" id="map-unlock" ${can ? '' : 'disabled'}>🔓 ⚡${W.price}로 열기</button>${can ? '' : `<div class="ms-note">숫자 에너지가 ${W.price - S.energy}개 더 필요해요</div>`}`}
@@ -3704,6 +3726,7 @@ Object.assign(App, {
     else if (!un) $('#map-unlock').onclick = () => this.unlockWorld(sel, () => this.drawMap());
     $$('#map-sheet .sj').forEach((b) => (b.onclick = () => { this._mapSubj = b.dataset.sj; S.settings.subject = b.dataset.sj; Save.save(); Sound.play('click'); this.drawMap(); }));
     $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); };
+    $('#ms-x').onclick = () => { this._mapOpen = false; this._mapSubj = null; Sound.play('click'); this.drawMap(); };
   },
   // ---------------- register (with starter colour) ----------------
   showRegister(edit) {

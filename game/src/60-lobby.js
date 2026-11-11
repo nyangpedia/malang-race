@@ -348,11 +348,12 @@ Object.assign(App, {
     </svg>`;
     $('#map-energy').innerHTML = `⚡ <b>${S.energy}</b>`;
     $$('#map-svg .isl').forEach((g) => (g.onclick = () => { if (this.mapSel !== g.dataset.w || !this._mapOpen) { this.mapSel = g.dataset.w; this._mapOpen = true; this._mapSubj = null; Sound.play('click'); this.drawMap(); } }));
-    $('#map-sheet').classList.toggle('closed', !this._mapOpen);
+    $('#map-sheet').classList.toggle('closed', !this._mapOpen); $('#map-sheet').classList.toggle('center', !!this._mapOpen); $('#map-dim').classList.toggle('on', !!this._mapOpen);
+    $('#map-dim').onclick = () => { this._mapOpen = false; this._mapSubj = null; Sound.play('click'); this.drawMap(); };
     if (!this._mapOpen) { $('#map-sheet').innerHTML = `<div class="ms-hint">👆 달리고 싶은 섬을 눌러 보세요!</div>`; $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); }; return; }
     // info sheet
     const W = WORLDS[sel], un = S.unlockedWorlds.includes(sel), best = S.worldBest[sel], P = S.profile, can = S.energy >= W.price, subj = this._mapSubj;
-    $('#map-sheet').innerHTML = `<div class="ms-head"><span class="ms-ic" style="background:linear-gradient(180deg,${MAP_ART[sel].c.join(',')})">${W.icon}</span><div class="ms-t"><b>${si + 1}. ${W.name}</b><small>${WORLD_FEAT[sel]}</small></div></div>
+    $('#map-sheet').innerHTML = `<button class="ms-x" id="ms-x" aria-label="닫기">✕</button><div class="ms-head"><span class="ms-ic" style="background:linear-gradient(180deg,${MAP_ART[sel].c.join(',')})">${W.icon}</span><div class="ms-t"><b>${si + 1}. ${W.name}</b><small>${WORLD_FEAT[sel]}</small></div></div>
       <div class="ms-chips"><span>📚 추천 ${W.grade}학년 · ${W.topic}</span><span>🏅 ${best ? `최고 ${best.rank}등` : '아직 기록 없음'}</span></div>
       ${un ? `<div class="ms-ask">${subj ? '좋아요! 이제 출발해 볼까요?' : '어떤 문제로 달릴까요?'}</div><div class="ms-sub big">${Object.keys(SUBJECTS).filter((k) => k !== 'run').map((k) => `<button class="sj sj-${k} ${k === subj ? 'on' : ''}" data-sj="${k}"><i>${SUBJECTS[k].icon}</i><b>${SUBJECTS[k].name}</b></button>`).join('')}</div>
       ${subj ? `<div class="ms-note">${SUBJECTS[subj].desc} · ${P.level}학년 수준</div><button class="btn go-pop" id="map-go">🏁 ${SUBJECTS[subj].name} 레이스 시작!</button>` : ''}` : `<button class="btn yellow" id="map-unlock" ${can ? '' : 'disabled'}>🔓 ⚡${W.price}로 열기</button>${can ? '' : `<div class="ms-note">숫자 에너지가 ${W.price - S.energy}개 더 필요해요</div>`}`}
@@ -361,6 +362,7 @@ Object.assign(App, {
     else if (!un) $('#map-unlock').onclick = () => this.unlockWorld(sel, () => this.drawMap());
     $$('#map-sheet .sj').forEach((b) => (b.onclick = () => { this._mapSubj = b.dataset.sj; S.settings.subject = b.dataset.sj; Save.save(); Sound.play('click'); this.drawMap(); }));
     $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); };
+    $('#ms-x').onclick = () => { this._mapOpen = false; this._mapSubj = null; Sound.play('click'); this.drawMap(); };
   },
   // ---------------- register (with starter colour) ----------------
   showRegister(edit) {
