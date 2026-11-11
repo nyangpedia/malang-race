@@ -844,7 +844,7 @@ class NumberGate {
     }
   }
   startRound(level) {
-    this.round++; this.state = 'ask'; this.timer = GATE_THINK + GATE_COUNT; this.revealT = 0; this.pending.clear();
+    this.round++; this.state = 'ask'; this.timer = (level <= 2 ? 10 : GATE_THINK + GATE_COUNT); this.revealT = 0; this.pending.clear(); // grades 1-2 get 10 seconds
     this.q = (this.course.qmaker || makeQuestion)(level); const b = buildDoors(this.q, N_DOORS); this.correctCount = b.correctCount;
     this.doors.forEach((dr, i) => { dr.value = b.values[i]; dr.correct = isCorrect(this.q, dr.value); });
     this.answerText = (this.doors.find((x) => x.correct) || {}).value || '';
