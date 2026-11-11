@@ -2070,7 +2070,8 @@ class Course {
     this.stars(D(8), D(16), 4, 2.4, -6); this.stars(D(8), D(16), 4, 2.4, 6);
     if (L >= 3) this.stompers(D(19.6), D(24), 2, Y);
     // safe but narrow bridge on the right; islands on the left are faster and have the stars
-    // no side bridge any more: everyone hops across the islands
+    // narrow safe bridge on the right for anyone who would rather not jump (only one or two AIs use it)
+    const bw = L <= 3 ? 5 : 3.8, bx = HALF_W - bw / 2 - 0.4; this.floor(D(25.4), D(54.2), Y, { w: bw, x: bx, th: 0.8, rails: false }); this.lanesHint.push({ d0: D(25), d1: D(54.5), x: bx, bridge: true });
     (this.hopHints = this.hopHints || []).push({ d0: D(22), d1: D(32), x: -2 }, { d0: D(32), d1: D(39), x: -6 }, { d0: D(39), d1: D(46), x: -4.5 }, { d0: D(46), d1: D(54.5), x: 0.5 });
     this.island(-9.5, D(29), 2.5, Y); this.island(-2, D(29.4), 2.5, Y);
     this.island(-6, D(35), 2.4, Y + 0.6, { bob: L >= 3 ? 0.5 : 0 });
@@ -2563,7 +2564,7 @@ class Race {
       else {
         const type = typeKeys[i % typeKeys.length], T = AI_TYPES[type];
         const L = clamp(this.level || 1, 1, 6), accBase = [0, 0.5, 0.54, 0.58, 0.62, 0.66, 0.7][L];
-        const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.4, 0.35, 0.8), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0.5, 5), waitX: rand(-13.5, 13.5), hop: T.jump >= 0.9 || Math.random() < 0.45, jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
+        const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.4, 0.35, 0.8), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0.5, 5), waitX: rand(-13.5, 13.5), hop: T.jump >= 0.9 || Math.random() < 0.45, bridge: i === (playerSlot + 3) % N || i === (playerSlot + 11) % N, jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
         const nm = (names[i % names.length] || '말랑') + '말랑이';
         const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.7, 0.76) };
         r = new Racer(this, i, { name: nm, look, ai, speedMul: (1 + (rand(...T.speed) - 0.95) * 0.5) * ([0, 0.84, 0.88, 0.92, 0.96, 1.0, 1.03][clamp(this.level || 1, 1, 6)] + (this.subject === 'run' ? 0.04 : 0)) });
@@ -2882,8 +2883,10 @@ class Race {
           else door = Math.random() < 0.8 ? G._herdWrong : pick(G.doors.filter((x) => !x.correct)) || G._herdWrong;
           A.door = door; A.commitT = G._herdT + rand(-0.25, 0.25); A.standD = rand(1.2, 5.2);
           A.millX = clamp(pick(G.doors).x + rand(-2.2, 2.2), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.2, 2.2);
+          A.hesT = rand(1.0, 2.6); A.holdX = r.p.x; A.holdD = d; A.lookT = 0;
         }
-        tx = G.timer <= A.commitT ? A.door.x + A.jit : A.millX; td = G.d - A.standD;
+        if (A.hesT > 0 && G.timer > A.commitT + 1) { A.hesT -= dt; A.lookT += dt; tx = A.holdX + Math.sin(A.lookT * 3 + r.idx) * 1.2; td = A.holdD; }
+        else { tx = G.timer <= A.commitT ? A.door.x + A.jit : A.millX; td = G.d - A.standD; }
         if (G.locked) { if (d < G.d - GATE_ZONE) { tx = r.p.x; td = G.d - GATE_ZONE - 1.2 - A.waitB; } else tx = G.doors[G.slotAt(r.p.x)].x + A.jit; }
       } else { tx = clamp(A.waitX, -13, 13); td = G.d - GATE_ZONE - 1.2 - A.waitB; }
       r.in.x = clamp((tx - r.p.x) * 0.9, -1, 1); r.in.z = clamp((d - td) * 0.9, -1, 1);
@@ -2895,8 +2898,8 @@ class Race {
     // lane selection with obstacle look-ahead
     let target = A.laneX;
     const hint = C.lanesHint.find((h) => d > h.d0 - 12 && d < h.d1 - 1);
-    const hop = C.hopHints ? C.hopHints.find((h) => d > h.d0 && d < h.d1) : null;
-    if (hop) target = hop.x; else if (hint && (hint.must || !A.hop)) target = hint.x;
+    const hop = C.hopHints && !(hint && hint.bridge && A.bridge) ? C.hopHints.find((h) => d > h.d0 && d < h.d1) : null;
+    if (hop) target = hop.x; else if (hint && (hint.must || hint.bridge ? A.bridge || hint.must : !A.hop)) target = hint.x;
     // aggressive racers steer toward neighbours, stompers line up behind someone
     if ((T.aggro > 0.5 || T.stomp > 0.5) && !hint) {
       let best = null, bd = 9; for (const o of this.racers) { if (o === r || o.respawnT > 0) continue; const ddz = r.p.z - o.p.z; if (ddz < 0.5 || ddz > 5) continue; const dd = Math.abs(o.p.x - r.p.x) + ddz * 0.5; if (dd < bd) { bd = dd; best = o; } }
