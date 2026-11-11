@@ -4,13 +4,13 @@
 // ================================================================
 const TRACK_W = 30, HALF_W = 15;
 const WORLDS = {
-  candy: { name: '캔디 월드', icon: '🍭', topic: '덧셈과 뺄셈', price: 0, skyTop: 0x2f8cff, skyMid: 0xff8fd8, skyBot: 0xffe36b, fog: 0xffc9ec, floorA: '#ff6fb5', floorB: '#ffd1ea', side: 0xe0438f, rail: ['#ff2d8a', '#ffffff'], accent: 0xff3d9a, ground: 0x7fe08a,
+  candy: { name: '캔디 월드', icon: '🍭', topic: '덧셈과 뺄셈', price: 0, skyTop: 0x3b95f5, skyMid: 0x86ccff, skyBot: 0xe4f5ff, fog: 0xdcefff, floorA: '#ff6fb5', floorB: '#ffd1ea', side: 0xe0438f, rail: ['#ff2d8a', '#ffffff'], accent: 0xff3d9a, ground: 0x7fe08a,
     zones: [['#ff5fae', '#ffe0f0'], ['#ffb020', '#fff2a8'], ['#36d6c3', '#c9fff4'], ['#9b6bff', '#e7dbff'], ['#ff5a5a', '#ffd6d6'], ['#3fb6ff', '#d4f0ff']] },
-  block: { name: '블록 월드', icon: '🧱', topic: '두 자리 수와 곱셈', price: 100, skyTop: 0x1f6fff, skyMid: 0x6fd6ff, skyBot: 0xfff08a, fog: 0xcdeeff, floorA: '#ffcc33', floorB: '#ff8a1f', side: 0x3a6fe0, rail: ['#2f6bff', '#ffd23f'], accent: 0x2f6bff, ground: 0x5fd35a,
+  block: { name: '블록 월드', icon: '🧱', topic: '두 자리 수와 곱셈', price: 100, skyTop: 0x3b95f5, skyMid: 0x86ccff, skyBot: 0xe4f5ff, fog: 0xdcefff, floorA: '#ffcc33', floorB: '#ff8a1f', side: 0x3a6fe0, rail: ['#2f6bff', '#ffd23f'], accent: 0x2f6bff, ground: 0x5fd35a,
     zones: [['#ffcc33', '#ff7a1f'], ['#38c95a', '#c8ff8a'], ['#ff4b4b', '#ffd23f'], ['#2f9bff', '#a8e4ff'], ['#b05cff', '#ffd23f'], ['#ff7a1f', '#ffffff']] },
-  cloud: { name: '구름 월드', icon: '☁️', topic: '혼합 계산과 분수', price: 300, skyTop: 0x3d7dff, skyMid: 0xc59bff, skyBot: 0xffd0f0, fog: 0xe6dcff, floorA: '#c9d6ff', floorB: '#9fb4ff', side: 0x8fa2ff, rail: ['#a06bff', '#ffffff'], accent: 0x8f5bff, ground: null,
+  cloud: { name: '구름 월드', icon: '☁️', topic: '혼합 계산과 분수', price: 300, skyTop: 0x3b95f5, skyMid: 0x86ccff, skyBot: 0xe4f5ff, fog: 0xdcefff, floorA: '#c9d6ff', floorB: '#9fb4ff', side: 0x8fa2ff, rail: ['#a06bff', '#ffffff'], accent: 0x8f5bff, ground: null,
     zones: [['#a9c1ff', '#ffffff'], ['#ffb3e1', '#ffffff'], ['#9ff0ff', '#ffffff'], ['#ffe08a', '#ffffff'], ['#c7a6ff', '#ffffff'], ['#a6ffcf', '#ffffff']] },
-  jungle: { name: '정글 월드', icon: '🌴', topic: '곱셈과 나눗셈', price: 200, skyTop: 0x1ea6ff, skyMid: 0x7fffc4, skyBot: 0xfff36b, fog: 0xd0ffd0, floorA: '#9be04a', floorB: '#5fbf3a', side: 0x2f8a3c, rail: ['#1fa84f', '#ffe07a'], accent: 0x22c55e, ground: 0x3fae5a,
+  jungle: { name: '정글 월드', icon: '🌴', topic: '곱셈과 나눗셈', price: 200, skyTop: 0x3b95f5, skyMid: 0x86ccff, skyBot: 0xe4f5ff, fog: 0xdcefff, floorA: '#9be04a', floorB: '#5fbf3a', side: 0x2f8a3c, rail: ['#1fa84f', '#ffe07a'], accent: 0x22c55e, ground: 0x3fae5a,
     zones: [['#8fe03a', '#d9ff8a'], ['#ff8a3d', '#ffe0a8'], ['#21c7a8', '#b4fff0'], ['#ffd21f', '#fff7b0'], ['#ff4f7a', '#ffd0dc'], ['#4fa8ff', '#d0ecff']] },
   space: { name: '우주 월드', icon: '🚀', topic: '비율과 종합 문제', price: 500, skyTop: 0x05031f, skyMid: 0x3a1680, skyBot: 0xff4fb8, fog: 0x2a1a6a, floorA: '#6f7cff', floorB: '#2c2f8f', side: 0x1f2370, rail: ['#ffd23f', '#3ff0ff'], accent: 0xffd23f, ground: null, gravity: 0.72, neon: true,
     zones: [['#3b2fff', '#00e5ff'], ['#9b1fff', '#ff4fd8'], ['#ff2d6f', '#ffd23f'], ['#00b37a', '#3fffb0'], ['#ff7a00', '#ffd23f'], ['#2f6bff', '#ff4fd8']] },
@@ -87,17 +87,19 @@ function rayDownSolid(s, x, yFrom, z) {
 
 // ---------------- textures ----------------
 function canvasTex(w, h, draw, repeat) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; if (repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; } return t; }
+// clean toy-like floors: one bright pastel colour with bold lines in a deeper shade of the same colour
 function floorTexture(th, A, B, kind = 'check') {
   A = A || th.floorA; B = B || th.floorB;
-  return canvasTex(256, 256, (g, w, h) => {
-    g.fillStyle = A; g.fillRect(0, 0, w, h); g.fillStyle = B; g.strokeStyle = B; g.lineCap = 'round'; g.lineJoin = 'round';
-    if (kind === 'check') { g.lineWidth = 6; g.beginPath(); g.roundRect ? g.roundRect(8, 8, 240, 240, 36) : g.rect(8, 8, 240, 240); g.stroke(); }
-    else if (kind === 'stripe') { g.lineWidth = 10; for (let x = -256; x < 512; x += 128) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 256, 256); g.stroke(); } }
-    else if (kind === 'dots') { for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) { g.beginPath(); g.arc(x * 128 + 64 + (y % 2) * 64, y * 128 + 64, 9, 0, 7); g.fill(); } }
-    else if (kind === 'chevron') { g.lineWidth = 8; for (let y = 40; y < 300; y += 128) { g.beginPath(); g.moveTo(40, y + 36); g.lineTo(128, y); g.lineTo(216, y + 36); g.stroke(); } }
-    else if (kind === 'star') { g.lineWidth = 6; for (const [cx, cy, R] of [[70, 70, 70], [190, 190, 70]]) { g.beginPath(); g.arc(cx, cy, R * 0.55, 0, 7); g.stroke(); } }
-    else if (kind === 'wave') { g.lineWidth = 7; for (let y = 64; y < 300; y += 128) { g.beginPath(); for (let x = 0; x <= 256; x += 8) g.lineTo(x, y + Math.sin(x / 256 * Math.PI * 2) * 14); g.stroke(); } }
-    else if (kind === 'rainbow') { const cs = ['#ff7a8f', '#ffb45c', '#ffe46b', '#7fdc8a', '#6fcaff', '#a990ff']; for (let i = 0; i < 8; i++) { g.fillStyle = cs[i % 6]; g.fillRect(0, i * 32, w, 32); } }
+  return canvasTex(512, 512, (g, w, h) => {
+    g.fillStyle = A; g.fillRect(0, 0, w, h); g.fillStyle = B; g.strokeStyle = B; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = 18;
+    const arc = (cx, cy, r, a0, a1) => { g.beginPath(); g.arc(cx, cy, r, a0, a1); g.stroke(); };
+    if (kind === 'check') { for (const r of [120, 200]) arc(256, 256, r, 0, 7); g.beginPath(); g.moveTo(256, 0); g.lineTo(256, 56); g.moveTo(256, 456); g.lineTo(256, 512); g.moveTo(0, 256); g.lineTo(56, 256); g.moveTo(456, 256); g.lineTo(512, 256); g.stroke(); }
+    else if (kind === 'stripe') { g.beginPath(); g.moveTo(0, 128); g.lineTo(180, 128); g.lineTo(180, 384); g.lineTo(512, 384); g.moveTo(330, 0); g.lineTo(330, 250); g.lineTo(512, 250); g.moveTo(0, 384); g.lineTo(90, 384); g.lineTo(90, 512); g.stroke(); }
+    else if (kind === 'dots') { for (const [x, y] of [[128, 128], [384, 384], [384, 128], [128, 384]]) { g.beginPath(); g.arc(x, y, 34, 0, 7); g.fill(); } }
+    else if (kind === 'chevron') { for (let y = 60; y < 600; y += 256) { g.beginPath(); g.moveTo(80, y + 90); g.lineTo(256, y); g.lineTo(432, y + 90); g.stroke(); } }
+    else if (kind === 'star') { for (const [x, y, r] of [[256, 256, 150], [0, 0, 110], [512, 0, 110], [0, 512, 110], [512, 512, 110]]) arc(x, y, r, 0, 7); }
+    else if (kind === 'wave') { for (let y = 128; y < 600; y += 256) { g.beginPath(); for (let x = 0; x <= 512; x += 8) g.lineTo(x, y + Math.sin(x / 512 * Math.PI * 2) * 40); g.stroke(); } }
+    else if (kind === 'rainbow') { const cs = ['#ff7a8f', '#ffb45c', '#ffe46b', '#7fdc8a', '#6fcaff', '#a990ff']; for (let i = 0; i < 8; i++) { g.fillStyle = cs[i % 6]; g.fillRect(0, i * 64, w, 64); } }
   }, true);
 }
 const VIVID = [0xff2d6f, 0xff8a00, 0xffe600, 0x22e06a, 0x00c8ff, 0x7a5cff, 0xff4fd8];
@@ -119,7 +121,7 @@ class Course {
     this.pulse = []; this.spinners = [];
     // every stretch of the course has its own colours and pattern
     const zs = this.th.zones || [[this.th.floorA, this.th.floorB]];
-    this.zones = ZONE_EDGES.map((d, i) => { const [A0] = zs[i % zs.length]; const A = '#' + new THREE.Color(A0).lerp(new THREE.Color(0xffffff), 0.12).getHexString(), B = '#' + new THREE.Color(A).lerp(new THREE.Color(0xffffff), 0.22).getHexString(); return { tex: floorTexture(this.th, A, B, ZONE_KINDS[i % ZONE_KINDS.length]), side: new THREE.MeshStandardMaterial({ color: new THREE.Color(A).multiplyScalar(0.72), roughness: 0.45, envMapIntensity: 0.4 }), edge: new THREE.Color(A).lerp(new THREE.Color(0xffffff), 0.25) }; });
+    this.zones = ZONE_EDGES.map((d, i) => { const [A0] = zs[i % zs.length]; const A = '#' + new THREE.Color(A0).lerp(new THREE.Color(0xffffff), 0.1).getHexString(), B = '#' + new THREE.Color(A0).multiplyScalar(0.8).getHexString(); return { tex: floorTexture(this.th, A, B, ZONE_KINDS[i % ZONE_KINDS.length]), side: new THREE.MeshStandardMaterial({ color: new THREE.Color(A).multiplyScalar(0.72), roughness: 0.45, envMapIntensity: 0.4 }), edge: new THREE.Color(A).lerp(new THREE.Color(0xffffff), 0.25) }; });
     this.gateTex = floorTexture(this.th, '#ffffff', '#ffffff', 'rainbow');
     this.railTex = stripeTexture(this.th.rail[0], this.th.rail[1]);
     this.warnTex = stripeTexture('#ff2d6f', '#ffe600');
@@ -594,25 +596,25 @@ class Course {
     const cloudM = W === 'space' ? mat(0x7a63d8, { roughness: 0.9, emissive: 0x2a1f70 }) : mat(0xffffff, { roughness: 0.9, emissive: 0x666677 });
     if (W === 'space') { const n = 700, pos = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const a = rand(0, 6.283), e = rand(-0.25, 1), r = 560; pos[i * 3] = Math.cos(a) * Math.sqrt(1 - e * e) * r; pos[i * 3 + 1] = e * r; pos[i * 3 + 2] = Math.sin(a) * Math.sqrt(1 - e * e) * r - 300; } const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const st = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 2.2, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.9 })); st.frustumCulled = false; grp.add(st); }
     const puff = (x, y, z, s) => { const c = new THREE.Group(); for (let i = 0; i < 5; i++) { const b = new THREE.Mesh(GEO.sphereLo, cloudM); b.scale.setScalar(s * rand(0.6, 1.1)); b.position.set((i - 2) * s * 0.8, rand(0, s * 0.4), rand(-s * 0.3, s * 0.3)); c.add(b); } c.position.set(x, y, z); grp.add(c); return c; };
-    for (let i = 0; i < 48; i++) puff(rand(-140, 140) + (RNG() < 0.5 ? -50 : 50) * 0, rand(18, 50), -rand(-60, 940), rand(4, 9)).position.x = (RNG() < 0.5 ? -1 : 1) * rand(40, 150);
+    for (let i = 0; i < 30; i++) puff(rand(-140, 140) + (RNG() < 0.5 ? -50 : 50) * 0, rand(18, 50), -rand(-60, 940), rand(4, 9)).position.x = (RNG() < 0.5 ? -1 : 1) * rand(40, 150);
     if (W === 'cloud') for (let i = 0; i < 76; i++) puff((RNG() < 0.5 ? -1 : 1) * rand(16, 70), rand(-12, -4), -rand(-20, 900), rand(3, 7));
     // side decorations
     const side = () => (RNG() < 0.5 ? -1 : 1);
-    for (let i = 0; i < 135; i++) {
+    for (let i = 0; i < 64; i++) {
       const d = rand(-20, this.FINISH + 40), x = side() * (rand(HALF_W + 6, HALF_W + 34) + (this.gates.some((G) => Math.abs(G.d - d) < 18) ? 9 : 0)), y = W === 'cloud' || W === 'space' ? rand(-6, 2) : -1;
-      const o = this.decoItem(W); o.position.set(x, y, -d); o.rotation.y = rand(0, 6.28); grp.add(o);
+      const o = this.decoItem(W); o.scale.multiplyScalar(1.5); o.position.set(x, y, -d); o.rotation.y = rand(0, 6.28); grp.add(o);
     }
     // festival decor: bunting lines + balloons along the course
     const flagCols = [0xff5a7a, 0xffd23f, 0x5fd35f, 0x3fc2ff, 0xa86bff, 0xff9a3c];
     const flagGeo = new THREE.ConeGeometry(0.32, 0.7, 3); flagGeo.rotateX(Math.PI); flagGeo.scale(1, 1, 0.15);
-    for (let d = 30; d < this.FINISH + 8; d += 34) {
+    for (let d = 30; d < this.FINISH + 8; d += 102) {
       if (this.gates.some((G) => Math.abs(G.d - d) < 16)) continue;
       const y = (d > 150 && d < 200 ? 3 : 0) + 10.5;
       for (const sd of [-1, 1]) { const pole = new THREE.Mesh(GEO.cyl, mat(0xffffff)); pole.scale.set(0.18, y + 1, 0.18); pole.position.set(sd * (HALF_W + 1.6), (y + 1) / 2 - 1, -d); grp.add(pole); const top = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); top.scale.setScalar(0.45); top.position.set(sd * (HALF_W + 1.6), y + 0.2, -d); grp.add(top); }
       for (let i = 0; i < 25; i++) { const u = i / 24, x = lerp(-HALF_W - 1.6, HALF_W + 1.6, u); const f = new THREE.Mesh(flagGeo, mat(flagCols[i % 6], { side: THREE.DoubleSide })); f.position.set(x, y - Math.sin(u * Math.PI) * 1.6 - 0.5, -d); grp.add(f); }
     }
     this.balloons = [];
-    for (let i = 0; i < 54; i++) { const g = new THREE.Group(); const b = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); b.scale.set(1.1, 1.35, 1.1); g.add(b); const st = new THREE.Mesh(GEO.cyl, mat(0xffffff)); st.scale.set(0.03, 3, 0.03); st.position.y = -2.8; g.add(st); g.position.set(side() * rand(HALF_W + 3, HALF_W + 14), rand(5, 13), -rand(0, 850)); if (this.gates.some((G) => Math.abs(G.d + g.position.z) < 18)) g.position.x += Math.sign(g.position.x) * 9; g.userData.y0 = g.position.y; g.userData.ph = rand(0, 6); grp.add(g); this.balloons.push(g); }
+    for (let i = 0; i < 16; i++) { const g = new THREE.Group(); const b = new THREE.Mesh(GEO.sphere, jellyMaterial(pick(flagCols))); b.scale.set(1.1, 1.35, 1.1); g.add(b); const st = new THREE.Mesh(GEO.cyl, mat(0xffffff)); st.scale.set(0.03, 3, 0.03); st.position.y = -2.8; g.add(st); g.position.set(side() * rand(HALF_W + 3, HALF_W + 14), rand(5, 13), -rand(0, 850)); if (this.gates.some((G) => Math.abs(G.d + g.position.z) < 18)) g.position.x += Math.sign(g.position.x) * 9; g.userData.y0 = g.position.y; g.userData.ph = rand(0, 6); grp.add(g); this.balloons.push(g); }
     this.landmarks(W);
     // big landmark: rainbow-ish ring over the finish area
     const ring = new THREE.Mesh(new THREE.TorusGeometry(30, 1.6, 12, 48, Math.PI), new THREE.MeshBasicMaterial({ color: 0xff9ccf, transparent: true, opacity: 0.55 }));
@@ -624,7 +626,7 @@ class Course {
   landmarks(W) {
     const grp = this.group, RB = [0xff3b5c, 0xff9a1f, 0xffe11f, 0x3fd35a, 0x20b8ff, 0x8a5cff];
     const rainbow = (x, z, R, rotY) => { const g = new THREE.Group(); RB.forEach((c, i) => { const t = new THREE.Mesh(new THREE.TorusGeometry(R - i * 1.6, 0.85, 8, 40, Math.PI), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85, fog: false })); g.add(t); }); g.position.set(x, -6, z); g.rotation.y = rotY; grp.add(g); };
-    for (let i = 0; i < 6; i++) rainbow((i % 2 ? 1 : -1) * rand(80, 120), -rand(60, this.FINISH + 30), rand(34, 46), rand(-0.6, 0.6));
+    for (let i = 0; i < 2; i++) rainbow((i % 2 ? 1 : -1) * rand(80, 120), -rand(60, this.FINISH + 30), rand(34, 46), rand(-0.6, 0.6));
     const glow = (hex) => new THREE.MeshStandardMaterial({ color: hex, emissive: new THREE.Color(hex).multiplyScalar(0.55), roughness: 0.4 });
     for (let i = 0; i < 18; i++) {
       const side = i % 2 ? 1 : -1, x = side * rand(55, 140), z = -rand(-40, 920), c = pick(VIVID), g = new THREE.Group();

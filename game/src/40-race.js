@@ -127,10 +127,10 @@ class Race {
   constructor(opts) {
     this.opts = opts; this.worldId = opts.worldId; this.level = opts.level; this.N = opts.count;
     this.scene = new THREE.Scene(); const th = WORLDS[this.worldId]; this.gMul = th.gravity || 1;
-    this.scene.fog = new THREE.Fog(th.fog, 90, 330);
+    this.scene.fog = new THREE.Fog(th.fog, 120, 420);
     this.scene.add(makeSky(th.skyTop, th.skyBot, th.skyMid));
     this.scene.environment = App.envMap;
-    const hemi = new THREE.HemisphereLight(0xffffff, th.ground || 0xcfd8ff, 0.45); this.scene.add(hemi);
+    const hemi = new THREE.HemisphereLight(0xffffff, th.ground || 0xcfd8ff, 0.75); this.scene.add(hemi);
     const sun = new THREE.DirectionalLight(0xfff1dc, 2.0); sun.position.set(-20, 40, 25); this.scene.add(sun); this.scene.add(sun.target); this.sun = sun;
     this.useShadow = App.renderer.shadowMap.enabled;
     if (this.useShadow) { sun.castShadow = true; { const ms = Save.data.settings.quality === 'high' || Math.min(innerWidth, innerHeight) >= 600 ? 2048 : 1024; sun.shadow.mapSize.set(ms, ms); } const c = sun.shadow.camera; c.left = -30; c.right = 30; c.top = 34; c.bottom = -26; c.near = 1; c.far = 120; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03; sun.shadow.radius = 4; }
