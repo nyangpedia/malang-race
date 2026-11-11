@@ -277,6 +277,14 @@ class MallangView {
     this.sy = 1; this.vy = 0; this.wob = 0; this.wobV = 0; this.flatT = 0; this.flatDur = 0.55; this.t = Math.random() * 10;
     this.leanX = 0; this.leanZ = 0;
     this.root.scale.setScalar(look.scale || 0.62);
+    this.lean.scale.set(0.95, 1.2, 0.95);
+  }
+  // thick bright outline so my mallang stands out from the floor
+  setOutline(on) {
+    if (!on) { if (this.outline) this.outline.visible = false; return; }
+    if (!this.outline) { const m = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide }); this.outline = new THREE.Mesh(GEO.bodyLo, m); this.outline.scale.setScalar(1.12); this.squash.add(this.outline);
+      const m2 = new THREE.MeshBasicMaterial({ color: 0x3d2a55, side: THREE.BackSide }); const o2 = new THREE.Mesh(GEO.bodyLo, m2); o2.scale.setScalar(1.2); this.outline.add(o2); o2.scale.setScalar(1.07); }
+    this.outline.visible = true;
   }
   buildExtras() {
     this.extras.clear(); const L = this.look;

@@ -145,8 +145,8 @@ class Race {
     const shTex = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 2, 32, 32, 30); gr.addColorStop(0, 'rgba(60,30,90,0.45)'); gr.addColorStop(1, 'rgba(60,30,90,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
     const shGeo = new THREE.PlaneGeometry(1.6, 1.6); shGeo.rotateX(-Math.PI / 2);
     this.shadows = new THREE.InstancedMesh(shGeo, new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false }), this.racers.length); this.shadows.frustumCulled = false; this.scene.add(this.shadows);
-    this.marker = new THREE.Mesh(GEO.cone, new THREE.MeshBasicMaterial({ color: 0xff3d8f })); this.marker.scale.set(0.26, 0.38, 0.26); this.marker.rotation.x = Math.PI; this.scene.add(this.marker);
-    const ringGeo = new THREE.RingGeometry(0.75, 0.95, 32); ringGeo.rotateX(-Math.PI / 2); this.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xff5fa2, transparent: true, opacity: 0.7, depthWrite: false })); this.scene.add(this.ring);
+    this.marker = new THREE.Mesh(GEO.cone, new THREE.MeshBasicMaterial({ color: 0xff3d8f })); this.marker.scale.set(0.36, 0.5, 0.36); this.marker.rotation.x = Math.PI; this.scene.add(this.marker);
+    const ringGeo = new THREE.RingGeometry(0.85, 1.15, 32); ringGeo.rotateX(-Math.PI / 2); this.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xff5fa2, transparent: true, opacity: 0.7, depthWrite: false })); this.scene.add(this.ring);
     this.camPos = new THREE.Vector3(); this.camLook = new THREE.Vector3(); this.snapCamera();
     this.hudT = 0; this.rankT = 0; this.order = this.racers.slice(); $('#leaderboard').onclick = () => { $('#leaderboard').classList.toggle('full'); this.updateHUD(); };
     this.buildHUD();
@@ -162,15 +162,16 @@ class Race {
       if (i === playerSlot) { r = new Racer(this, i, { name: S.profile.nick, isPlayer: true, look: lookP }); this.player = r; }
       else {
         const type = typeKeys[i % typeKeys.length], T = AI_TYPES[type];
-        const L = clamp(this.level || 1, 1, 6), accBase = [0, 0.5, 0.58, 0.66, 0.74, 0.8, 0.86][L];
-        const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.5, 0.35, 0.95), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0, 6), waitX: rand(-13, 13), jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
+        const L = clamp(this.level || 1, 1, 6), accBase = [0, 0.5, 0.54, 0.58, 0.62, 0.66, 0.7][L];
+        const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.4, 0.35, 0.8), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0, 6), waitX: rand(-13, 13), jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
         const nm = (names[i % names.length] || '말랑') + '말랑이';
-        const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.56, 0.62) };
+        const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.7, 0.77) };
         r = new Racer(this, i, { name: nm, look, ai, speedMul: (1 + (rand(...T.speed) - 0.95) * 0.5) * ([0, 0.84, 0.88, 0.92, 0.96, 1.0, 1.03][clamp(this.level || 1, 1, 6)] + (this.subject === 'run' ? 0.04 : 0)) });
         r.baseSpeed = r.speed;
       }
-      r.p.set((col - 4.5) * 2.7 + rand(-0.2, 0.2), PHYS.R + 0.05, -(4 + row * 2.6));
-      if (r.isPlayer) r.view.root.scale.setScalar(0.62);
+      r.p.set(clamp((col - 4.5) * 2.7 + rand(-1.1, 1.1) + (row % 2) * 1.3, -13, 13), PHYS.R + 0.05, -(4 + row * 2.6 + rand(-0.9, 0.9)));
+      r.yaw = Math.PI + rand(-0.6, 0.6); r.view.yaw.rotation.y = r.yaw; if (r.ai) r.ai.startT = rand(0, 0.45);
+      if (r.isPlayer) { r.view.root.scale.setScalar(0.8); r.view.setOutline(true); }
       this.racers.push(r); r.view.root.position.copy(r.p).y -= PHYS.R;
     }
   }
@@ -451,7 +452,7 @@ class Race {
   }
   // ---------- AI ----------
   thinkAI(r, dt) {
-    const A = r.ai, T = A.T; if (r.finished) { r.in.x = 0; r.in.z = r.d < this.course.FINISH + 5 ? -0.5 : 0; return; }
+    const A = r.ai, T = A.T; if (A.startT > 0 && this.state === 'run') { A.startT -= dt; r.in.x = 0; r.in.z = 0; return; } if (r.finished) { r.in.x = 0; r.in.z = r.d < this.course.FINISH + 5 ? -0.5 : 0; return; }
     if (r.respawnT > 0) return;
     A.think -= dt; A.pauseT -= dt; A.jumpT -= dt; A.swerveT -= dt;
     const C = this.course, d = r.d;
@@ -536,7 +537,7 @@ class Race {
     const gy = this.course.groundAt(r.p.x, r.p.z, r.p.y); const i = r.idx;
     if (gy > -50) { const hgt = r.p.y - r.r - gy, s = clamp(1 - hgt * 0.12, 0.35, 1); _m4.makeScale(s, 1, s); _m4.setPosition(r.p.x, gy + 0.03, r.p.z); } else _m4.makeScale(0, 0, 0);
     this.shadows.setMatrixAt(i, _m4); this.shadows.instanceMatrix.needsUpdate = true;
-    if (r.isPlayer) { this.marker.position.set(r.p.x, r.p.y + 1.25 + Math.sin(this.t * 5) * 0.12, r.p.z); this.marker.visible = true; this.ring.visible = gy > -50; this.ring.position.set(r.p.x, gy + 0.05, r.p.z); }
+    if (r.isPlayer) { this.marker.position.set(r.p.x, r.p.y + 1.75 + Math.sin(this.t * 5) * 0.14, r.p.z); this.ring.material.opacity = 0.65 + 0.3 * Math.sin(this.t * 6); this.ring.scale.setScalar(1 + 0.08 * Math.sin(this.t * 6)); this.marker.visible = true; this.ring.visible = gy > -50; this.ring.position.set(r.p.x, gy + 0.05, r.p.z); }
     // trail cosmetic (player only)
     if (r.isPlayer && sp > 2) { r.trailT -= dt; const tr = Save.data.equip.trail; if (tr !== 'none' && r.trailT <= 0) { r.trailT = 0.05; spawnTrail(this.particles, tr, r.p); } }
   }
