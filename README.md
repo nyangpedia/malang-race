@@ -12,6 +12,16 @@
 - 친구 코드 + 보호자 승인, 승인한 친구끼리만 들어오는 친구 방 (이모티콘만 사용)
 - 보호자 화면: 놀이 기록, 친구 승인, 하루 놀이 시간, 이모티콘/친구 방 켜고 끄기, 계정 삭제
 
+## 관리자 모드
+
+`supabase/schema.sql` 을 실행한 뒤, SQL Editor에서 아래 한 줄의 이메일을 운영자의 보호자 계정 이메일로 바꿔 한 번 실행하세요.
+
+```sql
+insert into public.admins(user_id) select id from auth.users where email = '내이메일@example.com' on conflict do nothing;
+```
+
+그 계정으로 로그인하면 광장 왼쪽 위에 **🛠️ 관리자 모드** 배지가 떠요. 누르고 보호자 PIN을 넣으면 통계, 아이 찾기, 닉네임 바꾸기, 점수 지우기, 공지 올리기를 할 수 있어요.
+
 ## 폴더
 
 | 위치 | 내용 |

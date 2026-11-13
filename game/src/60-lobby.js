@@ -128,6 +128,7 @@ Object.assign(App, {
     }
     const npc = (x, z, look) => { const v = new MallangView(Object.assign({ pattern: 'none', tuft: 'none', scale: 0.62 }, look), true); v.root.position.set(x, Y0, z); v.root.scale.setScalar(1.15); v.yaw.rotation.y = 0; sc.add(v.root); v.hopT = rand(1, 3); v.hy = 0; v.vy0 = 0; v.home = v.root.position.clone(); return v; };
     const npcs = [npc(P_NOTES[0], P_NOTES[1], { colorHex: 0xffa77a, face: 'happy', glasses: 'round', hat: 'cap' }), npc(P_DAILY[0], P_DAILY[1], { colorHex: 0x5cc8ff, face: 'sparkle', hat: 'party' })];
+    for (const n of npcs) sc.remove(n.root); npcs.length = 0; // no helper mallangs either, only mine
     // 📒 book stack beside the notes teacher, 🎯 notice board beside the mission guide
     { const [x, z] = P_NOTES; [[0xff7eb6, 0], [0x5cc8ff, 0.25], [0xffd84d, -0.2], [0x5fe0b0, 0.1]].forEach(([c, r], k) => { const b = new THREE.Mesh(GEO.box, mat(c)); b.scale.set(1.3, 0.3, 0.95); b.rotation.y = r; add(b, x - 1.9, Y0 + 0.15 + k * 0.3, z - 0.2); const pg = new THREE.Mesh(GEO.box, mat(0xffffff)); pg.scale.set(1.22, 0.2, 0.9); pg.rotation.y = r; add(pg, x - 1.86, Y0 + 0.15 + k * 0.3, z - 0.16); }); const pn = new THREE.Mesh(GEO.cyl, jellyMaterial(0xffd23f)); pn.scale.set(0.13, 1.5, 0.13); pn.rotation.z = 0.35; add(pn, x - 2.9, Y0 + 0.75, z + 0.2); solids.push({ x: x - 1.9, z: z - 0.2, r: 0.8 }); }
     { const [x, z] = P_DAILY; for (const sx of [-1, 1]) { const lg = new THREE.Mesh(GEO.cyl, mat(0xd9a066)); lg.scale.set(0.08, 2.4, 0.08); add(lg, x + 2.1 + sx * 0.85, Y0 + 1.2, z - 0.2); } const bd = new THREE.Mesh(GEO.box, mat(0xfff1d6)); bd.scale.set(2.2, 1.5, 0.14); add(bd, x + 2.1, Y0 + 1.9, z - 0.2); const tg = canvasTex(256, 176, (g) => { g.fillStyle = '#fff8e6'; g.fillRect(0, 0, 256, 176); g.font = '110px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🎯', 128, 96); }); const pl = new THREE.Mesh(new THREE.PlaneGeometry(2, 1.36), new THREE.MeshBasicMaterial({ map: tg })); add(pl, x + 2.1, Y0 + 1.9, z - 0.12); solids.push({ x: x + 2.1, z: z - 0.2, r: 0.9 }); }
@@ -177,7 +178,7 @@ Object.assign(App, {
     // characters
     const player = new MallangView(playerLookSafe(), true); player.root.scale.setScalar(1.0); sc.add(player.root);
     const friends = [], csKeys = Object.keys(COSTUMES).filter((k) => k !== 'none');
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 0; i++) { // plaza shows only my mallang
       const look = { colorHex: AI_COLORS[(i * 3 + 1) % AI_COLORS.length], face: pick(['happy', 'wink', 'normal', 'sparkle', 'sleepy']), tuft: pick(TUFTS), pattern: i % 4 === 0 ? pick(['dots', 'stripes', 'stars']) : 'none', hat: i % 5 === 1 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', scale: 0.62 };
       if (i % 3 === 0) { const k = csKeys[(i * 5 + 2) % csKeys.length]; look.costume = k; if (COSTUMES[k].color) look.colorHex = COSTUMES[k].color; }
       const f = new MallangView(look, true); f.root.scale.setScalar(rand(0.72, 0.9)); f.ang = i / 12 * Math.PI * 2 + rand(-0.2, 0.2); f.rad = rand(3.6, 9.6);
@@ -263,20 +264,21 @@ Object.assign(App, {
   drawHub() {
     const S = Save.data, P = S.profile, al = accountLevel(S.xp), L = LEVELS[P.level], col = playerColorCss();
     const crown = S.lastCrown ? { gold: '🥇', silver: '🥈', bronze: '🥉' }[S.lastCrown] : '';
-    $('#hub-top').innerHTML = `<div class="pcard"><span class="blob" style="--c:${col}"></span><div class="pc-t"><b>${escapeHtml(P.nick)} ${crown}</b><span class="pc-lv">말랑 Lv.${al.lv}<span class="xpbar"><i style="width:${al.cur / al.need * 100}%"></i></span></span></div></div>
+    $('#hub-top').innerHTML = `<div class="pcard"><span class="blob" style="--c:${col}"></span><div class="pc-t">${Online.admin ? '<button class="admin-badge" id="hub-admin" title="관리자 화면 열기">🛠️ 관리자 모드</button>' : ''}<b>${escapeHtml(P.nick)} ${crown}</b><span class="pc-lv">말랑 Lv.${al.lv}<span class="xpbar"><i style="width:${al.cur / al.need * 100}%"></i></span></span></div></div>
       <div></div>
       <div class="pills">${Online.enabled ? '<button class="pill rooms" id="hub-rooms">👫 친구 방</button>' : ''}${Number.isFinite(Online.timeLeft()) ? `<div class="pill">⏰ ${Math.max(0, Math.ceil(Online.timeLeft() / 60))}분</div>` : ''}<div class="pill hidden" id="hub-cloud"></div><div class="pill">${L.icon} ${P.level}학년 ${L.name}</div><div class="pill en">⚡ <b>${S.energy}</b></div><button class="pill gear" id="hub-gear">⚙️</button></div>`;
+    if ($('#hub-admin')) $('#hub-admin').onclick = () => { Sound.play('click'); this.olPin(() => this.olAdmin(), '관리자 확인 (보호자 PIN)'); };
     $('#hub-gear').onclick = () => { Sound.play('click'); this.menuSettings(); };
     if ($('#hub-rooms')) $('#hub-rooms').onclick = () => { Sound.play('click'); this.menuRooms(); };
     this.drawCloud();
     const claimable = DAILY.some((m) => (S.daily.progress[m.id] || 0) >= m.goal && !S.daily.claimed[m.id]);
     this.drawFever();
-    $('#hub-hint').innerHTML = claimable ? '🎯 미션 보상이 기다려요! 파란 말랑이에게 가 보세요' : `🏁 무지개 문으로 들어가면 레이스 · 🔥 피버 모드까지 ${S.runProgress || 0}/${RUN_NEED}판`;
+    $('#hub-hint').style.display = 'none'; if (0) $('#hub-hint').innerHTML = claimable ? '🎯 미션 보상이 기다려요! 파란 말랑이에게 가 보세요' : `🏁 무지개 문으로 들어가면 레이스 · 🔥 피버 모드까지 ${S.runProgress || 0}/${RUN_NEED}판`;
   },
   enterHub() {
     this.show('hub'); this.setHubZoom(0); this.closeModal(); $('#controls').classList.remove('hidden');
     const H = this.hub; if (Math.hypot(H.pp.x, H.pp.z + 15) < 3.4) { H.pp.set(0, H.Y0, -10.5); H.pv.set(0, 0, 0); }
-    this.checkDaily(); this.drawHub(); Sound.startMusic(MUSIC.hub);
+    this.checkDaily(); this.drawHub(); Sound.startMusic(MUSIC.hub); setTimeout(() => this.olNotice(), 1200);
     { const S = Save.data; if (S.profile && S.runTickets > 0 && !S.feverSeen && $('#modal').classList.contains('hidden')) this.feverModal(); }
   },
   menuDaily() {
@@ -290,40 +292,51 @@ Object.assign(App, {
   menuMap() { this.showMap(); },
   showMap(sel) {
     const S = Save.data; S.worldBest = S.worldBest || {}; this.closeModal();
-    this.mapSel = sel || this.mapSel || this._lastWorld || 'candy';
+    this.mapSel = sel || this.mapSel || this._lastWorld || 'candy'; this._mapOpen = !!sel; this._mapSubj = null;
     this.show('map'); $('#controls').classList.add('hidden'); this.drawMap();
     if (!this._mapBound) { this._mapBound = true; addEventListener('resize', () => { if (this.screen === 'map') this.drawMap(); }); }
   },
   drawMap() {
     const S = Save.data, port = false, VW = port ? 700 : 1280, VH = port ? 1180 : 720;
-    const pos = port ? [[180, 1000], [520, 860], [190, 690], [515, 520], [195, 350], [500, 185]] : [[480, 545], [600, 275], [790, 525], [915, 285], [1105, 490], [1150, 150]];
+    const pos = port ? [[180, 1000], [520, 860], [190, 690], [515, 520], [195, 350], [500, 185]] : [[250, 500], [420, 240], [620, 490], [820, 250], [1010, 480], [1080, 150]];
     const sel = this.mapSel, si = WORLD_ORDER.indexOf(sel);
     // smooth route through the islands
     let d = `M${pos[0][0]},${pos[0][1] + 30}`;
     for (let i = 0; i < pos.length - 1; i++) { const p0 = pos[Math.max(0, i - 1)], p1 = pos[i], p2 = pos[i + 1], p3 = pos[Math.min(pos.length - 1, i + 2)]; d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + 30 + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] + 30 - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1] + 30}`; }
     const rnd = (i) => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
     let waves = ''; for (let i = 0; i < 46; i++) { const x = rnd(i) * VW, y = rnd(i + 99) * VH; waves += `<path d="M${x},${y} q10,-9 20,0 t20,0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="${0.25 + rnd(i + 7) * 0.3}"/>`; }
-    const extras = port ? [['⛵', 560, 1080, 44], ['🐳', 90, 520, 44], ['🏝️', 600, 690, 40], ['🐙', 80, 150, 38]] : [['⛵', 250, 330, 46], ['🐳', 800, 100, 46], ['🏝️', 950, 660, 40], ['🐙', 380, 130, 38], ['⛵', 120, 180, 36]];
+    const extras = port ? [['⛵', 560, 1080, 44], ['🐳', 90, 520, 44], ['🏝️', 600, 690, 40], ['🐙', 80, 150, 38]] : [['⛵', 130, 330, 46], ['🐳', 620, 110, 46], ['🏝️', 830, 640, 40], ['🐙', 250, 120, 38], ['⛵', 1180, 600, 36]];
     const isl = WORLD_ORDER.map((w, i) => {
       const W = WORLDS[w], A = MAP_ART[w], [x, y] = pos[i], un = S.unlockedWorlds.includes(w), best = S.worldBest[w];
       const stars = best ? (best.rank === 1 ? 3 : best.rank <= 3 ? 2 : 1) : 0;
       return `<g class="isl ${un ? '' : 'locked'} ${w === sel ? 'sel' : ''}" data-w="${w}" transform="translate(${x},${y})">
-        <ellipse cx="0" cy="52" rx="128" ry="30" fill="#1f6fb8" opacity=".22"/>
+        <ellipse cx="0" cy="78" rx="150" ry="36" fill="#0d4f91" opacity=".28" filter="url(#mblur)"/>
+        <ellipse cx="0" cy="62" rx="140" ry="40" fill="none" stroke="#fff" stroke-width="3" opacity=".35" class="ripple" style="animation-delay:${-i * 0.5}s"/>
         <g class="bob" style="animation-delay:${-i * 0.7}s">
           ${w === sel ? '<ellipse cx="0" cy="24" rx="132" ry="60" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="14 12" class="selring"/>' : ''}
-          <ellipse cx="0" cy="36" rx="116" ry="44" fill="#e9cf98"/><ellipse cx="0" cy="30" rx="116" ry="44" fill="#fbe9bd"/>
-          <ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mg-${w})"/><ellipse cx="-18" cy="10" rx="62" ry="18" fill="#fff" opacity=".28"/>
-          <g class="deco">${A.deco.map(([e, dx, dy, fs]) => `<text x="${dx}" y="${dy + fs * 0.35}" font-size="${fs}" text-anchor="middle">${e}</text>`).join('')}</g>
+          <path d="M-116,30 L-116,62 A116,44 0 0 0 116,62 L116,30 Z" fill="url(#mside)"/>
+          <path d="M-116,48 A116,44 0 0 0 116,48" fill="none" stroke="#c9a46a" stroke-width="3" opacity=".6"/>
+          <ellipse cx="0" cy="30" rx="116" ry="44" fill="#fbe9bd"/>
+          <path d="M-102,22 L-102,30 A102,38 0 0 0 102,30 L102,22 Z" fill="${MAP_ART[w].c[1]}" opacity=".9" style="filter:brightness(.78)"/>
+          <ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mg-${w})"/><ellipse cx="0" cy="20" rx="102" ry="38" fill="url(#mshine)"/>
+          <ellipse cx="-30" cy="6" rx="50" ry="13" fill="#fff" opacity=".35"/>
+          <g class="deco" filter="url(#mdrop)">${A.deco.map(([e, dx, dy, fs]) => `<text x="${dx}" y="${dy + fs * 0.35}" font-size="${fs * 1.08}" text-anchor="middle">${e}</text>`).join('')}</g>
           ${un ? '' : `<g><circle cx="0" cy="6" r="30" fill="#fff" opacity=".95"/><text x="0" y="18" font-size="34" text-anchor="middle">🔒</text></g>`}
           <g class="num"><circle cx="-92" cy="-28" r="22" fill="${un ? '#ff5fa2' : '#a79fc0'}" stroke="#fff" stroke-width="5"/><text x="-92" y="-18" font-size="28" text-anchor="middle" fill="#fff">${i + 1}</text></g>
         </g>
-        <g class="tag"><rect x="-96" y="78" width="192" height="40" rx="20" fill="#fff" stroke="${w === sel ? '#ff5fa2' : '#ffffff'}" stroke-width="4"/><text x="0" y="106" font-size="23" text-anchor="middle" fill="#3d2a55">${W.name}${un ? '' : ` · ⚡${W.price}`}</text></g>
+        <g class="tag"><rect x="-96" y="84" width="192" height="40" rx="20" fill="${w === sel ? '#ff5fa2' : '#c9b8e6'}"/><rect x="-96" y="78" width="192" height="40" rx="20" fill="#fff" stroke="${w === sel ? '#ff5fa2' : '#ffffff'}" stroke-width="4"/><text x="0" y="106" font-size="23" text-anchor="middle" fill="#3d2a55">${W.name}${un ? '' : ` · ⚡${W.price}`}</text></g>
         ${stars ? `<text x="0" y="142" font-size="22" text-anchor="middle">${'⭐'.repeat(stars)}</text>` : ''}
       </g>`;
     }).join('');
     const [mx, my] = pos[si];
     $('#map-svg').innerHTML = `<svg viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-      <defs>${WORLD_ORDER.map((w) => `<linearGradient id="mg-${w}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${MAP_ART[w].c[0]}"/><stop offset="1" stop-color="${MAP_ART[w].c[1]}"/></linearGradient>`).join('')}</defs>
+      <defs><linearGradient id="mside" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c98c"/><stop offset="1" stop-color="#b98a4c"/></linearGradient>
+        <radialGradient id="mshine" cx=".35" cy=".25" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".45"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+        <radialGradient id="msea" cx=".5" cy=".55" r=".75"><stop offset="0" stop-color="#8fdcff"/><stop offset=".7" stop-color="#4fb3f0"/><stop offset="1" stop-color="#2a86d6"/></radialGradient>
+        <filter id="mblur" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="8"/></filter>
+        <filter id="mdrop" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-color="#3d2a55" flood-opacity=".35"/></filter>
+        ${WORLD_ORDER.map((w) => `<linearGradient id="mg-${w}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${MAP_ART[w].c[0]}"/><stop offset="1" stop-color="${MAP_ART[w].c[1]}"/></linearGradient>`).join('')}</defs>
+      <rect x="-400" y="-300" width="${VW + 800}" height="${VH + 600}" fill="url(#msea)"/>
       ${waves}
       ${extras.map(([e, x, y, fs]) => `<text x="${x}" y="${y}" font-size="${fs}" text-anchor="middle" class="drift">${e}</text>`).join('')}
       <path d="${d}" fill="none" stroke="#1f6fb8" stroke-opacity=".25" stroke-width="22" stroke-linecap="round"/>
@@ -335,18 +348,22 @@ Object.assign(App, {
       <g class="mcloud" style="animation-duration:55s;animation-delay:-20s"><ellipse cx="0" cy="${VH * 0.7}" rx="100" ry="30" fill="#fff" opacity=".6"/><ellipse cx="-50" cy="${VH * 0.7 - 18}" rx="60" ry="26" fill="#fff" opacity=".6"/></g>
     </svg>`;
     $('#map-energy').innerHTML = `⚡ <b>${S.energy}</b>`;
-    $$('#map-svg .isl').forEach((g) => (g.onclick = () => { if (this.mapSel !== g.dataset.w) { this.mapSel = g.dataset.w; Sound.play('click'); this.drawMap(); } }));
+    $$('#map-svg .isl').forEach((g) => (g.onclick = () => { if (this.mapSel !== g.dataset.w || !this._mapOpen) { this.mapSel = g.dataset.w; this._mapOpen = true; this._mapSubj = null; Sound.play('click'); this.drawMap(); } }));
+    $('#map-sheet').classList.toggle('closed', !this._mapOpen); $('#map-sheet').classList.toggle('center', !!this._mapOpen); $('#map-dim').classList.toggle('on', !!this._mapOpen);
+    $('#map-dim').onclick = () => { this._mapOpen = false; this._mapSubj = null; Sound.play('click'); this.drawMap(); };
+    if (!this._mapOpen) { $('#map-sheet').innerHTML = `<div class="ms-hint">👆 달리고 싶은 섬을 눌러 보세요!</div>`; $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); }; return; }
     // info sheet
-    const W = WORLDS[sel], un = S.unlockedWorlds.includes(sel), best = S.worldBest[sel], P = S.profile, can = S.energy >= W.price, subj = SUBJECTS[S.settings.subject] && S.settings.subject !== 'run' ? S.settings.subject : 'math';
-    $('#map-sheet').innerHTML = `<div class="ms-head"><span class="ms-ic" style="background:linear-gradient(180deg,${MAP_ART[sel].c.join(',')})">${W.icon}</span><div class="ms-t"><b>${si + 1}. ${W.name}</b><small>${WORLD_FEAT[sel]}</small></div></div>
+    const W = WORLDS[sel], un = S.unlockedWorlds.includes(sel), best = S.worldBest[sel], P = S.profile, can = S.energy >= W.price, subj = this._mapSubj;
+    $('#map-sheet').innerHTML = `<button class="ms-x" id="ms-x" aria-label="닫기">✕</button><div class="ms-head"><span class="ms-ic" style="background:linear-gradient(180deg,${MAP_ART[sel].c.join(',')})">${W.icon}</span><div class="ms-t"><b>${si + 1}. ${W.name}</b><small>${WORLD_FEAT[sel]}</small></div></div>
       <div class="ms-chips"><span>📚 추천 ${W.grade}학년 · ${W.topic}</span><span>🏅 ${best ? `최고 ${best.rank}등` : '아직 기록 없음'}</span></div>
-      <div class="ms-sub">${Object.keys(SUBJECTS).filter((k) => k !== 'run').map((k) => `<button class="sj ${k === subj ? 'on' : ''}" data-sj="${k}"><b>${SUBJECTS[k].icon} ${SUBJECTS[k].name}</b></button>`).join('')}</div><div class="ms-note">${SUBJECTS[subj].desc}${subj === 'math' ? ` (${P.level}학년 수준)` : ''}</div>
-      ${un ? `<button class="btn" id="map-go">🏁 여기서 레이스!</button>` : `<button class="btn yellow" id="map-unlock" ${can ? '' : 'disabled'}>🔓 ⚡${W.price}로 열기</button>${can ? '' : `<div class="ms-note">숫자 에너지가 ${W.price - S.energy}개 더 필요해요</div>`}`}
+      ${un ? `<div class="ms-ask">${subj ? '좋아요! 이제 출발해 볼까요?' : '어떤 문제로 달릴까요?'}</div><div class="ms-sub big">${Object.keys(SUBJECTS).filter((k) => k !== 'run').map((k) => `<button class="sj sj-${k} ${k === subj ? 'on' : ''}" data-sj="${k}"><i>${SUBJECTS[k].icon}</i><b>${SUBJECTS[k].name}</b></button>`).join('')}</div>
+      ${subj ? `<div class="ms-note">${SUBJECTS[subj].desc} · ${P.level}학년 수준</div><button class="btn go-pop" id="map-go">🏁 ${SUBJECTS[subj].name} 레이스 시작!</button>` : ''}` : `<button class="btn yellow" id="map-unlock" ${can ? '' : 'disabled'}>🔓 ⚡${W.price}로 열기</button>${can ? '' : `<div class="ms-note">숫자 에너지가 ${W.price - S.energy}개 더 필요해요</div>`}`}
       <div class="ms-note">나 + AI 말랑이 49명 · 온라인 대전은 아직 준비 중이에요</div>`;
-    if (un) $('#map-go').onclick = () => { this._lastWorld = sel; Sound.play('click'); this.startRace(sel, 50, subj); };
-    else $('#map-unlock').onclick = () => this.unlockWorld(sel, () => this.drawMap());
-    $$('#map-sheet .sj').forEach((b) => (b.onclick = () => { S.settings.subject = b.dataset.sj; Save.save(); Sound.play('click'); this.drawMap(); }));
+    if (un && subj) $('#map-go').onclick = () => { this._lastWorld = sel; Sound.play('click'); this.startRace(sel, 50, subj); };
+    else if (!un) $('#map-unlock').onclick = () => this.unlockWorld(sel, () => this.drawMap());
+    $$('#map-sheet .sj').forEach((b) => (b.onclick = () => { this._mapSubj = b.dataset.sj; S.settings.subject = b.dataset.sj; Save.save(); Sound.play('click'); this.drawMap(); }));
     $('#map-back').onclick = () => { Sound.play('click'); this.enterHub(); };
+    $('#ms-x').onclick = () => { this._mapOpen = false; this._mapSubj = null; Sound.play('click'); this.drawMap(); };
   },
   // ---------------- register (with starter colour) ----------------
   showRegister(edit) {

@@ -8,11 +8,13 @@ const EMOTES = ['😀', '😂', '😮', '😢', '😡', '👍', '🎉', '❤️'
 const ROOM_MAX = 8, ROOM_HZ = 6;
 
 // run fn with Math.random replaced by a seeded generator (so every client builds the same course)
+const MAPS_PER_LEVEL = 30;
+function mapSeed(world, level, no) { return 100000 + WORLD_ORDER.indexOf(world) * 10000 + level * 1000 + no * 7; }
 function withSeed(seed, fn) {
   if (!seed) return fn();
-  let a = seed >>> 0; const orig = Math.random;
-  Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  try { return fn(); } finally { Math.random = orig; }
+  let a = seed >>> 0; const orig = RNG;
+  RNG = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  try { return fn(); } finally { RNG = orig; }
 }
 const _emoTex = {};
 function emoteSprite(e) {
@@ -93,7 +95,7 @@ class Room {
     g.buf.push({ t: performance.now() / 1000, x: +p.x, y: +p.y, z: +p.z, h: p.h }); if (g.buf.length > 24) g.buf.shift();
   }
   makeGhost(m) {
-    const R = App.race, v = new MallangView(Object.assign({}, m.look || {}, { scale: 0.62 }), true); v.root.scale.setScalar(0.62); R.scene.add(v.root);
+    const R = App.race, v = new MallangView(Object.assign({}, m.look || {}, { scale: 0.75 }), true); v.root.scale.setScalar(0.75); R.scene.add(v.root);
     const lab = nameSprite('👫 ' + m.nick, '#d8407f'); R.scene.add(lab);
     return { view: v, lab, buf: [], nick: m.nick, yaw: Math.PI, d: 0 };
   }
@@ -192,7 +194,7 @@ Object.assign(App, {
       <p class="muted">${R.isHost ? '친구에게 방 코드를 알려 주세요. 친구 화면에도 초대가 떠요.' : `<b>${escapeHtml(R.hostNick)}</b>의 방이에요. 방장이 출발을 누르면 시작해요.`}</p>
       <div class="room-mem">${ms.map((m) => { const b = R.bubbles[m.key]; return `<div class="${m.key === R.key ? 'me' : ''}">${b && b.until > now ? `<i class="bub">${b.e}</i>` : ''}${blobHtml(m.look ? hexCss(m.look.colorHex || 0xff7eb6) : '#ff7eb6', 48)}<b>${escapeHtml(m.nick)}</b><small>${m.host ? '👑 방장' : ''}${m.st === 'race' ? ' 🏃 달리는 중' : ''}</small></div>`; }).join('')}</div>
       <div class="room-set"><div><small>월드</small><div class="row">${ws.map((w) => `<button class="chip sm ${w === R.world ? 'on' : ''}" ${R.isHost ? `data-rw="${w}"` : ''}>${WORLDS[w].icon} ${WORLDS[w].name}</button>`).join('')}</div></div>
-      <div><small>문제</small><div class="row">${['math', 'capital', 'quiz'].map((s) => `<button class="chip sm ${s === R.subject ? 'on' : ''}" ${R.isHost ? `data-rs="${s}"` : ''}>${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div></div></div>
+      <div><small>문제</small><div class="row">${['math', 'english', 'quiz'].map((s) => `<button class="chip sm ${s === R.subject ? 'on' : ''}" ${R.isHost ? `data-rs="${s}"` : ''}>${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div></div></div>
       <p class="muted">산수 문제는 각자 자기 학년 수준으로 나와요. 코스는 모두 같아요.</p>
       ${this.emoteRow()}
       <div class="row" style="justify-content:center;margin-top:10px">${R.isHost ? `<button class="btn" id="rm-go" ${canGo ? '' : 'disabled'}>${ms.length < 2 ? '친구를 기다리는 중…' : allBack ? `🏁 출발! (${ms.length}명)` : '친구가 돌아오길 기다려요…'}</button>` : ''}<button class="btn sm gray" id="rm-out">방 나가기</button></div></div>`);

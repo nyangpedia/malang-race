@@ -43,6 +43,12 @@ const App = {
     this.screen = name; this.drawFever && this.drawFever();
   },
   loop(t) {
+    requestAnimationFrame((tt) => this.loop(tt));
+    try { this.loopBody(t); } catch (e) { this.reportError(e); }
+  },
+  reportError(e) { const msg = String((e && e.message) || e).slice(0, 120); if (this._lastErr === msg) return; this._lastErr = msg; console.error(e);
+    if (this.race && this.race.state === 'done' && $('#modal').classList.contains('hidden')) this.modal(`<h2>🏁 레이스 끝!</h2><p>결과 화면을 여는 중에 문제가 생겼어요. 아래 글자를 캡처해서 알려 주시면 고칠게요.</p><p class="muted" style="font-size:11px">${escapeHtml(msg)}</p><div class="row" style="justify-content:center"><button class="btn blue" onclick="App.exitRace()">광장으로</button></div>`); },
+  loopBody(t) {
     const dt = Math.min(0.05, (t - (this.last || t)) / 1000); this.last = t;
     if (this.race) {
       if (!this.paused) this.race.update(dt);
@@ -52,7 +58,7 @@ const App = {
     if (!document.hidden && Save.data.profile && this.screen !== 'title' && this.screen !== 'register') Online.tickPlay(dt);
     this._pollT = (this._pollT || 3) - dt; if (this._pollT <= 0) { this._pollT = 25; this.pollRooms(); }
     this.fps = this.fps ? this.fps * 0.95 + (1 / Math.max(dt, 0.001)) * 0.05 : 60;
-    requestAnimationFrame((tt) => this.loop(tt));
+    return;
   },
   // ---------------- hub 3D ----------------
   buildHub() {
@@ -68,7 +74,7 @@ const App = {
     for (let i = 0; i < 26; i++) { const o = deco.call({}, 'candy'); const a = rand(0, Math.PI * 2), r = rand(14, 40); o.position.set(Math.cos(a) * r, -0.6, Math.sin(a) * r - 10); sc.add(o); }
     const player = new MallangView(playerLookSafe(), true); player.root.scale.setScalar(1.25); sc.add(player.root);
     const friends = [];
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 0; i++) {
       const f = new MallangView({ colorHex: AI_COLORS[(i * 3 + 1) % AI_COLORS.length], face: pick(['happy', 'wink', 'normal', 'sparkle', 'sleepy']), tuft: pick(TUFTS), pattern: 'none', scale: 0.8 }, true);
       const a = -0.9 + i * 0.36; f.home = new THREE.Vector3(Math.sin(a) * 6.5, -0.6, -4 - Math.cos(a) * 3); f.root.position.copy(f.home); f.hopT = rand(0, 2); sc.add(f.root); friends.push(f);
       f.yaw.rotation.y = Math.atan2(-f.home.x, 6 - f.home.z);
@@ -154,7 +160,7 @@ const App = {
     $('#btn-race').onclick = () => { Sound.play('click'); this.openMenu('race'); };
   },
   toastHub(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2200); },
-  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeModal()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
+  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').classList.remove('narrow'); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeModal()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
   closeModal() { $('#modal').classList.add('hidden'); document.body.classList.remove('modal-side'); if (this.hub && this.hub.zoom) this.setHubZoom(0); if (this.screen === 'hub' && Save.data.profile) this.drawHub(); },
   openMenu(id) {
     const fn = { race: 'menuRace', custom: 'menuCustom', notes: 'menuNotes', rank: 'menuRank', level: 'menuLevel', shop: 'menuShop', map: 'menuMap', settings: 'menuSettings' }[id];
@@ -181,7 +187,7 @@ const App = {
     S.energy -= W.price; S.unlockedWorlds.push(w); Save.save(); Sound.play('finish'); this.toastHub(`${W.name} 해금! 🎉`); after && after();
   },
   startRace(worldId, count, subject, free, extra) {
-    subject = subject || Save.data.settings.subject || 'math';
+    subject = subject || Save.data.settings.subject || 'math'; if (!SUBJECTS[subject]) subject = subject === 'capital' ? 'quiz' : 'math';
     if (!(extra && extra.room)) { if (this.room) this.leaveRoom(true); if (Online.timeLeft() <= 0) { this.olTimeUpModal(); return; } }
     if (subject === 'run' && !free) { const S = Save.data; if (!(S.runTickets > 0)) { this.closeModal(); this.enterHub(); return; } S.runTickets--; Save.save(); }
     $('#fever').classList.add('hidden'); $('#fever-mini').classList.add('hidden');
@@ -210,16 +216,17 @@ const App = {
     if (S.history.length > 200) S.history.length = 200;
     const dp = S.daily.progress; if (S.daily.date === todayStr()) { dp.race1 = (dp.race1 || 0) + 1; dp.correct10 = (dp.correct10 || 0) + res.correct; dp.stomp3 = (dp.stomp3 || 0) + res.stomps; }
     let tk = ''; if (res.subject !== 'run') { S.runProgress = (S.runProgress || 0) + 1; if (S.runProgress >= RUN_NEED) { S.runProgress = 0; S.runTickets = (S.runTickets || 0) + 1; S.feverSeen = false; tk = `<div class="fever-hero" style="margin:10px 0"><div class="big">🔥 피버 모드 열림!</div><p>레이스 ${RUN_NEED}판 완주 보상이에요. 문제 없이 달리고 에너지는 2배!</p><button class="btn" style="margin-top:10px;background:#fff;color:#ff5a3c;box-shadow:0 6px 0 #c9401f" onclick="App.startFever()">🔥 지금 참가하기</button></div>`; } else tk = `<p class="muted" style="text-align:center">🔥 피버 모드까지 ${S.runProgress}/${RUN_NEED}판</p>`; } else tk = `<p class="muted" style="text-align:center">🔥 남은 피버 참가권 ${S.runTickets || 0}장 · 일반 레이스 ${RUN_NEED}판마다 1장을 받아요</p>`;
-    const inRoom = !!(this.room && this.race && this.race.room); Online.submitScore(res, inRoom).then((sc) => { if (sc && $('#res-online')) $('#res-online').innerHTML = `🏆 랭킹에 올렸어요 · 이번 판 <b>${sc}점</b>`; });
+    const inRoom = !!(this.room && this.race && this.race.room); Online.submitScore(res, inRoom).then((sc) => { if (sc && $('#res-online')) $('#res-online').innerHTML = `🏆 랭킹에 올렸어요 · 랭킹 점수 <b>${sc}점</b>`; });
     let tkTop = ''; if (tk.includes('fever-hero')) { tkTop = tk; tk = ''; }
     const again = res.subject === 'run' && !(S.runTickets > 0) ? '' : `<button class="btn" onclick="App.restartRace();App.closeModal()">${res.subject === 'run' ? '🔥 피버 한 번 더!' : '한 번 더!'}</button>`;
     Save.save();
     const tm = `${Math.floor(res.time / 60)}분 ${Math.floor(res.time % 60)}초`;
-    const log = res.log.map((l) => `<div class="wn" style="padding:8px 12px"><span class="tag ${l.ok ? 'green' : 'red'}">${l.ok ? '한 번에 정답' : '오답 후 통과'}</span> ${escapeHtml(l.q)} → 정답 <b>${escapeHtml(l.answer)}</b>${l.ok ? '' : ` (처음 고른 문: ${escapeHtml(l.chosen)})`}</div>`).join('');
+    const pts = res.pts || { speed: 0, quiz: 0, star: 0, total: res.score };
     this.modal(`<h2>${res.subject === 'run' ? '🔥 피버 모드 결과' : '🏁 레이스 결과'}</h2><div class="res-rank">${res.rank}등 <span style="font-size:26px;color:#a77bd0;-webkit-text-stroke:0;text-shadow:none">/ ${res.N}명</span></div>${inRoom ? '<div class="wn room-board" id="room-board"></div>' : ''}${tkTop}
+      <div class="res-pts"><div>🏃 속도<b>${pts.speed}</b><small>${res.place || res.rank}번째 골인 · ${tm}</small></div><i>+</i><div>✏️ 정답<b>${pts.quiz}</b><small>${res.subject === 'run' ? '문제 없음' : res.correct + ' / ' + res.attempts + ' 문제'}</small></div><i>+</i><div>⭐ 별<b>${pts.star}</b><small>${res.stars || 0}개</small></div><i>=</i><div class="sum">합계<b>${pts.total}</b><small>포인트</small></div></div>
+      <div class="res-mini"><span>최대 콤보 <b>${res.maxCombo}</b></span><span>밟기 <b>${res.stomps}</b></span><span>에너지 <b style="color:#d89a00">+${res.energy} ⚡</b></span><span>경험치 <b style="color:#d8407f">+${res.xp} XP</b></span></div>
       ${Online.child ? '<div class="muted" id="res-online" style="text-align:center">☁️ 기록 저장 중…</div>' : ''}
-      <div class="res-grid"><div>완주 기록<b>${tm}</b></div><div>관문 정답<b>${res.subject === 'run' ? '없음' : res.correct + '/' + res.attempts}</b></div><div>최대 콤보<b>${res.maxCombo}</b></div><div>밟기 성공<b>${res.stomps}</b></div><div>숫자 에너지<b style="color:#d89a00">+${res.energy} ⚡</b></div><div>경험치<b style="color:#d8407f">+${res.xp} XP</b></div><div>레이스 점수<b>${res.score}</b></div></div>
-      ${S.lastCrown ? `<div class="wn" style="text-align:center;font-size:18px">👑 ${res.rank}등 축하해요! 다음 판에는 <b>${CROWN_TIERS[S.lastCrown][1]}왕관</b>을 쓰고 달려요.</div>` : ''}${tk}${log}<p class="muted">${res.subject === 'run' ? '피버 모드는 문제 없이 달리고 에너지를 2배로 받아요.' : '틀린 문제는 오답노트에 자동으로 저장돼요.'}</p>
+      ${S.lastCrown ? `<div class="wn" style="text-align:center;font-size:18px">👑 ${res.rank}등 축하해요! 다음 판에는 <b>${CROWN_TIERS[S.lastCrown][1]}왕관</b>을 쓰고 달려요.</div>` : ''}${tk}<p class="muted" style="text-align:center">${res.subject === 'run' ? '피버 모드는 문제 없이 달리고 에너지를 2배로 받아요.' : res.attempts > res.correct ? `틀린 문제 ${res.attempts - res.correct}개는 📒 오답노트에서 다시 볼 수 있어요.` : '등수는 속도, 정답, 별 포인트를 더해서 정해요.'}</p>
       <div class="row" style="justify-content:center;margin-top:10px">${inRoom ? '<button class="btn" onclick="App.roomBackToLobby()">👫 방으로 돌아가기</button>' : again}<button class="btn blue" onclick="App.exitRace()">${inRoom ? '방 나가기' : '광장으로'}</button></div>`);
   },
   // ---------------- customize & shop ----------------
@@ -276,7 +283,7 @@ const App = {
     this.modal(`<h2>📒 나의 오답노트</h2>${tabs}${body}`);
     $$('[data-t]').forEach((b) => (b.onclick = () => this.menuNotes(b.dataset.t)));
     $$('[data-retry]').forEach((b) => (b.onclick = () => { const w = S.wrongNotes.find((x) => x.id === b.dataset.retry); this.retryNote(w); }));
-    $$('[data-sim]').forEach((b) => (b.onclick = () => { const k = b.dataset.sim, T = QTYPES[k], sj = k === '수도 퀴즈' ? 'capital' : 'quiz'; this.quiz({ title: `${T ? T.name : k} 연습`, n: 5, gen: () => (T ? makeQuestion(T.level, k) : makeQuizQuestion(sj, S.profile.level)), mode: 'practice', back: () => this.menuNotes('list') }); }));
+    $$('[data-sim]').forEach((b) => (b.onclick = () => { const k = b.dataset.sim, T = QTYPES[k], sj = k === '수도 퀴즈' ? 'capital' : k === '영어 단어' ? 'english' : 'quiz'; this.quiz({ title: `${T ? T.name : k} 연습`, n: 5, gen: () => (T ? makeQuestion(T.level, k) : makeQuizQuestion(sj, S.profile.level)), mode: 'practice', back: () => this.menuNotes('list') }); }));
   },
   retryNote(w) {
     // rebuild a question object for the stored text/answer
@@ -332,9 +339,9 @@ const App = {
     const S = Save.data, st = promotionStatus(), L = LEVELS[st.level];
     const per = st.per.map((p) => `<div class="statbar"><span style="width:170px">${p.name}</span><span class="b"><i style="width:${p.acc * 100}%;background:${p.ok ? '#2fbf7f' : '#ffc21f'}"></i></span><span style="width:90px;text-align:right">${p.a ? Math.round(p.acc * 100) + '%' : '-'} (${p.a})</span></div>`).join('');
     this.modal(`<h2>🎓 레벨 · 승급시험</h2><div class="wn"><div class="q">${L.icon} LV${st.level} ${L.name}</div><div class="muted">${L.desc}</div></div>
-      <h3>유형별 숙련도</h3>${per}
+      <div class="lv-grid"><div><h3>유형별 숙련도</h3>${per}</div><div>
       ${st.max ? '<p style="font-size:18px">최고 레벨 마스터예요! 👑</p>' : `<h3>승급시험 조건 (LV${st.level + 1} ${LEVELS[st.level + 1].name})</h3>${st.conds.map((c) => `<div style="font-size:16px;margin:4px 0">${c.ok ? '✅' : '⬜'} ${c.label}</div>`).join('')}<div style="font-size:16px;margin:4px 0">🎯 시험: 10문제 중 9문제 이상 정답</div>
-      <div style="text-align:center;margin-top:12px"><button class="btn yellow" id="exam" ${st.ready ? '' : 'disabled'}>승급시험 보기</button></div><p class="muted" style="text-align:center">시험에 떨어져도 레벨과 아이템은 그대로예요. 언제든 다시 도전할 수 있어요.</p>`}
+      <div style="text-align:center;margin-top:12px"><button class="btn yellow" id="exam" ${st.ready ? '' : 'disabled'}>승급시험 보기</button></div><p class="muted" style="text-align:center">시험에 떨어져도 레벨과 아이템은 그대로예요. 언제든 다시 도전할 수 있어요.</p></div></div>`}
       <p class="muted">레이스 순위가 아니라 문제 풀이 실력으로만 레벨이 올라가요. 레벨은 설정에서 직접 바꿀 수도 있어요.</p>`);
     const b = $('#exam'); if (b) b.onclick = () => this.exam();
   },

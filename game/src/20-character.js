@@ -26,9 +26,31 @@ function deformMochi(geo, scale = 1) {
   geo.computeVertexNormals();
   return geo;
 }
+// ghost-slime: a round dome on top, soft sides that flare a little, and a scalloped hem at the bottom
+function deformGhost(geo, scale = 1) {
+  const p = geo.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i).divideScalar(scale);
+    const hr = Math.hypot(v.x, v.z), th = Math.atan2(v.z, v.x), dx = hr > 1e-6 ? v.x / hr : 0, dz = hr > 1e-6 ? v.z / hr : 0;
+    let r, y;
+    if (v.y >= 0) { r = hr * (1 - 0.06 * v.y); y = v.y * 1.02; }
+    else {
+      const t = -v.y; // 0 at the equator, 1 at the bottom pole
+      if (t < 0.9) { const k = t / 0.9; r = 1 + 0.16 * k * k; y = -k * 1.05; const wv = Math.sin(th * 6); r += 0.035 * wv * k * k; y += 0.09 * wv * Math.pow(k, 3); }
+      else { const k = (t - 0.9) / 0.1; r = (1.16 + 0.035 * Math.sin(th * 6)) * (1 - k); y = -1.05 + 0.09 * Math.sin(th * 6) * (1 - k) + 0.12 * k; }
+      if (hr < 1e-6) r = 0;
+    }
+    // squeeze into the same height as before so hats and faces still fit (-0.566 .. 1.087)
+    const yy = -0.566 + (y + 1.14) / 2.16 * 1.653;
+    v.set(dx * r * 1.02, yy, dz * r * 0.98).multiplyScalar(scale);
+    p.setXYZ(i, v.x, v.y, v.z);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
 const BODY_OFFSET_Y = 0.474; // so bottom sits at y=0 (computed from deform: (-0.45-0.55*0.3)*0.92 ≈ -0.566 → we lift slightly less for contact)
-function makeBodyGeo(seg) { const g = deformMochi(new THREE.SphereGeometry(1, seg, Math.round(seg * 0.75))); g.translate(0, 0.566, 0); return g; }
-function makeFaceGeo() { const g = deformMochi(new THREE.SphereGeometry(1.012, 28, 18, Math.PI / 2 - 0.85, 1.7, 0.75, 1.2), 1.012); g.translate(0, 0.566, 0); return g; }
+function makeBodyGeo(seg) { const g = deformGhost(new THREE.SphereGeometry(1, seg, Math.round(seg * 0.9))); g.translate(0, 0.566, 0); return g; }
+function makeFaceGeo() { const g = deformGhost(new THREE.SphereGeometry(1.012, 28, 18, Math.PI / 2 - 0.85, 1.7, 0.55, 1.15), 1.012); g.translate(0, 0.566, 0); return g; }
 let GEO = null;
 function initCharacterAssets() {
   GEO = {
@@ -136,10 +158,10 @@ function itemName(cat, id) {
 const _mats = {};
 function mat(hex, opts = {}) {
   const key = hex + JSON.stringify(opts); if (_mats[key]) return _mats[key];
-  return (_mats[key] = new THREE.MeshStandardMaterial(Object.assign({ color: hex, roughness: 0.45, metalness: 0 }, opts)));
+  return (_mats[key] = new THREE.MeshStandardMaterial(Object.assign({ color: hex, roughness: 0.72, metalness: 0, envMapIntensity: 0.5 }, opts)));
 }
 function jellyMaterial(hex, pattern) {
-  const m = new THREE.MeshPhysicalMaterial({ color: hex, roughness: 0.3, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.08, sheen: 0.25, sheenRoughness: 0.5, sheenColor: new THREE.Color(0xffffff), emissive: new THREE.Color(hex).multiplyScalar(0.07), envMapIntensity: 0.8 });
+  const m = new THREE.MeshPhysicalMaterial({ color: hex, roughness: 0.5, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.35, sheen: 0.4, sheenRoughness: 0.5, sheenColor: new THREE.Color(0xffffff), emissive: new THREE.Color(hex).multiplyScalar(0.07), envMapIntensity: 0.8 });
   if (pattern && pattern !== 'none' && PATTERNS.tex[pattern]) { m.map = PATTERNS.tex[pattern]; }
   return m;
 }
@@ -271,12 +293,21 @@ class MallangView {
     this.body = new THREE.Mesh(hi ? GEO.bodyHi : GEO.bodyLo, this.bodyMat); this.body.castShadow = true; this.squash.add(this.body);
     this.face = new THREE.Mesh(GEO.face, FACES.mats[look.face || 'normal']); this.squash.add(this.face);
     this.baseFace = look.face || 'normal'; this.curFace = this.baseFace; this.faceTimer = 0;
+    this.arms = [-1, 1].map((sd) => { const a = new THREE.Mesh(GEO.sphereLo, this.bodyMat); a.scale.set(0.17, 0.26, 0.17); a.position.set(sd * 1.08, 0.58, 0.08); a.rotation.z = sd * 0.5; a.castShadow = true; this.squash.add(a); return a; });
     this.extras = new THREE.Group(); this.squash.add(this.extras);
     this.buildExtras();
     // squash & stretch springs
     this.sy = 1; this.vy = 0; this.wob = 0; this.wobV = 0; this.flatT = 0; this.flatDur = 0.55; this.t = Math.random() * 10;
     this.leanX = 0; this.leanZ = 0;
     this.root.scale.setScalar(look.scale || 0.62);
+    this.lean.scale.set(0.9, 1.12, 0.9);
+  }
+  // thick bright outline so my mallang stands out from the floor
+  setOutline(on) {
+    if (!on) { if (this.outline) this.outline.visible = false; return; }
+    if (!this.outline) { const m = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide }); this.outline = new THREE.Mesh(this.body.geometry, m); this.outline.scale.setScalar(1.07); this.squash.add(this.outline);
+      const m2 = new THREE.MeshBasicMaterial({ color: 0xffd84d, side: THREE.BackSide }); const o2 = new THREE.Mesh(this.body.geometry, m2); o2.scale.setScalar(1.2); this.outline.add(o2); o2.scale.setScalar(1.04); }
+    this.outline.visible = true;
   }
   buildExtras() {
     this.extras.clear(); const L = this.look;
@@ -315,12 +346,13 @@ class MallangView {
       sy = this.sy;
     }
     const sx = 1 / Math.sqrt(sy);
-    const flatWide = this.flatT > 0 ? 1.25 : 1;
+    const flatWide = this.flatT > 0 ? 1.05 : 1;
     this.squash.scale.set(sx * flatWide, sy, sx * flatWide);
     // side wobble spring
     const wa = -120 * this.wob - 7 * this.wobV; this.wobV += wa * dt; this.wob += this.wobV * dt;
     const runSway = grounded && moving ? Math.sin(this.t * 8) * 0.09 * speed01 : 0;
     this.squash.rotation.z = this.wob * 0.12 + runSway;
     this.lean.rotation.x = damp(this.lean.rotation.x, moving ? 0.16 * speed01 : 0, 10, dt);
+    if (this.arms) { const sw = moving && grounded ? Math.sin(this.t * 14) * 0.7 * speed01 : grounded ? Math.sin(this.t * 2.4) * 0.12 : -0.9; this.arms[0].rotation.x = sw; this.arms[1].rotation.x = -sw; const up = grounded ? 0 : 0.5; this.arms[0].rotation.z = -0.5 - up; this.arms[1].rotation.z = 0.5 + up; }
   }
 }

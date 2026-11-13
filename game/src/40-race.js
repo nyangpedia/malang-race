@@ -127,15 +127,15 @@ class Race {
   constructor(opts) {
     this.opts = opts; this.worldId = opts.worldId; this.level = opts.level; this.N = opts.count;
     this.scene = new THREE.Scene(); const th = WORLDS[this.worldId]; this.gMul = th.gravity || 1;
-    this.scene.fog = new THREE.Fog(th.fog, 60, 230);
-    this.scene.add(makeSky(th.skyTop, th.skyBot));
+    this.scene.fog = new THREE.Fog(th.fog, 120, 420);
+    this.scene.add(makeSky(th.skyTop, th.skyBot, th.skyMid));
     this.scene.environment = App.envMap;
-    const hemi = new THREE.HemisphereLight(0xffffff, th.ground || 0xcfd8ff, 0.6); this.scene.add(hemi);
-    const sun = new THREE.DirectionalLight(0xfff1dc, 2.4); sun.position.set(-20, 40, 25); this.scene.add(sun); this.scene.add(sun.target); this.sun = sun;
+    const hemi = new THREE.HemisphereLight(0xffffff, th.ground || 0xcfd8ff, 0.75); this.scene.add(hemi);
+    const sun = new THREE.DirectionalLight(0xfff1dc, 2.0); sun.position.set(-20, 40, 25); this.scene.add(sun); this.scene.add(sun.target); this.sun = sun;
     this.useShadow = App.renderer.shadowMap.enabled;
     if (this.useShadow) { sun.castShadow = true; { const ms = Save.data.settings.quality === 'high' || Math.min(innerWidth, innerHeight) >= 600 ? 2048 : 1024; sun.shadow.mapSize.set(ms, ms); } const c = sun.shadow.camera; c.left = -30; c.right = 30; c.top = 34; c.bottom = -26; c.near = 1; c.far = 120; sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03; sun.shadow.radius = 4; }
     this.camera = new THREE.PerspectiveCamera(62, 1, 0.1, 700);
-    this.subject = opts.subject || 'math'; this.room = opts.room || null; this.course = withSeed(opts.seed, () => new Course(this.scene, this.worldId, opts.courseLevel || this.level, { noGates: this.subject === 'run' }));
+    this.subject = opts.subject || 'math'; this.room = opts.room || null; this.mapNo = 0; if (!opts.seed) { do { this.mapNo = opts.mapNo || 1 + Math.floor(Math.random() * MAPS_PER_LEVEL); } while (!opts.mapNo && this.mapNo === App._lastMap); App._lastMap = this.mapNo; } const seed = opts.seed || mapSeed(this.worldId, opts.courseLevel || this.level, this.mapNo); this.course = withSeed(seed, () => new Course(this.scene, this.worldId, opts.courseLevel || this.level, { noGates: this.subject === 'run' }));
     { const used = new Set(); this.course.qmaker = (lvl) => { let q; for (let k = 0; k < 10; k++) { q = makeSubjectQuestion(this.subject, lvl); if (!used.has(q.text)) break; } used.add(q.text); return q; }; }
     this.particles = new Particles(this.scene);
     this.racers = []; this.t = 0; this.state = 'countdown'; this.cd = 3.6; this.finishCount = 0; this.raceTime = 0;
@@ -145,10 +145,10 @@ class Race {
     const shTex = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 2, 32, 32, 30); gr.addColorStop(0, 'rgba(60,30,90,0.45)'); gr.addColorStop(1, 'rgba(60,30,90,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
     const shGeo = new THREE.PlaneGeometry(1.6, 1.6); shGeo.rotateX(-Math.PI / 2);
     this.shadows = new THREE.InstancedMesh(shGeo, new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false }), this.racers.length); this.shadows.frustumCulled = false; this.scene.add(this.shadows);
-    this.marker = new THREE.Mesh(GEO.cone, new THREE.MeshBasicMaterial({ color: 0xff3d8f })); this.marker.scale.set(0.26, 0.38, 0.26); this.marker.rotation.x = Math.PI; this.scene.add(this.marker);
-    const ringGeo = new THREE.RingGeometry(0.75, 0.95, 32); ringGeo.rotateX(-Math.PI / 2); this.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xff5fa2, transparent: true, opacity: 0.7, depthWrite: false })); this.scene.add(this.ring);
+    this.marker = new THREE.Mesh(GEO.cone, new THREE.MeshBasicMaterial({ color: 0xff3d8f })); this.marker.scale.set(0.36, 0.5, 0.36); this.marker.rotation.x = Math.PI; this.scene.add(this.marker);
+    const ringGeo = new THREE.RingGeometry(0.85, 1.15, 32); ringGeo.rotateX(-Math.PI / 2); this.ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xff5fa2, transparent: true, opacity: 0.7, depthWrite: false })); this.scene.add(this.ring);
     this.camPos = new THREE.Vector3(); this.camLook = new THREE.Vector3(); this.snapCamera();
-    this.hudT = 0; this.rankT = 0; this.order = this.racers.slice();
+    this.hudT = 0; this.rankT = 0; this.order = this.racers.slice(); $('#leaderboard').onclick = () => { $('#leaderboard').classList.toggle('full'); this.updateHUD(); };
     this.buildHUD();
     this.toastQ = [];
   }
@@ -162,21 +162,23 @@ class Race {
       if (i === playerSlot) { r = new Racer(this, i, { name: S.profile.nick, isPlayer: true, look: lookP }); this.player = r; }
       else {
         const type = typeKeys[i % typeKeys.length], T = AI_TYPES[type];
-        const lvlAdj = [0, 0.05, 0.04, 0.02, 0, -0.03, -0.06][this.level] || 0;
-        const ai = { type, T, acc: clamp(rand(...T.acc) * 0.42 + lvlAdj, 0.1, 0.6), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0, 6), waitX: rand(-13, 13), jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
+        const L = clamp(this.level || 1, 1, 6), accBase = [0, 0.5, 0.54, 0.58, 0.62, 0.66, 0.7][L];
+        const ai = { type, T, acc: clamp(accBase + (rand(...T.acc) - 0.8) * 0.4, 0.35, 0.8), think: Math.random() * 0.1, door: null, gRound: '', commitT: 2, millX: 0, standD: 4, pauseT: 0, waitB: rand(0.5, 5), waitX: rand(-13.5, 13.5), hop: T.jump >= 0.9 || Math.random() < 0.45, bridge: i === (playerSlot + 3) % N || i === (playerSlot + 11) % N, jumpT: rand(1, 4), swerveT: 0, laneX: rand(-11, 11) };
         const nm = (names[i % names.length] || '말랑') + '말랑이';
-        const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.56, 0.62) };
-        r = new Racer(this, i, { name: nm, look, ai, speedMul: rand(...T.speed) * (0.84 + 0.025 * this.level + (this.subject === 'run' ? 0.07 : 0)) });
+        const look = { colorHex: pick(AI_COLORS), pattern: Math.random() < 0.2 ? pick(['dots', 'stripes', 'stars']) : 'none', face: pick(['normal', 'normal', 'happy', 'wink', 'determined', 'sparkle', 'cool', 'sleepy']), tuft: pick(TUFTS), hat: Math.random() < 0.18 ? pick(['beanie', 'party', 'flower', 'cap']) : 'none', glasses: Math.random() < 0.08 ? pick(['round', 'sun']) : 'none', scale: rand(0.7, 0.76) };
+        r = new Racer(this, i, { name: nm, look, ai, speedMul: (1 + (rand(...T.speed) - 0.95) * 0.5) * ([0, 0.84, 0.88, 0.92, 0.96, 1.0, 1.03][clamp(this.level || 1, 1, 6)] + (this.subject === 'run' ? 0.04 : 0)) });
+        r.baseSpeed = r.speed;
       }
-      r.p.set((col - 4.5) * 2.7 + rand(-0.2, 0.2), PHYS.R + 0.05, -(4 + row * 2.6));
-      if (r.isPlayer) r.view.root.scale.setScalar(0.62);
+      r.p.set(clamp((col - 4.5) * 2.7 + rand(-1.1, 1.1) + (row % 2) * 1.3, -13, 13), PHYS.R + 0.05, -(4 + row * 2.6 + rand(-0.9, 0.9)));
+      r.yaw = Math.PI + rand(-0.6, 0.6); r.view.yaw.rotation.y = r.yaw; if (r.ai) r.ai.startT = rand(0, 0.45);
+      if (r.isPlayer) { r.view.root.scale.setScalar(0.78); r.view.setOutline(true); }
       this.racers.push(r); r.view.root.position.copy(r.p).y -= PHYS.R;
     }
   }
   // ---------- HUD ----------
   buildHUD() {
     $('#hud').classList.remove('hidden'); $('#controls').classList.remove('hidden');
-    $('#hud-world').textContent = `${WORLDS[this.worldId].icon} ${WORLDS[this.worldId].name}`;
+    $('#hud-world').style.display = 'none'; $('#hud-sim').style.display = 'none'; if (0) $('#hud-world').textContent = `${WORLDS[this.worldId].icon} ${WORLDS[this.worldId].name}${this.mapNo ? ' · 맵 ' + this.mapNo : ''}`;
     $('#hud-sim').textContent = this.subject === 'run' ? '🔥 피버 모드 · 에너지 2배' : `${SUBJECTS[this.subject].icon} ${SUBJECTS[this.subject].name} · AI ${this.N - 1}명`;
     $('#qpanel').classList.add('hidden'); $('#bigmsg').classList.add('hidden');
     const bar = $('#prog-marks'); bar.innerHTML = '';
@@ -198,10 +200,11 @@ class Race {
     // gap ahead/behind
     const ahead = this.order[rank - 2], behind = this.order[rank];
     const fmt = (o) => (o ? (o.finished ? '완주' : Math.abs(o.progress() - P.progress()).toFixed(1) + 'm') : '-');
-    $('#hud-gap').innerHTML = `<span>▲ 앞 ${ahead ? fmt(ahead) : '없음'}</span><span>▼ 뒤 ${behind ? fmt(behind) : '없음'}</span>`;
+    if (0) $('#hud-gap').innerHTML = `<span>▲ 앞 ${ahead ? fmt(ahead) : '없음'}</span><span>▼ 뒤 ${behind ? fmt(behind) : '없음'}</span>`;
     // mini leaderboard: top3 + around me
     const rows = []; const add = (i) => { const o = this.order[i]; if (!o || rows.some((r) => r.i === i)) return; rows.push({ i, o }); };
-    add(0); add(1); add(2); add(rank - 2); add(rank - 1); add(rank);
+    // compact by default (1st + the racers right around me) so it does not hide the course; tap to see more
+    const full = $('#leaderboard').classList.contains('full'); add(0); if (full) { add(1); add(2); } add(rank - 2); add(rank - 1); add(rank);
     rows.sort((a, b) => a.i - b.i);
     let html = ''; let last = -1;
     for (const { i, o } of rows) { if (i - last > 1) html += `<div class="lb-gap">⋯</div>`; html += `<div class="lb-row ${o.isPlayer ? 'me' : ''}"><span class="lb-n">${i + 1}</span><span class="lb-dot" style="background:#${o.color.toString(16).padStart(6, '0')}"></span><span class="lb-name">${escapeHtml(o.isPlayer ? o.name + ' (나)' : o.name)}</span>${o.finished ? '<span class="lb-f">🏁</span>' : ''}</div>`; last = i; }
@@ -210,6 +213,7 @@ class Race {
   }
   showQuestion(G) {
     const P = this.player; const el = $('#qpanel');
+    $('#leaderboard').classList.toggle('q-hide', !!G);
     if (!G) { if (this._qHtml) { this._qHtml = ''; el.classList.add('hidden'); } return; }
     let html; const title = `숫자 에너지 관문 ${G.idx + 1}`;
     const al = G.allowed.get(P);
@@ -237,6 +241,7 @@ class Race {
     }
     if (this.state === 'run' || this.state === 'finished') this.raceTime += this.state === 'run' ? dt : 0;
     this.course.update(this.t, dt);
+    { const P = this.player, L = this.course.starList; if (P && L && this.state === 'run') for (const s of L) { if (s.got) continue; for (const r of this.racers) { if (r.respawnT > 0 || r === P) continue; const dz = r.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = r.p.x - s.x, dy = r.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; if (Math.abs(P.p.z - s.z) < 25) { Sound.play('star', 0.35); this.particles.spawn(s.x, s.y, s.z, 6, ['#ffe11f', '#fff7b0'], 3, 0.4, 0.3, 3, 2); } break; } } if (s.got || P.respawnT > 0) continue; const dz = P.p.z - s.z; if (dz > 2 || dz < -2) continue; const dx = P.p.x - s.x, dy = P.p.y - s.y; if (dx * dx + dy * dy + dz * dz < 2.6) { s.got = true; s.m.visible = false; this.stats.stars = (this.stats.stars || 0) + 1; this.stats.energy += 1; Sound.play('star'); this.toast('⭐ 별 +10점', 'good'); this.particles.spawn(s.x, s.y, s.z, 10, ['#ffe11f', '#fff7b0'], 4, 0.5, 0.35, 4, 2); } } }
     const running = this.state === 'run' || this.state === 'finished' || this.state === 'done';
     // player input
     const P = this.player;
@@ -259,12 +264,14 @@ class Race {
     this.showQuestion(nextG);
     // views
     for (const r of this.racers) this.updateView(r, dt);
+    this.fwT = (this.fwT || 0) - dt;
+    if (this.fwT <= 0 && (this.state === 'run' || this.state === 'finished')) { this.fwT = this.state === 'finished' ? 0.35 : rand(1.2, 2.4); const P = this.player; if (P) { const cs = pick([['#ff3b5c', '#ffe11f'], ['#20b8ff', '#ffffff'], ['#8a5cff', '#ff4fd8'], ['#3fd35a', '#ffe11f'], ['#ff9a1f', '#ff3b5c']]); this.particles.spawn(rand(-45, 45), rand(26, 40), P.p.z - rand(50, 110), 46, cs, 16, 1.5, 2.2, 4, 0); } }
     this.particles.update(dt);
     // ranking
     this.rankT -= dt; if (this.rankT <= 0) { this.rankT = 0.25; this.order = this.racers.slice().sort((a, b) => b.progress() - a.progress()); }
     this.hudT -= dt; if (this.hudT <= 0) { this.hudT = 0.12; this.updateHUD(); }
     this.updateCamera(dt);
-    if (this.state === 'finished') { this.endT -= dt; if (this.endT <= 0) { this.state = 'done'; App.showResults(this.results()); } }
+    if (this.state === 'finished') { this.endT -= dt; if (this.endT <= 0) { this.state = 'done'; try { App.showResults(this.results()); } catch (e) { App.reportError(e); } } }
   }
   stepRacer(r, dt, running) {
     if (r.respawnT > 0) { r.respawnT -= dt; if (r.respawnT <= 0) this.respawn(r); return; }
@@ -274,7 +281,8 @@ class Race {
     let ix = r.in.x, iz = r.in.z; if (frozen || r.stunT > 0 || r.flatT > 0) { ix = 0; iz = 0; }
     const il = Math.hypot(ix, iz); if (il > 1) { ix /= il; iz /= il; }
     if (iz > 0) iz *= 0.65; // backwards is slower
-    let tx = ix * r.speed, tz = iz * r.speed;
+    const fxm = r.ground && r.gs && r.gs.fx ? (r.gs.fx === 'fast' ? 1.6 : 0.45) : 1; if (fxm > 1 && r.isPlayer && Math.random() < 0.3) this.particles.spawn(r.p.x, r.p.y - 0.4, r.p.z + 0.5, 1, ['#b6ff3f', '#ffffff'], 1.5, 0.35, 0.3, 0, 0.5);
+    let tx = ix * r.speed * fxm, tz = iz * r.speed * fxm;
     const slip = r.ground && r.gs && r.gs.slip;
     if (slip && r.gs.conv) { tz += r.gs.conv.z; }
     let acc = r.ground ? (slip ? 14 : PHYS.ACC_G) : PHYS.ACC_A; if (r.stunT > 0) acc = 5; if (r.flatT > 0) acc = 30;
@@ -289,6 +297,7 @@ class Race {
       if (r.isPlayer) Sound.play('jump');
     }
     r.lastVy = r.v.y;
+    if (r.ground && r.gs && r.gs.conv && !r.gs.slip) r.p.addScaledVector(r.gs.conv, dt); // conveyor belt
     r.p.addScaledVector(r.v, dt);
     // collisions
     const wasGround = r.ground; r.ground = false; r.gs = null;
@@ -302,9 +311,17 @@ class Race {
         r.p.x += nx * depth; r.p.y += ny * depth; r.p.z += nz * depth;
         const vn = r.v.x * nx + r.v.y * ny + r.v.z * nz;
         if (vn < 0) { r.v.x -= nx * vn; r.v.y -= ny * vn; r.v.z -= nz * vn; }
+        if (s.kind === 'stomper' && ny < -0.3 && s.vel.y < -2 && r.bounceCD <= 0) {
+          r.view.flatten(0.7); r.flatT = 0.7; r.bounceCD = 0.8; r.v.x = (r.p.x >= s.c.x ? 1 : -1) * 7; r.v.z = 2; r.view.setFace('dizzy', 1);
+          if (this.near(r)) Sound.play('squished'); this.particles.spawn(r.p.x, r.p.y, r.p.z, 10, ['#ffffff', '#ffe680'], 4, 0.4, 0.3, 6, 1);
+        }
         if (ny > 0.55) {
           r.ground = true; r.gs = s;
           if (s.kind === 'pad') { r.v.y = s.pad; r.v.z -= 3; r.ground = false; r.gs = null; s.padAnim = 0.6; r.view.stretch(0.55); if (this.near(r)) Sound.play('pad'); this.particles.spawn(r.p.x, r.p.y - 0.4, r.p.z, 10, ['#ffffff', '#fff3a0'], 3, 0.5, 0.35, 4, 1); }
+          if (s.kind === 'pad' && s.mystery) {
+            if (Math.random() < 0.5) { r.v.z = -13; r.v.y = 17; if (r.isPlayer) { this.toast('행운의 발판! 슈웅 🚀', 'good'); Sound.play('correct'); } }
+            else { r.v.z = 13; r.v.y = 9; r.stunT = 0.7; r.view.setFace('dizzy', 1); if (r.isPlayer) { this.toast('앗, 함정 발판이었어요! 🙃'); Sound.play('wrong'); } }
+          }
           if (s.kind === 'crumble' && s.timer < 0) { s.timer = 0; if (r.isPlayer) Sound.play('crumble'); }
         } else if (ny > -0.5) {
           if (s.kind === 'bumper' && r.bounceCD <= 0) {
@@ -331,8 +348,8 @@ class Race {
   near(r) { return Math.abs(r.p.z - this.player.p.z) < 25; }
   respawn(r) {
     const cp = this.course.checkpoints[r.cp];
-    r.p.set(rand(-6, 6), cp.y + 2.2, -cp.d); r.v.set(0, 0, 0); r.stunT = 0; r.flatT = 0; r.immuneT = 1.5; r.view.stretch(0.3);
-    if (r.ai) { r.ai.laneX = rand(-6, 6); }
+    r.p.set(cp.x != null ? cp.x + rand(-1.5, 1.5) : rand(-6, 6), cp.y + 2.2, -cp.d); r.v.set(0, 0, 0); r.stunT = 0; r.flatT = 0; r.immuneT = 1.5; r.view.stretch(0.3);
+    if (r.ai) { r.ai.laneX = cp.x != null ? cp.x : rand(-6, 6); }
     this.particles.spawn(r.p.x, r.p.y, r.p.z, 12, ['#ffffff', '#c9b6ff'], 3, 0.6, 0.4, 2, 1);
   }
   // doors are walls until this racer has been let through by a reveal
@@ -359,13 +376,13 @@ class Race {
     if (!wait.length) { G.close(); return; }
     G.reveal(); const P = this.player, st = this.stats; let nOk = 0;
     for (const r of wait) {
-      const dr = G.doors[G.slotAt(r.p.x)], ok = dr.correct; G.pending.add(r); G.allowed.set(r, ok ? 0 : GATE_HOLD); if (ok) nOk++;
+      const dr = G.doors[G.slotAt(r.p.x)], ok = dr.correct; G.pending.add(r); r.quizN = (r.quizN || 0) + 1; if (ok) r.quizOk = (r.quizOk || 0) + 1; G.allowed.set(r, ok ? 0 : GATE_HOLD); if (ok) nOk++;
       if (ok) { r.view.setFace('joy', 1.2); r.view.stretch(0.3); dr.flashT = 0.6; }
       else { r.v.y = 5; r.ground = false; r.stunT = 0.3; r.view.bump(1.3); r.view.setFace('oops', 1.5); dr.shieldT = 0.9; }
       if (r.isPlayer) {
         r.gateResult[G.idx] = ok ? 'correct' : 'wrong'; st.attempts++; recordAnswer(G.q, dr.value, ok, 'race'); st.log.push({ q: G.q.text, chosen: dr.value, answer: G.q.answer, ok }); st.solveTimes.push(ok ? 4 : 12);
         if (ok) {
-          st.correct++; st.combo++; st.maxCombo = Math.max(st.maxCombo, st.combo); const gain = 10 + (st.combo - 1) * 5; st.energy += gain;
+          st.correct++; st.combo++; st.maxCombo = Math.max(st.maxCombo, st.combo); const gain = 3 + Math.min(st.combo - 1, 4); st.energy += gain;
           Sound.play('correct'); this.bigMsg(st.combo >= 2 ? `정답! 콤보 ×${st.combo}` : '정답!', 1.2, 'good'); this.toast(`숫자 에너지 +${gain} ⚡ 먼저 통과해요!`, 'good');
           for (let k = 0; k < 3; k++) this.particles.spawn(r.p.x, 1.5, r.p.z, 12, ['#fff38a', '#ffd23f'], 5, 0.7, 0.45, -2, 0);
         } else {
@@ -387,14 +404,14 @@ class Race {
         best.flashT = 0.5;
         const near = this.near(r);
         if (near) this.particles.spawn(r.p.x, r.p.y + 0.4, r.p.z, r.isPlayer ? 40 : 10, ['#fff38a', '#ffffff', best.color, '#9ff3ff'], r.isPlayer ? 7 : 4, 0.9, r.isPlayer ? 0.55 : 0.4, 3, 2);
-        if (r.ai) { r.ai.door = null; r.ai.waitX = rand(-13, 13); r.ai.waitB = rand(0, 6); r.ai.laneX = rand(-11, 11); }
-        if (r.isPlayer) { r.view.stretch(0.3); Sound.play('pad'); if (r.gateResult[G.idx] !== 'correct') { this.stats.energy += 3; this.bigMsg('통과!', 0.9, 'good'); this.toast('통과! +3 ⚡ (틀린 문제는 오답노트에 저장됐어요)', 'good'); } }
+        if (r.ai) { r.ai.door = null; r.ai.waitX = rand(-13.5, 13.5); r.ai.waitB = rand(0.5, 5); r.ai.laneX = rand(-11, 11); }
+        if (r.isPlayer) { r.view.stretch(0.3); Sound.play('pad'); if (r.gateResult[G.idx] !== 'correct') { this.stats.energy += 1; this.bigMsg('통과!', 0.9, 'good'); this.toast('통과! +1 ⚡ (틀린 문제는 오답노트에 저장됐어요)', 'good'); } }
       }
     }
     if (!r.finished && r.d >= this.course.FINISH) {
       r.finished = true; r.place = ++this.finishCount; r.finishTime = this.raceTime;
       if (this.near(r)) this.particles.spawn(r.p.x, r.p.y + 1, r.p.z, r.isPlayer ? 80 : 12, ['#ff7eb6', '#ffd84d', '#7fe7ff', '#9be35a', '#a77bff'], 8, 1.4, 0.5, 6, 6);
-      if (r.isPlayer) { this.state = 'finished'; this.endT = 3.2; Sound.play('finish'); this.bigMsg(`${r.place}등으로 완주!`, 3, 'go'); r.view.setFace('joy', 4); }
+      if (r.isPlayer) { this.state = 'finished'; this.endT = 3.2; Sound.play('finish'); this.bigMsg(`${r.place}번째로 골인!`, 3, 'go'); r.view.setFace('joy', 4); }
     }
   }
   racerContacts() {
@@ -436,10 +453,12 @@ class Race {
   }
   // ---------- AI ----------
   thinkAI(r, dt) {
-    const A = r.ai, T = A.T; if (r.finished) { r.in.x = 0; r.in.z = r.d < this.course.FINISH + 5 ? -0.5 : 0; return; }
+    const A = r.ai, T = A.T; if (A.startT > 0 && this.state === 'run') { A.startT -= dt; r.in.x = 0; r.in.z = 0; return; } if (r.finished) { r.in.x = 0; r.in.z = r.d < this.course.FINISH + 5 ? -0.5 : 0; return; }
     if (r.respawnT > 0) return;
     A.think -= dt; A.pauseT -= dt; A.jumpT -= dt; A.swerveT -= dt;
     const C = this.course, d = r.d;
+    if (r.baseSpeed && this.player) { const gap = this.player.d - d, L = clamp(this.level || 1, 1, 6), up = 0.03 + 0.02 * L;
+      r.speed = r.baseSpeed * (1 + clamp(gap / 40, -0.06, 1) * up); }
     // ---- gates ----
     const G = C.gates.find((g) => !g.passed.has(r) && g.d - d < 20 && g.d - d > -1);
     if (G) {
@@ -452,15 +471,21 @@ class Race {
         else { r.in.x = clamp(dx * 1.2, -1, 1); r.in.z = Math.abs(dx) < 2.4 || G.d - d > 3 ? -1 : 0.25; return; }
       } else if (G.state === 'ask') {
         const key = G.idx + ':' + G.round;
-        if (A.gRound !== key) { // secretly decide which pad to stand on; only move there late so the crowd gives little away
-          A.gRound = key; let door;
-          if (Math.random() < A.acc) door = pick(G.doors.filter((x) => x.correct));
-          else if (Math.random() < 0.55 && G.decoys.length) door = pick(G.decoys);
-          else door = pick(G.doors.filter((x) => !x.correct));
-          A.door = door; A.commitT = GATE_COUNT + rand(1.0, 2.7) + (T.mistake > 0.2 ? -0.7 : 0); A.standD = rand(1.2, 6.4);
-          A.millX = clamp(door.x + (Math.random() < 0.5 ? -1 : 1) * rand(4, 11), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.6, 2.6);
+        if (G._herdKey !== key) { // one shared plan per round: the same right pad, one shared wrong pad, one moment to move
+          G._herdKey = key; const right = G.doors.filter((x) => x.correct), wrong = G.doors.filter((x) => !x.correct);
+          G._herdRight = pick(right); G._herdWrong = G.decoys.length && Math.random() < 0.7 ? pick(G.decoys) : pick(wrong.length ? wrong : right);
+          G._herdT = GATE_COUNT + rand(0.4, 1.1);
         }
-        tx = G.timer <= A.commitT ? A.door.x + A.jit : A.millX; td = G.d - A.standD;
+        if (A.gRound !== key) {
+          A.gRound = key; let door;
+          if (Math.random() < A.acc) door = Math.random() < 0.85 ? G._herdRight : pick(G.doors.filter((x) => x.correct));
+          else door = Math.random() < 0.8 ? G._herdWrong : pick(G.doors.filter((x) => !x.correct)) || G._herdWrong;
+          A.door = door; A.commitT = G._herdT + rand(-0.25, 0.25); A.standD = rand(1.2, 5.2);
+          A.millX = clamp(pick(G.doors).x + rand(-2.2, 2.2), -GATE_HALF + 1.2, GATE_HALF - 1.2); A.jit = rand(-2.2, 2.2);
+          A.hesT = rand(1.0, 2.6); A.holdX = r.p.x; A.holdD = d; A.lookT = 0;
+        }
+        if (A.hesT > 0 && G.timer > A.commitT + 1) { A.hesT -= dt; A.lookT += dt; tx = A.holdX + Math.sin(A.lookT * 3 + r.idx) * 1.2; td = A.holdD; }
+        else { tx = G.timer <= A.commitT ? A.door.x + A.jit : A.millX; td = G.d - A.standD; }
         if (G.locked) { if (d < G.d - GATE_ZONE) { tx = r.p.x; td = G.d - GATE_ZONE - 1.2 - A.waitB; } else tx = G.doors[G.slotAt(r.p.x)].x + A.jit; }
       } else { tx = clamp(A.waitX, -13, 13); td = G.d - GATE_ZONE - 1.2 - A.waitB; }
       r.in.x = clamp((tx - r.p.x) * 0.9, -1, 1); r.in.z = clamp((d - td) * 0.9, -1, 1);
@@ -472,7 +497,8 @@ class Race {
     // lane selection with obstacle look-ahead
     let target = A.laneX;
     const hint = C.lanesHint.find((h) => d > h.d0 - 12 && d < h.d1 - 1);
-    if (hint && T.jump < 0.9) target = hint.x;
+    const hop = C.hopHints && !(hint && hint.bridge && A.bridge) ? C.hopHints.find((h) => d > h.d0 && d < h.d1) : null;
+    if (hop) target = hop.x; else if (hint && (hint.must || hint.bridge ? A.bridge || hint.must : !A.hop)) target = hint.x;
     // aggressive racers steer toward neighbours, stompers line up behind someone
     if ((T.aggro > 0.5 || T.stomp > 0.5) && !hint) {
       let best = null, bd = 9; for (const o of this.racers) { if (o === r || o.respawnT > 0) continue; const ddz = r.p.z - o.p.z; if (ddz < 0.5 || ddz > 5) continue; const dd = Math.abs(o.p.x - r.p.x) + ddz * 0.5; if (dd < bd) { bd = dd; best = o; } }
@@ -515,7 +541,7 @@ class Race {
     const gy = this.course.groundAt(r.p.x, r.p.z, r.p.y); const i = r.idx;
     if (gy > -50) { const hgt = r.p.y - r.r - gy, s = clamp(1 - hgt * 0.12, 0.35, 1); _m4.makeScale(s, 1, s); _m4.setPosition(r.p.x, gy + 0.03, r.p.z); } else _m4.makeScale(0, 0, 0);
     this.shadows.setMatrixAt(i, _m4); this.shadows.instanceMatrix.needsUpdate = true;
-    if (r.isPlayer) { this.marker.position.set(r.p.x, r.p.y + 1.25 + Math.sin(this.t * 5) * 0.12, r.p.z); this.marker.visible = true; this.ring.visible = gy > -50; this.ring.position.set(r.p.x, gy + 0.05, r.p.z); }
+    if (r.isPlayer) { this.marker.position.set(r.p.x, r.p.y + 1.75 + Math.sin(this.t * 5) * 0.14, r.p.z); this.ring.material.opacity = 0.65 + 0.3 * Math.sin(this.t * 6); this.ring.scale.setScalar(1 + 0.08 * Math.sin(this.t * 6)); this.marker.visible = true; this.ring.visible = gy > -50; this.ring.position.set(r.p.x, gy + 0.05, r.p.z); }
     // trail cosmetic (player only)
     if (r.isPlayer && sp > 2) { r.trailT -= dt; const tr = Save.data.equip.trail; if (tr !== 'none' && r.trailT <= 0) { r.trailT = 0.05; spawnTrail(this.particles, tr, r.p); } }
   }
@@ -524,24 +550,35 @@ class Race {
     if (this.useShadow) { const sx = Math.round(P.p.x / 2) * 2, sz = Math.round(P.p.z / 2) * 2; this.sun.target.position.set(sx, 0, sz - 8); this.sun.position.set(sx - 18, 42, sz + 14); }
     const G = this.course.gates.find((g) => !g.passed.has(P) && g.d - P.d < 24 && g.d - P.d > -1);
     const k = G ? clamp((24 - (G.d - P.d)) / 10, 0, 1) : 0; this.gateK = damp(this.gateK || 0, k, 3, dt); const gk = this.gateK;
-    const back = (port ? 11.5 : 9.6) + gk * (port ? 13 : 6.5), hgt = (port ? 6.4 : 5.4) + gk * (port ? 11 : 5.5);
+    const small = Math.min(innerWidth, innerHeight) < 500; // phones: sit a little closer so the mallang looks bigger
+    const back = (port ? 11.5 : small ? 8.2 : 9.6) + gk * (port ? 13 : 6.5), hgt = (port ? 6.4 : small ? 4.7 : 5.4) + gk * (port ? 11 : 5.5);
     const tx = lerp(P.p.x * 0.85, P.p.x * (port ? 0.8 : 0.4), gk), ty = Math.max(P.p.y, (P.ground ? P.p.y : P.p.y - 0.5)) + hgt, tz = P.p.z + back;
     this.camPos.x = damp(this.camPos.x, tx, 6, dt); this.camPos.z = damp(this.camPos.z, tz, 7, dt); this.camPos.y = damp(this.camPos.y, ty, 3.2, dt);
     this.camLook.x = damp(this.camLook.x, lerp(P.p.x * 0.9, P.p.x * (port ? 0.8 : 0.3), gk), 7, dt); this.camLook.y = damp(this.camLook.y, P.p.y + 0.8, 4, dt); this.camLook.z = damp(this.camLook.z, P.p.z - 7, 8, dt);
     this.camera.position.copy(this.camPos); this.camera.lookAt(this.camLook);
-    this.camera.fov = port ? 70 : 62; this.camera.updateProjectionMatrix();
+    const asp = App.aspect || 16 / 9, vf = port ? 70 : asp > 16 / 9 ? 2 * Math.atan(Math.tan(31 * Math.PI / 180) * (16 / 9) / asp) * 180 / Math.PI : 62;
+    this.camera.fov = Math.max(46, vf); this.camera.updateProjectionMatrix();
   }
   results() {
     const P = this.player, N = this.racers.length, st = this.stats;
-    const rank = P.place || this.order.indexOf(P) + 1;
+    // final rank = speed points (finish order) + answer points (100 each) + star bonus (10 each)
+    const place = P.place || this.order.indexOf(P) + 1, nG = this.course.gates.length;
+    const rest = this.racers.filter((r) => !r.finished).sort((a, b) => b.progress() - a.progress());
+    const ptsOf = (r) => {
+      const pl = r.finished ? r.place : this.finishCount + rest.indexOf(r) + 1; // racers still running keep their current order
+      const okN = r.finished || !nG ? (r.quizOk || 0) : Math.min(nG, Math.round((r.quizOk || 0) + (nG - (r.quizN || 0)) * (r.quizN ? r.quizOk / r.quizN || 0 : 0.6)));
+      const speed = Math.round(1000 * (N - pl) / Math.max(1, N - 1)), quiz = 100 * okN, star = r === P ? 10 * (st.stars || 0) : 0;
+      return { speed, quiz, star, total: speed + quiz + star };
+    };
+    const pts = ptsOf(P); let rank = 1; for (const r of this.racers) if (r !== P && ptsOf(r).total > pts.total) rank++;
     const acc = st.attempts ? st.correct / st.attempts : 0;
     const avgSolve = st.solveTimes.length ? st.solveTimes.reduce((a, b) => a + b, 0) / st.solveTimes.length : 15;
     const speedScore = clamp(1 - (avgSolve - 3) / 12, 0, 1), finishScore = 1 - (rank - 1) / Math.max(1, N - 1);
-    const score = Math.round(1000 * (st.attempts ? 0.5 * acc + 0.2 * speedScore + 0.3 * finishScore : 0.85 * finishScore + 0.15) * (1 + 0.15 * (this.level - 1)));
+    const score = pts.total;
     const rankBonus = rank === 1 ? 40 : rank <= 3 ? 25 : rank <= 10 ? 12 : 0;
-    const energy = (st.energy + 20 + rankBonus + (st.maxCombo >= 3 ? 15 : 0)) * (this.subject === 'run' ? 2 : 1);
+    const energy = (st.energy + 10 + (rank === 1 ? 20 : rank <= 3 ? 12 : rank <= 10 ? 6 : 0) + (st.maxCombo >= 3 ? 5 : 0)) * (this.subject === 'run' ? 2 : 1);
     const xp = 40 + st.correct * 15 + rankBonus + Math.round(score / 50);
-    return { rank, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
+    return { rank, place, pts, N, time: P.finishTime, correct: st.correct, attempts: st.attempts, acc, avgSolve, score, energy, xp, maxCombo: st.maxCombo, stomps: st.stomps, stars: st.stars || 0, stomped: st.stomped, log: st.log, worldId: this.worldId, level: this.level, subject: this.subject };
   }
   dispose() { this.course.dispose(); this.racers.forEach((r) => { r.view.bodyMat.dispose(); }); this.scene.clear(); $('#hud').classList.add('hidden'); $('#controls').classList.add('hidden'); $('#qpanel').classList.add('hidden'); }
 }
@@ -554,12 +591,26 @@ function spawnTrail(P, kind, p) {
   if (kind === 'rainbow') P.spawn(x, y, z, 2, ['#ff5a7a', '#ff9a3c', '#ffd23f', '#5fd35f', '#3fc2ff', '#a86bff'], 0.3, 0.7, 0.4, 0, 0.2);
   if (kind === 'numbers') P.spawn(x, y, z, 1, ['#7fe7ff', '#fff38a'], 1.2, 0.5, 0.3, -1, 1);
 }
-function makeSky(top, bot) {
-  const g = new THREE.SphereGeometry(500, 24, 16);
-  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { top: { value: new THREE.Color(top) }, bot: { value: new THREE.Color(bot) } },
+function makeSky(top, bot, mid) {
+  const g = new THREE.SphereGeometry(500, 32, 20);
+  const u = { top: { value: new THREE.Color(top) }, bot: { value: new THREE.Color(bot) }, mid: { value: new THREE.Color(mid == null ? new THREE.Color(top).lerp(new THREE.Color(bot), 0.5) : mid) }, t: { value: 0 }, fx: { value: mid == null ? 0 : 1 } };
+  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: u,
     vertexShader: 'varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
-    fragmentShader: 'uniform vec3 top; uniform vec3 bot; varying vec3 vP; void main(){ float h=clamp(vP.y*1.6+0.25,0.0,1.0); gl_FragColor=vec4(mix(bot,top,h),1.0); }' });
-  const s = new THREE.Mesh(g, m); s.renderOrder = -1; return s;
+    fragmentShader: [
+      'uniform vec3 top; uniform vec3 bot; uniform vec3 mid; uniform float t; uniform float fx; varying vec3 vP;',
+      'void main(){',
+      ' float h=clamp(vP.y*1.5+0.3,0.0,1.0);',
+      ' vec3 c = h<0.5 ? mix(bot,mid,h*2.0) : mix(mid,top,(h-0.5)*2.0);',
+      ' vec3 sd=normalize(vec3(0.0,0.18,-1.0)); float a=acos(clamp(dot(vP,sd),-1.0,1.0));',
+      ' vec3 q=vP-sd*dot(vP,sd); float ang=atan(q.y,q.x);',
+      ' float rays=smoothstep(0.55,1.0,sin(ang*12.0+t*0.25))*smoothstep(1.3,0.15,a)*0.22*fx;',
+      ' float sun=smoothstep(0.14,0.10,a)*fx; float halo=smoothstep(0.6,0.0,a)*0.35*fx;',
+      ' float band=smoothstep(0.06,0.0,abs(vP.y-0.02))*0.25*fx;',
+      ' c += vec3(1.0,0.95,0.8)*(rays+halo+band); c=mix(c,vec3(1.0,0.98,0.85),sun);',
+      ' gl_FragColor=vec4(c,1.0); }'].join('\n') });
+  const s = new THREE.Mesh(g, m); s.renderOrder = -1; s.frustumCulled = false;
+  s.onBeforeRender = (r, sc, cam) => { u.t.value = performance.now() / 1000; s.position.copy(cam.position); };
+  return s;
 }
 function playerLook() {
   const S = Save.data, e = S.equip;
