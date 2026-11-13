@@ -737,7 +737,7 @@ function makeBannerArch(text, color, checker) {
 // racers standing on a correct pad pass first, the others pass through the correct doors a moment later.
 const DOOR_COLORS = ['#ff5a7a', '#ffc21a', '#4fcf5f', '#3fb4ff', '#a86bff'], N_DOORS = 5;
 const GATE_W = 40, GATE_HALF = GATE_W / 2, SLOT_W = GATE_W / N_DOORS, DOOR_W = 6.4, DOOR_H = 5.6;
-const GATE_ZONE = 10, GATE_GATHER = 10, GATE_THINK = 5, GATE_COUNT = 3, GATE_HOLD = 1.5, PAD_LEN = 6.6;
+const GATE_ZONE = 10, GATE_GATHER = 10, GATE_THINK = 12, GATE_COUNT = 3, GATE_HOLD = 1.5, PAD_LEN = 6.6;
 let _portalTex = null;
 function portalTextures() {
   if (_portalTex) return _portalTex;
@@ -844,7 +844,7 @@ class NumberGate {
     }
   }
   startRound(level) {
-    this.round++; this.state = 'ask'; this.timer = (level <= 2 ? 10 : GATE_THINK + GATE_COUNT); this.revealT = 0; this.pending.clear(); // grades 1-2 get 10 seconds
+    this.round++; this.state = 'ask'; this.timer = GATE_THINK + GATE_COUNT; this.revealT = 0; this.pending.clear(); // 15 seconds: 12 to choose a pad, 3 for the countdown
     this.q = (this.course.qmaker || makeQuestion)(level); const b = buildDoors(this.q, N_DOORS); this.correctCount = b.correctCount;
     this.doors.forEach((dr, i) => { dr.value = b.values[i]; dr.correct = isCorrect(this.q, dr.value); });
     this.answerText = (this.doors.find((x) => x.correct) || {}).value || '';

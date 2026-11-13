@@ -3,7 +3,7 @@
 // ================================================================
 const RUN_NEED = 5; // normal races needed for one free-run ticket
 const SUBJECTS = {
-  math: { name: '산수', icon: '🔢', desc: '내 학년에 맞는 계산 문제' },
+  math: { name: '수학', icon: '🔢', desc: '내 학년에 맞는 계산 문제' },
   english: { name: '영어 단어', icon: '🔤', desc: '낱말 뜻, 철자, 문장 빈칸 맞히기' },
   quiz: { name: '상식', icon: '💡', desc: '수도·동물·속담·우주 등 상식 퀴즈' },
   run: { name: '피버 모드', icon: '🔥', desc: '문제 없이 장애물만 달리는 보너스 레이스' },
