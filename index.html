@@ -856,7 +856,7 @@ function promotionStatus() {
 // ================================================================
 const RUN_NEED = 5; // normal races needed for one free-run ticket
 const SUBJECTS = {
-  math: { name: '산수', icon: '🔢', desc: '내 학년에 맞는 계산 문제' },
+  math: { name: '수학', icon: '🔢', desc: '내 학년에 맞는 계산 문제' },
   english: { name: '영어 단어', icon: '🔤', desc: '낱말 뜻, 철자, 문장 빈칸 맞히기' },
   quiz: { name: '상식', icon: '💡', desc: '수도·동물·속담·우주 등 상식 퀴즈' },
   run: { name: '피버 모드', icon: '🔥', desc: '문제 없이 장애물만 달리는 보너스 레이스' },
@@ -2286,7 +2286,7 @@ function makeBannerArch(text, color, checker) {
 // racers standing on a correct pad pass first, the others pass through the correct doors a moment later.
 const DOOR_COLORS = ['#ff5a7a', '#ffc21a', '#4fcf5f', '#3fb4ff', '#a86bff'], N_DOORS = 5;
 const GATE_W = 40, GATE_HALF = GATE_W / 2, SLOT_W = GATE_W / N_DOORS, DOOR_W = 6.4, DOOR_H = 5.6;
-const GATE_ZONE = 10, GATE_GATHER = 10, GATE_THINK = 5, GATE_COUNT = 3, GATE_HOLD = 1.5, PAD_LEN = 6.6;
+const GATE_ZONE = 10, GATE_GATHER = 10, GATE_THINK = 12, GATE_COUNT = 3, GATE_HOLD = 1.5, PAD_LEN = 6.6;
 let _portalTex = null;
 function portalTextures() {
   if (_portalTex) return _portalTex;
@@ -2393,7 +2393,7 @@ class NumberGate {
     }
   }
   startRound(level) {
-    this.round++; this.state = 'ask'; this.timer = (level <= 2 ? 10 : GATE_THINK + GATE_COUNT); this.revealT = 0; this.pending.clear(); // grades 1-2 get 10 seconds
+    this.round++; this.state = 'ask'; this.timer = GATE_THINK + GATE_COUNT; this.revealT = 0; this.pending.clear(); // 15 seconds: 12 to choose a pad, 3 for the countdown
     this.q = (this.course.qmaker || makeQuestion)(level); const b = buildDoors(this.q, N_DOORS); this.correctCount = b.correctCount;
     this.doors.forEach((dr, i) => { dr.value = b.values[i]; dr.correct = isCorrect(this.q, dr.value); });
     this.answerText = (this.doors.find((x) => x.correct) || {}).value || '';
@@ -2981,6 +2981,9 @@ class Race {
     this.camPos.x = damp(this.camPos.x, tx, 6, dt); this.camPos.z = damp(this.camPos.z, tz, 7, dt); this.camPos.y = damp(this.camPos.y, ty, 3.2, dt);
     this.camLook.x = damp(this.camLook.x, lerp(P.p.x * 0.9, P.p.x * (port ? 0.8 : 0.3), gk), 7, dt); this.camLook.y = damp(this.camLook.y, P.p.y + 0.8, 4, dt); this.camLook.z = damp(this.camLook.z, P.p.z - 7, 8, dt);
     this.camera.position.copy(this.camPos); this.camera.lookAt(this.camLook);
+    // phones: while a question is up, slide the picture down so the answer pads sit below the question box
+    { const qOn = !!(G && G.state === 'ask'); this.qShift = damp(this.qShift || 0, small && qOn ? (port ? 0.12 : 0.2) : 0, 4, dt); const off = this.qShift;
+      if (off > 0.003) { const H = 1000, W = H * this.camera.aspect; this.camera.setViewOffset(W, H, 0, -off * H, W, H); this._vo = true; } else if (this._vo) { this.camera.clearViewOffset(); this._vo = false; } }
     const asp = App.aspect || 16 / 9, vf = port ? 70 : asp > 16 / 9 ? 2 * Math.atan(Math.tan(31 * Math.PI / 180) * (16 / 9) / asp) * 180 / Math.PI : 62;
     this.camera.fov = Math.max(46, vf); this.camera.updateProjectionMatrix();
   }
@@ -3206,7 +3209,9 @@ const App = {
     $('#btn-race').onclick = () => { Sound.play('click'); this.openMenu('race'); };
   },
   toastHub(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2200); },
-  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').classList.remove('narrow'); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeModal()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
+  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').classList.remove('narrow'); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeX()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
+  // the ✕ button: after a race there is nothing behind the window, so it takes you out instead of leaving a frozen screen
+  closeX() { if (this.race && this.race.state === 'done') { $('#modal').classList.add('hidden'); document.body.classList.remove('modal-side'); if (this.room && this.race.room && this.roomBackToLobby) this.roomBackToLobby(); else this.exitRace(); return; } if (this.race && this.paused) { this.togglePause(); return; } this.closeModal(); },
   closeModal() { $('#modal').classList.add('hidden'); document.body.classList.remove('modal-side'); if (this.hub && this.hub.zoom) this.setHubZoom(0); if (this.screen === 'hub' && Save.data.profile) this.drawHub(); },
   openMenu(id) {
     const fn = { race: 'menuRace', custom: 'menuCustom', notes: 'menuNotes', rank: 'menuRank', level: 'menuLevel', shop: 'menuShop', map: 'menuMap', settings: 'menuSettings' }[id];
@@ -4467,7 +4472,7 @@ Object.assign(App, {
       <div class="room-mem">${ms.map((m) => { const b = R.bubbles[m.key]; return `<div class="${m.key === R.key ? 'me' : ''}">${b && b.until > now ? `<i class="bub">${b.e}</i>` : ''}${blobHtml(m.look ? hexCss(m.look.colorHex || 0xff7eb6) : '#ff7eb6', 48)}<b>${escapeHtml(m.nick)}</b><small>${m.host ? '👑 방장' : ''}${m.st === 'race' ? ' 🏃 달리는 중' : ''}</small></div>`; }).join('')}</div>
       <div class="room-set"><div><small>월드</small><div class="row">${ws.map((w) => `<button class="chip sm ${w === R.world ? 'on' : ''}" ${R.isHost ? `data-rw="${w}"` : ''}>${WORLDS[w].icon} ${WORLDS[w].name}</button>`).join('')}</div></div>
       <div><small>문제</small><div class="row">${['math', 'english', 'quiz'].map((s) => `<button class="chip sm ${s === R.subject ? 'on' : ''}" ${R.isHost ? `data-rs="${s}"` : ''}>${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div></div></div>
-      <p class="muted">산수 문제는 각자 자기 학년 수준으로 나와요. 코스는 모두 같아요.</p>
+      <p class="muted">수학 문제는 각자 자기 학년 수준으로 나와요. 코스는 모두 같아요.</p>
       ${this.emoteRow()}
       <div class="row" style="justify-content:center;margin-top:10px">${R.isHost ? `<button class="btn" id="rm-go" ${canGo ? '' : 'disabled'}>${ms.length < 2 ? '친구를 기다리는 중…' : allBack ? `🏁 출발! (${ms.length}명)` : '친구가 돌아오길 기다려요…'}</button>` : ''}<button class="btn sm gray" id="rm-out">방 나가기</button></div></div>`);
     this.bindEmotes($('#room-lobby'));

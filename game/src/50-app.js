@@ -160,7 +160,9 @@ const App = {
     $('#btn-race').onclick = () => { Sound.play('click'); this.openMenu('race'); };
   },
   toastHub(t) { const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; $('#toasts').appendChild(el); setTimeout(() => el.remove(), 2200); },
-  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').classList.remove('narrow'); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeModal()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
+  modal(html, side = false) { const m = $('#modal'); m.classList.remove('hidden'); m.classList.toggle('side', side); document.body.classList.toggle('modal-side', side); $('#modal-panel').classList.remove('narrow'); $('#modal-panel').innerHTML = `<button class="x" onclick="App.closeX()">✕</button>` + html; $('#modal-panel').scrollTop = 0; },
+  // the ✕ button: after a race there is nothing behind the window, so it takes you out instead of leaving a frozen screen
+  closeX() { if (this.race && this.race.state === 'done') { $('#modal').classList.add('hidden'); document.body.classList.remove('modal-side'); if (this.room && this.race.room && this.roomBackToLobby) this.roomBackToLobby(); else this.exitRace(); return; } if (this.race && this.paused) { this.togglePause(); return; } this.closeModal(); },
   closeModal() { $('#modal').classList.add('hidden'); document.body.classList.remove('modal-side'); if (this.hub && this.hub.zoom) this.setHubZoom(0); if (this.screen === 'hub' && Save.data.profile) this.drawHub(); },
   openMenu(id) {
     const fn = { race: 'menuRace', custom: 'menuCustom', notes: 'menuNotes', rank: 'menuRank', level: 'menuLevel', shop: 'menuShop', map: 'menuMap', settings: 'menuSettings' }[id];

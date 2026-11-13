@@ -556,6 +556,9 @@ class Race {
     this.camPos.x = damp(this.camPos.x, tx, 6, dt); this.camPos.z = damp(this.camPos.z, tz, 7, dt); this.camPos.y = damp(this.camPos.y, ty, 3.2, dt);
     this.camLook.x = damp(this.camLook.x, lerp(P.p.x * 0.9, P.p.x * (port ? 0.8 : 0.3), gk), 7, dt); this.camLook.y = damp(this.camLook.y, P.p.y + 0.8, 4, dt); this.camLook.z = damp(this.camLook.z, P.p.z - 7, 8, dt);
     this.camera.position.copy(this.camPos); this.camera.lookAt(this.camLook);
+    // phones: while a question is up, slide the picture down so the answer pads sit below the question box
+    { const qOn = !!(G && G.state === 'ask'); this.qShift = damp(this.qShift || 0, small && qOn ? (port ? 0.12 : 0.2) : 0, 4, dt); const off = this.qShift;
+      if (off > 0.003) { const H = 1000, W = H * this.camera.aspect; this.camera.setViewOffset(W, H, 0, -off * H, W, H); this._vo = true; } else if (this._vo) { this.camera.clearViewOffset(); this._vo = false; } }
     const asp = App.aspect || 16 / 9, vf = port ? 70 : asp > 16 / 9 ? 2 * Math.atan(Math.tan(31 * Math.PI / 180) * (16 / 9) / asp) * 180 / Math.PI : 62;
     this.camera.fov = Math.max(46, vf); this.camera.updateProjectionMatrix();
   }
