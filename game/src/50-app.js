@@ -56,7 +56,7 @@ const App = {
       if (this.room) this.room.tick(dt);
     } else { this.updateHub(dt); this.renderer.render(this.hub.scene, this.hub.camera); }
     if (!document.hidden && Save.data.profile && this.screen !== 'title' && this.screen !== 'register') Online.tickPlay(dt);
-    this._pollT = (this._pollT || 3) - dt; if (this._pollT <= 0) { this._pollT = 25; this.pollRooms(); }
+    this._pollT = (this._pollT || 3) - dt; if (this._pollT <= 0) { this._pollT = 8; this.pollRooms(); }
     this.fps = this.fps ? this.fps * 0.95 + (1 / Math.max(dt, 0.001)) * 0.05 : 60;
     return;
   },
@@ -373,16 +373,16 @@ const App = {
     this.modal(`<h2>⚙️ 설정</h2>${sw('sound', '효과음')}${sw('music', '배경음악')}
       <div class="switch"><span>그래픽 품질</span><span class="row">${[['auto', '자동'], ['high', '고화질'], ['low', '절약']].map(([k, n]) => `<button class="btn sm ${st.quality === k ? '' : 'gray'}" data-q="${k}">${n}</button>`).join('')}</span></div>
       <div class="switch"><span>프로필 (닉네임 · 나이 · 수학 레벨)</span><button class="btn sm blue" id="edit-prof">바꾸기</button></div>
-      <div class="switch"><span>보호자 · 온라인 계정</span>${!Online.enabled ? '<span class="muted">이 버전은 서버가 연결되지 않았어요</span>' : Online.session ? '<span class="row"><button class="btn sm blue" id="st-parent">보호자 메뉴</button><button class="btn sm" id="st-kids">아이 바꾸기</button></span>' : '<button class="btn sm blue" id="st-login">보호자 계정 연결</button>'}</div>
+      <div class="switch"><span>내 계정 · 다른 기기에서 이어하기</span>${!Online.enabled ? '<span class="muted">이 버전은 서버가 연결되지 않았어요</span>' : `<span class="row"><button class="btn sm blue" id="st-acc">이어하기 코드</button>${Online.email ? '<button class="btn sm" id="st-parent">예전 보호자 메뉴</button>' : ''}</span>`}</div>
       <div class="switch"><span>데이터 초기화</span><button class="btn sm gray" id="reset">초기화</button></div>
-      <div class="honest">${Online.child ? `저장: <b>${escapeHtml(Online.child.nickname)}</b>의 기록은 이 기기와 서버에 함께 저장돼요. 친구 방에서는 보호자님이 승인한 친구와 실시간으로 달리고, 대화는 이모티콘만 돼요. 일반 레이스의 다른 말랑이는 AI예요.` : '저장: 지금은 이 기기 브라우저에만 저장돼요. 보호자 계정으로 하면 서버에 저장되고 친구 방을 쓸 수 있어요. 일반 레이스의 다른 말랑이는 AI예요.'}</div>
+      <div class="honest">${Online.child ? `저장: <b>${escapeHtml(Online.child.nickname)}</b>의 기록은 이 기기와 서버에 함께 저장돼요. 친구 방에서는 친구 목록에 있는 친구와 실시간으로 달리고, 대화는 이모티콘만 돼요. 일반 레이스의 다른 말랑이는 AI예요.` : '저장: 지금은 이 기기 브라우저에만 저장돼요. 일반 레이스의 다른 말랑이는 AI예요.'}</div>
       <p class="muted">평균 프레임: ${Math.round(this.fps || 0)} FPS</p>`);
     $$('[data-k]').forEach((b) => (b.onclick = () => { st[b.dataset.k] = !st[b.dataset.k]; Save.save(); Sound.init(); Sound.applySettings(); this.menuSettings(); }));
     $$('[data-q]').forEach((b) => (b.onclick = () => { st.quality = b.dataset.q; Save.save(); this.applyQuality(); this.renderer.shadowMap.enabled = st.quality !== 'low'; this.resize(); this.menuSettings(); }));
     $('#edit-prof').onclick = () => { this.closeModal(); this.showRegister(true); };
     if ($('#st-parent')) $('#st-parent').onclick = () => this.olPin(() => this.olParent());
     if ($('#st-kids')) $('#st-kids').onclick = () => this.olPin(() => this.olPickChild(), '아이 바꾸기');
-    if ($('#st-login')) $('#st-login').onclick = () => this.olEntry();
+    if ($('#st-acc')) $('#st-acc').onclick = () => this.menuAccount();
     $('#reset').onclick = () => { const b = $('#reset'); if (b.dataset.sure) { Save.reset(); Save.save(true); setTimeout(() => location.reload(), 900); } else { b.dataset.sure = 1; b.textContent = '정말 지울까요? 한 번 더 누르기'; b.classList.remove('gray'); } };
   },
 };

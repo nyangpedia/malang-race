@@ -146,19 +146,19 @@ Object.assign(App, {
   async menuRooms() {
     if (this.room) return this.drawRoomLobby();
     if (!Online.child) {
-      this.modal(`<h2>👫 친구 방</h2><p>친구 방은 <b>보호자 계정</b>으로 로그인한 아이만 쓸 수 있어요. 보호자님이 승인한 친구끼리만 함께 달려요.</p><div class="row" style="justify-content:center">${Online.enabled ? '<button class="btn" id="rm-login">👨‍👩‍👧 보호자 계정으로 하기</button>' : '<p class="muted">이 버전은 아직 서버가 연결되지 않았어요.</p>'}<button class="btn sm gray" onclick="App.closeModal()">닫기</button></div>`);
-      if ($('#rm-login')) $('#rm-login').onclick = () => this.olEntry(); return;
+      this.modal(`<h2>👫 친구랑 달리기</h2><p>친구와 같이 달리려면 서버에 연결해야 해요.</p><div class="ol-msg" id="ol-msg"></div><div class="row" style="justify-content:center">${Online.enabled ? '<button class="btn" id="rm-login">☁️ 서버에 연결하기</button>' : '<p class="muted">이 버전은 아직 서버가 연결되지 않았어요.</p>'}<button class="btn sm gray" onclick="App.closeModal()">닫기</button></div>`);
+      if ($('#rm-login')) $('#rm-login').onclick = async () => { try { await Online.quickStart(); this.drawTitleOnline(); this.menuRooms(); } catch (e) { $('#ol-msg').textContent = olErr(e); } }; return;
     }
     if (!Online.roomsOn()) { this.modal('<h2>👫 친구 방</h2><p>보호자님이 친구 방을 꺼 두었어요.</p><button class="btn" onclick="App.closeModal()">알겠어요</button>'); return; }
-    this.modal(`<h2>👫 친구 방</h2><p class="muted">보호자님이 승인한 친구끼리만 들어올 수 있어요. 방에는 8명까지 들어오고, 남은 자리는 AI 말랑이가 채워요. 대화는 이모티콘으로만 해요.</p>
-      <div class="row" style="justify-content:center;margin:8px 0"><button class="btn" id="rm-new">🏠 방 만들기</button></div>
-      <div class="row"><input class="ol-inline" id="rm-code" maxlength="4" placeholder="방 코드 4자리" style="text-transform:uppercase;flex:1"><button class="btn sm blue" id="rm-join">코드로 들어가기</button></div>
-      <div class="ol-msg" id="ol-msg"></div><h3>열려 있는 친구 방</h3><div id="rm-list"><p class="muted">찾는 중…</p></div>`);
+    this.modal(`<h2>👫 친구랑 달리기</h2><p class="muted">방을 만들고 친구 옆의 <b>초대</b>를 누르면 친구 화면에 초대가 떠요. 8명까지 함께 달리고, 남은 자리는 AI 말랑이가 채워요.</p>
+      <div class="row" style="justify-content:center;margin:8px 0"><button class="btn" id="rm-new">🏠 방 만들고 친구 초대하기</button></div>
+      <h3>열려 있는 친구 방</h3><div id="rm-list"><p class="muted">찾는 중…</p></div>
+      <div id="rm-friends"><p class="muted">친구 목록을 불러오는 중…</p></div>`);
     $('#rm-new').onclick = () => this.openRoom(null);
-    $('#rm-join').onclick = () => this.openRoom($('#rm-code').value.trim().toUpperCase());
+    this.friendPanelHtml(false).then((h) => { const el = $('#rm-friends'); if (!el) return; el.innerHTML = h; this.bindFriendPanel(() => this.menuRooms()); }).catch((e) => { const el = $('#rm-friends'); if (el) el.innerHTML = `<p class="ol-msg bad">${olErr(e)}</p>`; });
     try {
       const rooms = await Online.rpc('friend_rooms', { child: Online.child.id }); const el = $('#rm-list'); if (!el) return;
-      el.innerHTML = rooms.length ? rooms.map((r) => `<div class="wn ol-row"><span>${blobHtml(r.look && r.look.c, 26)} <b>${escapeHtml(r.host)}</b>의 방</span><button class="btn sm green" data-rc="${r.code}">들어가기</button></div>`).join('') : '<p class="muted">지금 열린 친구 방이 없어요. 방을 만들고 친구에게 코드를 알려 주세요.</p>';
+      el.innerHTML = rooms.length ? rooms.map((r) => `<div class="wn ol-row"><span>${blobHtml(r.look && r.look.c, 26)} <b>${escapeHtml(r.host)}</b>의 방</span><button class="btn sm green" data-rc="${r.code}">들어가기</button></div>`).join('') : '<p class="muted">지금 열린 친구 방이 없어요. 방을 만들고 친구를 초대해 보세요.</p>';
       $$('[data-rc]').forEach((b) => (b.onclick = () => this.openRoom(b.dataset.rc)));
     } catch (e) { const el = $('#rm-list'); if (el) el.innerHTML = `<p class="ol-msg bad">${olErr(e)}</p>`; }
   },
@@ -191,14 +191,17 @@ Object.assign(App, {
     const allBack = ms.every((m) => m.st !== 'race'), canGo = R.isHost && ms.length >= 2 && allBack;
     const ws = R.isHost ? Save.data.unlockedWorlds.filter((w) => WORLDS[w]) : [R.world];
     this.modal(`<div id="room-lobby"><h2>👫 친구 방 <span class="room-code">${R.code}</span></h2>
-      <p class="muted">${R.isHost ? '친구에게 방 코드를 알려 주세요. 친구 화면에도 초대가 떠요.' : `<b>${escapeHtml(R.hostNick)}</b>의 방이에요. 방장이 출발을 누르면 시작해요.`}</p>
+      <p class="muted">${R.isHost ? '아래 친구 목록에서 <b>초대</b>를 누르면 친구 화면에 초대가 떠요.' : `<b>${escapeHtml(R.hostNick)}</b>의 방이에요. 방장이 출발을 누르면 시작해요.`}</p>
       <div class="room-mem">${ms.map((m) => { const b = R.bubbles[m.key]; return `<div class="${m.key === R.key ? 'me' : ''}">${b && b.until > now ? `<i class="bub">${b.e}</i>` : ''}${blobHtml(m.look ? hexCss(m.look.colorHex || 0xff7eb6) : '#ff7eb6', 48)}<b>${escapeHtml(m.nick)}</b><small>${m.host ? '👑 방장' : ''}${m.st === 'race' ? ' 🏃 달리는 중' : ''}</small></div>`; }).join('')}</div>
+      ${R.isHost ? `<div id="rm-inv">${R.invHtml || '<p class="muted">친구 목록을 불러오는 중…</p>'}</div>` : ''}
       <div class="room-set"><div><small>월드</small><div class="row">${ws.map((w) => `<button class="chip sm ${w === R.world ? 'on' : ''}" ${R.isHost ? `data-rw="${w}"` : ''}>${WORLDS[w].icon} ${WORLDS[w].name}</button>`).join('')}</div></div>
       <div><small>문제</small><div class="row">${['math', 'english', 'quiz'].map((s) => `<button class="chip sm ${s === R.subject ? 'on' : ''}" ${R.isHost ? `data-rs="${s}"` : ''}>${SUBJECTS[s].icon} ${SUBJECTS[s].name}</button>`).join('')}</div></div></div>
       <p class="muted">수학 문제는 각자 자기 학년 수준으로 나와요. 코스는 모두 같아요.</p>
       ${this.emoteRow()}
       <div class="row" style="justify-content:center;margin-top:10px">${R.isHost ? `<button class="btn" id="rm-go" ${canGo ? '' : 'disabled'}>${ms.length < 2 ? '친구를 기다리는 중…' : allBack ? `🏁 출발! (${ms.length}명)` : '친구가 돌아오길 기다려요…'}</button>` : ''}<button class="btn sm gray" id="rm-out">방 나가기</button></div></div>`);
     this.bindEmotes($('#room-lobby'));
+    if (R.isHost) { const fill = (h) => { R.invHtml = h; const el = $('#rm-inv'); if (!el) return; el.innerHTML = h; this.bindFriendPanel(async () => { R.invHtml = await this.friendPanelHtml(true); this.drawRoomLobby(); }); };
+      if (R.invHtml) fill(R.invHtml); if (!R.invT || now - R.invT > 15000) { R.invT = now; this.friendPanelHtml(true).then(fill).catch(() => {}); } }
     $$('[data-rw]').forEach((b) => (b.onclick = () => { R.world = b.dataset.rw; R.send({ t: 'set', w: R.world, s: R.subject }); this.drawRoomLobby(); }));
     $$('[data-rs]').forEach((b) => (b.onclick = () => { R.subject = b.dataset.rs; R.send({ t: 'set', w: R.world, s: R.subject }); this.drawRoomLobby(); }));
     if ($('#rm-go')) $('#rm-go').onclick = () => { if (!canGo) return; const p = { t: 'start', w: R.world, s: R.subject, seed: randi(1, 2e9), cl: Save.data.profile.level }; R.send(p); this.startRoomRace(p); };
@@ -233,13 +236,15 @@ Object.assign(App, {
     const ok = Online.child && Online.roomsOn() && !this.room && !this.race && this.screen === 'hub';
     if (!ok) { el.classList.add('hidden'); return; }
     try {
-      const rooms = await Online.rpc('friend_rooms', { child: Online.child.id }); this._dismissed = this._dismissed || {};
-      const r = rooms.find((x) => !this._dismissed[x.code]);
-      if (!r || this.room || this.screen !== 'hub') { el.classList.add('hidden'); return; }
-      el.innerHTML = `${blobHtml(r.look && r.look.c, 30)}<span><b>${escapeHtml(r.host)}</b>의 친구 방이 열렸어요!</span><button class="btn sm green" id="rc-go">들어가기</button><button class="rc-x" id="rc-x">✕</button>`;
-      el.classList.remove('hidden');
-      $('#rc-go').onclick = () => { el.classList.add('hidden'); this.openRoom(r.code); };
-      $('#rc-x').onclick = () => { this._dismissed[r.code] = 1; el.classList.add('hidden'); };
+      const cid = Online.child.id; this._dismissed = this._dismissed || {};
+      const [inv, rooms, fr] = await Promise.all([Online.rpc('my_invites', { child: cid }).catch(() => []), Online.rpc('friend_rooms', { child: cid }), Online.rpc('my_friends', { child: cid }).catch(() => [])]);
+      if (this.room || this.race || this.screen !== 'hub') { el.classList.add('hidden'); return; }
+      const iv = inv.find((x) => !this._dismissed['i' + x.code]), rq = fr.find((f) => f.status !== 'approved' && f.incoming && !this._dismissed['f' + f.fid]), r = rooms.find((x) => !this._dismissed[x.code]);
+      const show = (look, text, btn, go, key) => { el.innerHTML = `${blobHtml(look && look.c, 30)}<span>${text}</span><button class="btn sm green" id="rc-go">${btn}</button><button class="rc-x" id="rc-x">✕</button>`; el.classList.remove('hidden'); $('#rc-go').onclick = () => { el.classList.add('hidden'); this._dismissed[key] = 1; go(); }; $('#rc-x').onclick = () => { this._dismissed[key] = 1; el.classList.add('hidden'); }; };
+      if (iv) { if (!this._invSeen || !this._invSeen[iv.code]) { (this._invSeen = this._invSeen || {})[iv.code] = 1; Sound.play('star'); } show(iv.look, `<b>${escapeHtml(iv.host)}</b>가 같이 달리자고 초대했어요!`, '같이 하기', () => this.openRoom(iv.code), 'i' + iv.code); }
+      else if (rq) show(rq.look, `<b>${escapeHtml(rq.nickname)}</b>가 친구 신청을 했어요`, '수락', async () => { try { await Online.call('accept_friend', { child: cid, fid: rq.fid, approve: true }); this.toastHub(`${rq.nickname}와 친구가 되었어요! 🎉`); } catch (e) { this.toastHub(olErr(e)); } }, 'f' + rq.fid);
+      else if (r) show(r.look, `<b>${escapeHtml(r.host)}</b>의 친구 방이 열렸어요!`, '들어가기', () => this.openRoom(r.code), r.code);
+      else el.classList.add('hidden');
     } catch (e) { el.classList.add('hidden'); }
   },
 });
