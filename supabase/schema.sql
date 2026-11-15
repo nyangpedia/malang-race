@@ -290,7 +290,7 @@ begin
   order by b.p, c.nickname;
 end $$;
 
--- ---------- friends (the receiving guardian approves) ----------
+-- ---------- friends (the invited child accepts in the game; guardians can still approve or remove) ----------
 create or replace function public.send_friend_request(child uuid, code text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare t public.children;
@@ -356,6 +356,19 @@ begin
   return jsonb_build_object('ok', true);
 end $$;
 
+-- the invited child can accept or decline a request in the game, without the guardian PIN
+create or replace function public.accept_friend(child uuid, fid bigint, approve boolean) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare f public.friendships;
+begin
+  if not public.is_my_child(child) then return jsonb_build_object('ok', false, 'err', 'not_mine'); end if;
+  select * into f from public.friendships where id = fid;
+  if not found or f.to_child <> child or f.status <> 'pending' then return jsonb_build_object('ok', false, 'err', 'not_mine'); end if;
+  if approve then update public.friendships set status = 'approved' where id = fid;
+  else delete from public.friendships where id = fid; end if;
+  return jsonb_build_object('ok', true);
+end $$;
+
 -- ---------- friend rooms (live races go over Supabase Realtime, only for the host and their approved friends) ----------
 create or replace function public._room_member(code text, child uuid) returns boolean
 language sql stable security definer set search_path = public as $$
@@ -418,6 +431,41 @@ create or replace function public.can_use_room(topic text) returns boolean
 language sql stable security definer set search_path = public as $$
   select topic like 'room:%' and exists (
     select 1 from public.children c where c.guardian_id = auth.uid() and public._room_member(substr(topic, 6), c.id))
+$$;
+
+-- room invites: the host taps "초대" next to a friend, and the friend sees a pop-up in the plaza
+create table if not exists public.room_invites (
+  code text not null references public.rooms(code) on delete cascade,
+  to_child uuid not null references public.children(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (code, to_child)
+);
+alter table public.room_invites enable row level security;
+
+create or replace function public.invite_friend(child uuid, fid bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare f public.friendships; v_code text; v_to uuid;
+begin
+  if not public.is_my_child(child) then return jsonb_build_object('ok', false, 'err', 'not_mine'); end if;
+  select r.code into v_code from public.rooms r where r.host_child = child and r.created_at > now() - interval '3 hours';
+  if v_code is null then return jsonb_build_object('ok', false, 'err', 'no_room'); end if;
+  select * into f from public.friendships where id = fid and status = 'approved' and (from_child = child or to_child = child);
+  if not found then return jsonb_build_object('ok', false, 'err', 'not_friend'); end if;
+  v_to := case when f.from_child = child then f.to_child else f.from_child end;
+  insert into public.room_invites (code, to_child) values (v_code, v_to)
+    on conflict (code, to_child) do update set created_at = now();
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- invites for this child from the last 10 minutes, to rooms that are still open
+create or replace function public.my_invites(child uuid)
+returns table (code text, host text, look jsonb, sent timestamptz)
+language sql stable security definer set search_path = public as $$
+  select i.code, h.nickname, h.look, i.created_at
+  from public.room_invites i join public.rooms r on r.code = i.code join public.children h on h.id = r.host_child
+  where public.is_my_child(child) and i.to_child = child and i.created_at > now() - interval '10 minutes'
+    and public._room_member(i.code, child)
+  order by i.created_at desc
 $$;
 
 do $$ begin

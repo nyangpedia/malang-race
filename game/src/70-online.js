@@ -6,8 +6,8 @@ const OL_ERR = {
   pin: 'PIN이 맞지 않아요.', pin_locked: 'PIN을 5번 틀려서 5분 동안 잠겼어요.', pin_format: 'PIN은 숫자 4자리예요.',
   nick: '닉네임은 한글·영문·숫자 2~10글자로 써 주세요. 긴 숫자나 나쁜 말은 쓸 수 없어요.',
   max_children: '아이는 4명까지 등록할 수 있어요.', no_code: '그런 친구 코드가 없어요.', self: '내 친구 코드예요.',
-  exists: '이미 친구이거나 신청한 친구예요.', too_many: '승인을 기다리는 신청이 너무 많아요.',
-  not_friend: '보호자님이 승인한 친구의 방만 들어갈 수 있어요.', no_room: '방이 없거나 이미 닫혔어요.',
+  exists: '이미 친구이거나 신청한 친구예요.', too_many: '수락을 기다리는 신청이 너무 많아요.',
+  not_friend: '친구 목록에 있는 친구의 방만 들어갈 수 있어요.', no_room: '방이 없거나 이미 닫혔어요.',
   rooms_off: '보호자님이 친구 방을 꺼 두었어요.', not_mine: '권한이 없어요.', auth: '로그인이 필요해요.',
   invalid: '기록을 확인하지 못했어요.', not_admin: '관리자만 할 수 있어요.', too_long: '공지는 200글자까지 쓸 수 있어요.', too_fast: '', net: '서버에 연결하지 못했어요. 인터넷을 확인해 주세요.',
 };
@@ -318,7 +318,7 @@ Object.assign(App, {
   },
   async olParent(tab = 'kids') {
     if (tab === 'admin') return this.olAdmin();
-    const tabs = [['kids', '📊 아이 기록'], ['friends', '🤝 친구 승인'], ['rules', '⏰ 사용 규칙'], ['account', '🔑 계정']]; 
+    const tabs = [['kids', '📊 아이 기록'], ['friends', '🤝 친구'], ['rules', '⏰ 사용 규칙'], ['account', '🔑 계정']]; 
     const head = `<h2>👨‍👩‍👧 보호자 메뉴</h2><div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === tab ? 'on' : ''}" data-pt="${k}">${n}</button>`).join('')}</div>`;
     this.modal(head + '<p class="muted">불러오는 중…</p>');
     const bind = () => { $$('[data-pt]').forEach((b) => (b.onclick = () => this.olPin(() => this.olParent(b.dataset.pt)))); if ($('#ol-back')) $('#ol-back').onclick = () => this.olPickChild(); };
@@ -331,8 +331,8 @@ Object.assign(App, {
         body = K.length ? K.map((k) => this.olKidReport(k, byId[k.id])).join('') : '<p>아직 등록한 아이가 없어요.</p>';
       } else if (tab === 'friends') {
         const req = await Online.rpc('guardian_requests');
-        body = `<h3>승인을 기다리는 친구 신청</h3>${req.length ? req.map((r) => `<div class="wn ol-row"><span><b>${escapeHtml(r.from_nickname)}</b> (LV${r.from_level}) → 우리 <b>${escapeHtml(r.to_nickname)}</b></span><span class="row"><button class="btn sm green" data-ok="${r.fid}">승인</button><button class="btn sm gray" data-no="${r.fid}">거절</button></span></div>`).join('') : '<p class="muted">새 신청이 없어요.</p>'}
-          <p class="muted">아이가 친구 코드를 넣으면 상대 보호자에게 신청이 가요. 승인된 친구끼리만 랭킹을 보고 친구 방에서 함께 달릴 수 있어요. 대화는 정해진 이모티콘만 돼요.</p>`;
+        body = `<h3>수락을 기다리는 친구 신청</h3>${req.length ? req.map((r) => `<div class="wn ol-row"><span><b>${escapeHtml(r.from_nickname)}</b> (LV${r.from_level}) → 우리 <b>${escapeHtml(r.to_nickname)}</b></span><span class="row"><button class="btn sm green" data-ok="${r.fid}">승인</button><button class="btn sm gray" data-no="${r.fid}">거절</button></span></div>`).join('') : '<p class="muted">새 신청이 없어요.</p>'}
+          <p class="muted">아이가 친구 코드를 넣으면 상대 아이에게 신청이 가고, 그 아이가 게임에서 수락하면 친구가 돼요. 여기서 대신 승인하거나 친구를 끊을 수도 있어요. 대화는 정해진 이모티콘만 돼요.</p>`;
         for (const k of K) {
           const fr = await Online.rpc('my_friends', { child: k.id }); const ok = fr.filter((f) => f.status === 'approved');
           body += `<h3>${escapeHtml(k.nickname)}의 친구 (${ok.length})</h3>${ok.length ? ok.map((f) => `<div class="wn ol-row"><span>${blobHtml(f.look && f.look.c, 24)} ${escapeHtml(f.nickname)} · LV${f.level}</span><button class="btn sm gray" data-rm="${f.fid}">친구 끊기</button></div>`).join('') : '<p class="muted">아직 친구가 없어요.</p>'}`;
@@ -342,7 +342,7 @@ Object.assign(App, {
           return `<div class="wn" data-kid="${k.id}"><div class="row" style="justify-content:space-between"><b style="font-size:19px">${blobHtml(k.look && k.look.c, 26)} ${escapeHtml(k.nickname)}</b><span class="muted">친구 코드 ${k.friend_code}</span></div>
             <div class="switch"><span>하루 놀이 시간</span><span class="row">${[0, 30, 60, 90, 120].map((m) => `<button class="chip sm ${m === dm ? 'on' : ''}" data-dm="${m}">${m ? m + '분' : '제한 없음'}</button>`).join('')}</span></div>
             <div class="switch"><span>이모티콘 주고받기</span><button class="btn sm ${c.emotes !== false ? 'green' : 'gray'}" data-em="${c.emotes !== false ? 1 : 0}">${c.emotes !== false ? '켜짐' : '꺼짐'}</button></div>
-            <div class="switch"><span>친구 방 (승인한 친구와 실시간 달리기)</span><button class="btn sm ${c.rooms !== false ? 'green' : 'gray'}" data-rmo="${c.rooms !== false ? 1 : 0}">${c.rooms !== false ? '켜짐' : '꺼짐'}</button></div>
+            <div class="switch"><span>친구 방 (친구와 실시간 달리기)</span><button class="btn sm ${c.rooms !== false ? 'green' : 'gray'}" data-rmo="${c.rooms !== false ? 1 : 0}">${c.rooms !== false ? '켜짐' : '꺼짐'}</button></div>
             <div class="switch"><span>닉네임</span><span class="row"><input class="ol-inline" data-nick value="${escapeHtml(k.nickname)}" maxlength="10"><button class="btn sm blue" data-save>저장</button></span></div>
             <div class="switch"><span>이 아이 지우기 <span class="muted">(기록 모두 삭제)</span></span><button class="btn sm gray" data-del>지우기</button></div></div>`; }).join('') + '<p class="muted">놀이 시간은 이 아이가 게임 화면을 켜 둔 시간이에요. 시간이 다 되면 새 레이스를 시작할 수 없고, 하던 레이스는 끝까지 할 수 있어요.</p>';
       } else {
@@ -402,10 +402,7 @@ Object.assign(App, {
     let body = '';
     try {
       if (tab === 'friends') {
-        const fr = await Online.rpc('my_friends', { child: Online.child.id });
-        body = `<div class="ol-code">내 친구 코드 <b>${Online.child.friend_code}</b> <button class="btn sm blue" id="ol-copy">복사</button></div>
-          <div class="row"><input class="ol-inline" id="ol-fcode" maxlength="6" placeholder="친구 코드 6자리" style="text-transform:uppercase;flex:1"><button class="btn sm" id="ol-fadd">친구 신청</button></div><div class="ol-msg" id="ol-msg"></div>
-          ${fr.length ? fr.map((f) => `<div class="wn ol-row"><span>${blobHtml(f.look && f.look.c, 26)} <b>${escapeHtml(f.nickname)}</b> · LV${f.level}</span><span class="tag ${f.status === 'approved' ? 'green' : ''}">${f.status === 'approved' ? '친구' : f.incoming ? '우리 보호자님 승인 대기' : '친구 보호자님 승인 대기'}</span></div>`).join('') : '<p class="muted">친구 코드를 서로 알려 주고 신청해 보세요. 보호자님이 승인하면 친구가 돼요.</p>'}`;
+        body = await this.friendPanelHtml(false);
       } else {
         const [scope, period] = tab.split('-');
         const rows = await Online.rpc('leaderboard', { child: Online.child.id, scope, period: period || 'week' });
@@ -416,8 +413,30 @@ Object.assign(App, {
     } catch (e) { body = `<p class="ol-msg bad">${olErr(e)}</p>`; }
     this.modal(head + body + '<p class="muted">점수는 서버가 순위·정답률·학년 레벨로 다시 계산해요. 랭킹에는 닉네임과 말랑이 색만 보여요.</p>');
     $$('[data-rt]').forEach((b) => (b.onclick = () => this.menuRank(b.dataset.rt)));
+    if (tab === 'friends') this.bindFriendPanel(() => this.menuRank('friends'));
+  },
+  // friend code, add-a-friend box, requests to accept, and the friend list (with 초대 buttons while hosting a room)
+  async friendPanelHtml(invite) {
+    const fr = await Online.rpc('my_friends', { child: Online.child.id }); this._friends = fr;
+    const inc = fr.filter((f) => f.status !== 'approved' && f.incoming), ok = fr.filter((f) => f.status === 'approved'), out = fr.filter((f) => f.status !== 'approved' && !f.incoming);
+    const row = (f, right) => `<div class="wn ol-row"><span>${blobHtml(f.look && f.look.c, 26)} <b>${escapeHtml(f.nickname)}</b> · LV${f.level}</span><span class="row">${right}</span></div>`;
+    const sent = this._invited || {};
+    const add = `<div class="ol-code">내 친구 코드 <b>${Online.child.friend_code}</b> <button class="btn sm blue" id="ol-copy">복사</button></div>
+      <div class="row"><input class="ol-inline" id="ol-fcode" maxlength="6" placeholder="친구 코드 6자리" style="text-transform:uppercase;flex:1"><button class="btn sm" id="ol-fadd">친구 추가</button></div><div class="ol-msg" id="ol-msg"></div>`;
+    const list = `<h3>내 친구 (${ok.length})</h3>${ok.length ? ok.map((f) => row(f, invite ? `<button class="btn sm ${sent[f.fid] ? 'gray' : 'green'}" data-finv="${f.fid}">${sent[f.fid] ? '초대했어요 ✓' : '초대'}</button>` : '<span class="tag green">친구</span>')).join('') : '<p class="muted">친구 코드를 서로 알려 주고 친구 추가를 눌러 보세요. 친구가 수락하면 바로 친구가 돼요.</p>'}`;
+    return `${invite ? list : add}
+      ${inc.length ? `<h3>나에게 온 친구 신청</h3>${inc.map((f) => row(f, `<button class="btn sm green" data-fok="${f.fid}">수락</button><button class="btn sm gray" data-fno="${f.fid}">거절</button>`)).join('')}` : ''}
+      ${invite ? add : list}
+      ${out.map((f) => row(f, '<span class="tag">친구가 수락하길 기다려요</span>')).join('')}`;
+  },
+  bindFriendPanel(refresh) {
+    const msg = (t) => { const m = $('#ol-msg'); if (m) m.textContent = t; };
     if ($('#ol-copy')) $('#ol-copy').onclick = () => { try { navigator.clipboard.writeText(Online.child.friend_code); } catch (e) {} $('#ol-copy').textContent = '복사됨'; };
-    if ($('#ol-fadd')) $('#ol-fadd').onclick = async () => { const code = $('#ol-fcode').value.trim().toUpperCase(); try { const r = await Online.call('send_friend_request', { child: Online.child.id, code }); this.menuRank('friends'); setTimeout(() => { const m = $('#ol-msg'); if (m) m.textContent = `${r.nickname}에게 신청했어요. 친구의 보호자님이 승인하면 친구가 돼요.`; }, 300); } catch (e) { $('#ol-msg').textContent = olErr(e); } };
+    if ($('#ol-fadd')) $('#ol-fadd').onclick = async () => { const code = $('#ol-fcode').value.trim().toUpperCase(); try { const r = await Online.call('send_friend_request', { child: Online.child.id, code }); await refresh(); msg(`${r.nickname}에게 친구 신청을 보냈어요. 친구가 수락하면 친구가 돼요.`); } catch (e) { msg(olErr(e)); } };
+    const ans = async (fid, yes) => { try { await Online.call('accept_friend', { child: Online.child.id, fid, approve: yes }); await refresh(); msg(yes ? '친구가 되었어요! 🎉' : '신청을 거절했어요.'); } catch (e) { msg(olErr(e)); } };
+    $$('[data-fok]').forEach((b) => (b.onclick = () => ans(+b.dataset.fok, true)));
+    $$('[data-fno]').forEach((b) => (b.onclick = () => ans(+b.dataset.fno, false)));
+    $$('[data-finv]').forEach((b) => (b.onclick = async () => { const fid = +b.dataset.finv; try { await Online.call('invite_friend', { child: Online.child.id, fid }); (this._invited = this._invited || {})[fid] = 1; b.textContent = '초대했어요 ✓'; b.classList.remove('green'); b.classList.add('gray'); } catch (e) { msg(olErr(e)); } }));
   },
   drawCloud() { const el = $('#hub-cloud'); if (!el) return; if (!Online.child) { el.classList.add('hidden'); return; } el.classList.remove('hidden'); el.textContent = Online.syncState === 'err' ? '☁️ 저장 대기' : '☁️ 저장됨'; },
   olTimeUpModal() {

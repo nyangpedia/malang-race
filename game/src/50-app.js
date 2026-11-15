@@ -56,7 +56,7 @@ const App = {
       if (this.room) this.room.tick(dt);
     } else { this.updateHub(dt); this.renderer.render(this.hub.scene, this.hub.camera); }
     if (!document.hidden && Save.data.profile && this.screen !== 'title' && this.screen !== 'register') Online.tickPlay(dt);
-    this._pollT = (this._pollT || 3) - dt; if (this._pollT <= 0) { this._pollT = 25; this.pollRooms(); }
+    this._pollT = (this._pollT || 3) - dt; if (this._pollT <= 0) { this._pollT = 8; this.pollRooms(); }
     this.fps = this.fps ? this.fps * 0.95 + (1 / Math.max(dt, 0.001)) * 0.05 : 60;
     return;
   },
