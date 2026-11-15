@@ -586,6 +586,78 @@ language sql stable security definer set search_path = public as $$
   select n.id, n.body, n.created_at from public.notices n where n.active order by n.id desc limit 1
 $$;
 
+-- ---------- quick start: no guardian account, a nickname is enough ----------
+-- Each device signs in anonymously (Supabase "anonymous sign-ins"). The account holds one player.
+-- We keep no email, real name, birthday or phone number: only the nickname, the mallang look and game records.
+alter table public.children add column if not exists restore_code text;
+create unique index if not exists children_restore on public.children (restore_code) where restore_code is not null;
+
+create or replace function public.quick_start(nick text, look jsonb, lvl int) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare c public.children; v_code text; v_rc text;
+begin
+  if auth.uid() is null then return jsonb_build_object('ok', false, 'err', 'auth'); end if;
+  select * into c from public.children where guardian_id = auth.uid() order by created_at limit 1;
+  if found then
+    if c.restore_code is null then
+      loop v_rc := public._new_code(8); exit when not exists (select 1 from public.children where restore_code = v_rc); end loop;
+      update public.children set restore_code = v_rc where id = c.id returning * into c;
+    end if;
+    return jsonb_build_object('ok', true, 'child', to_jsonb(c));
+  end if;
+  nick := btrim(nick);
+  if not public._nick_ok(nick) then return jsonb_build_object('ok', false, 'err', 'nick'); end if;
+  insert into public.guardians (id, pin_hash, consent_version) values (auth.uid(), '-', 'none') on conflict (id) do nothing;
+  loop v_code := public._new_code(6); exit when not exists (select 1 from public.children where friend_code = v_code); end loop;
+  loop v_rc := public._new_code(8); exit when not exists (select 1 from public.children where restore_code = v_rc); end loop;
+  insert into public.children (guardian_id, nickname, friend_code, look, level, restore_code)
+    values (auth.uid(), nick, v_code, coalesce(look, '{}'::jsonb), least(6, greatest(1, coalesce(lvl, 1))), v_rc)
+    returning * into c;
+  return jsonb_build_object('ok', true, 'child', to_jsonb(c));
+end $$;
+
+-- the player changes their own nickname
+create or replace function public.rename_me(child uuid, nick text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_my_child(child) then return jsonb_build_object('ok', false, 'err', 'not_mine'); end if;
+  nick := btrim(nick);
+  if not public._nick_ok(nick) then return jsonb_build_object('ok', false, 'err', 'nick'); end if;
+  update public.children set nickname = nick where id = child;
+  return jsonb_build_object('ok', true);
+end $$;
+
+-- move a player to this device with its 8-letter restore code (10 wrong tries lock it for 10 minutes)
+create or replace function public.restore_account(code text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare c public.children; g public.guardians;
+begin
+  if auth.uid() is null then return jsonb_build_object('ok', false, 'err', 'auth'); end if;
+  insert into public.guardians (id, pin_hash, consent_version) values (auth.uid(), '-', 'none') on conflict (id) do nothing;
+  select * into g from public.guardians where id = auth.uid() for update;
+  if g.pin_locked_until is not null and g.pin_locked_until > now() then return jsonb_build_object('ok', false, 'err', 'restore_locked'); end if;
+  select * into c from public.children where restore_code = upper(regexp_replace(coalesce(code, ''), '[^A-Za-z0-9]', '', 'g'));
+  if not found then
+    update public.guardians set
+      pin_locked_until = case when g.pin_fails + 1 >= 10 then now() + interval '10 minutes' else null end,
+      pin_fails = case when g.pin_fails + 1 >= 10 then 0 else g.pin_fails + 1 end
+    where id = g.id;
+    return jsonb_build_object('ok', false, 'err', 'no_restore');
+  end if;
+  update public.guardians set pin_fails = 0, pin_locked_until = null where id = g.id;
+  update public.children set guardian_id = auth.uid() where id = c.id returning * into c;
+  return jsonb_build_object('ok', true, 'child', to_jsonb(c));
+end $$;
+
+-- delete this player's account and every record (no PIN for quick-start accounts)
+create or replace function public.delete_me() returns jsonb
+language plpgsql security definer set search_path = public as $$
+begin
+  if auth.uid() is null then return jsonb_build_object('ok', false, 'err', 'auth'); end if;
+  delete from auth.users where id = auth.uid();
+  return jsonb_build_object('ok', true);
+end $$;
+
 -- ---------- who may call what ----------
 revoke execute on all functions in schema public from public, anon;
 grant execute on all functions in schema public to authenticated;

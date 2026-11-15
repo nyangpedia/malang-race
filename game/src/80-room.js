@@ -146,8 +146,8 @@ Object.assign(App, {
   async menuRooms() {
     if (this.room) return this.drawRoomLobby();
     if (!Online.child) {
-      this.modal(`<h2>👫 친구랑 달리기</h2><p>친구와 같이 달리려면 처음 한 번만 <b>보호자님 계정</b>으로 로그인해 주세요. 그다음부터는 친구 코드만 넣으면 돼요.</p><div class="row" style="justify-content:center">${Online.enabled ? '<button class="btn" id="rm-login">👨‍👩‍👧 보호자 계정으로 하기</button>' : '<p class="muted">이 버전은 아직 서버가 연결되지 않았어요.</p>'}<button class="btn sm gray" onclick="App.closeModal()">닫기</button></div>`);
-      if ($('#rm-login')) $('#rm-login').onclick = () => this.olEntry(); return;
+      this.modal(`<h2>👫 친구랑 달리기</h2><p>친구와 같이 달리려면 서버에 연결해야 해요.</p><div class="ol-msg" id="ol-msg"></div><div class="row" style="justify-content:center">${Online.enabled ? '<button class="btn" id="rm-login">☁️ 서버에 연결하기</button>' : '<p class="muted">이 버전은 아직 서버가 연결되지 않았어요.</p>'}<button class="btn sm gray" onclick="App.closeModal()">닫기</button></div>`);
+      if ($('#rm-login')) $('#rm-login').onclick = async () => { try { await Online.quickStart(); this.drawTitleOnline(); this.menuRooms(); } catch (e) { $('#ol-msg').textContent = olErr(e); } }; return;
     }
     if (!Online.roomsOn()) { this.modal('<h2>👫 친구 방</h2><p>보호자님이 친구 방을 꺼 두었어요.</p><button class="btn" onclick="App.closeModal()">알겠어요</button>'); return; }
     this.modal(`<h2>👫 친구랑 달리기</h2><p class="muted">방을 만들고 친구 옆의 <b>초대</b>를 누르면 친구 화면에 초대가 떠요. 8명까지 함께 달리고, 남은 자리는 AI 말랑이가 채워요.</p>

@@ -327,7 +327,7 @@ body:has(#modal:not(.hidden)) #fever,body:has(#modal:not(.hidden)) #fever-mini{d
 .room-board{font-size:16px}
 #emotebar{position:fixed;right:max(12px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);z-index:16;display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:auto}
 #emotebar .eb-t{font-size:28px;width:52px;height:52px;border-radius:50%;background:#fffe;box-shadow:0 3px 0 rgba(120,80,170,.2)}#emotebar .eb-row{display:none;flex-direction:column;margin:0}#emotebar.open .eb-row{display:flex}
-#roomcall{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(max(12px,env(safe-area-inset-bottom)) + 14px);z-index:14;display:flex;align-items:center;gap:10px;background:#fff;border:4px solid #9fe3ff;border-radius:999px;padding:6px 8px 6px 12px;box-shadow:var(--shadow);font-size:16px;white-space:nowrap}
+#roomcall{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(max(12px,env(safe-area-inset-bottom)) + 14px);z-index:25;display:flex;align-items:center;gap:10px;background:#fff;border:4px solid #9fe3ff;border-radius:999px;padding:6px 8px 6px 12px;box-shadow:var(--shadow);font-size:16px;white-space:nowrap}
 #roomcall .rc-x{width:30px;height:30px;border-radius:50%;background:#f3ecff;font-size:14px}
 body:has(#modal:not(.hidden)) #roomcall{display:none}
 @container stage (max-height:520px){ #roomhud{top:calc(max(6px,env(safe-area-inset-top)) + 150px);font-size:11px;min-width:120px;padding:4px 8px} .ol-stats{grid-template-columns:repeat(5,1fr)} .emotes button{width:40px;height:40px;font-size:22px} #emotebar .eb-t{width:44px;height:44px;font-size:24px} }
@@ -3422,16 +3422,16 @@ const App = {
     this.modal(`<h2>⚙️ 설정</h2>${sw('sound', '효과음')}${sw('music', '배경음악')}
       <div class="switch"><span>그래픽 품질</span><span class="row">${[['auto', '자동'], ['high', '고화질'], ['low', '절약']].map(([k, n]) => `<button class="btn sm ${st.quality === k ? '' : 'gray'}" data-q="${k}">${n}</button>`).join('')}</span></div>
       <div class="switch"><span>프로필 (닉네임 · 나이 · 수학 레벨)</span><button class="btn sm blue" id="edit-prof">바꾸기</button></div>
-      <div class="switch"><span>보호자 · 온라인 계정</span>${!Online.enabled ? '<span class="muted">이 버전은 서버가 연결되지 않았어요</span>' : Online.session ? '<span class="row"><button class="btn sm blue" id="st-parent">보호자 메뉴</button><button class="btn sm" id="st-kids">아이 바꾸기</button></span>' : '<button class="btn sm blue" id="st-login">보호자 계정 연결</button>'}</div>
+      <div class="switch"><span>내 계정 · 다른 기기에서 이어하기</span>${!Online.enabled ? '<span class="muted">이 버전은 서버가 연결되지 않았어요</span>' : `<span class="row"><button class="btn sm blue" id="st-acc">이어하기 코드</button>${Online.email ? '<button class="btn sm" id="st-parent">예전 보호자 메뉴</button>' : ''}</span>`}</div>
       <div class="switch"><span>데이터 초기화</span><button class="btn sm gray" id="reset">초기화</button></div>
-      <div class="honest">${Online.child ? `저장: <b>${escapeHtml(Online.child.nickname)}</b>의 기록은 이 기기와 서버에 함께 저장돼요. 친구 방에서는 보호자님이 승인한 친구와 실시간으로 달리고, 대화는 이모티콘만 돼요. 일반 레이스의 다른 말랑이는 AI예요.` : '저장: 지금은 이 기기 브라우저에만 저장돼요. 보호자 계정으로 하면 서버에 저장되고 친구 방을 쓸 수 있어요. 일반 레이스의 다른 말랑이는 AI예요.'}</div>
+      <div class="honest">${Online.child ? `저장: <b>${escapeHtml(Online.child.nickname)}</b>의 기록은 이 기기와 서버에 함께 저장돼요. 친구 방에서는 친구 목록에 있는 친구와 실시간으로 달리고, 대화는 이모티콘만 돼요. 일반 레이스의 다른 말랑이는 AI예요.` : '저장: 지금은 이 기기 브라우저에만 저장돼요. 일반 레이스의 다른 말랑이는 AI예요.'}</div>
       <p class="muted">평균 프레임: ${Math.round(this.fps || 0)} FPS</p>`);
     $$('[data-k]').forEach((b) => (b.onclick = () => { st[b.dataset.k] = !st[b.dataset.k]; Save.save(); Sound.init(); Sound.applySettings(); this.menuSettings(); }));
     $$('[data-q]').forEach((b) => (b.onclick = () => { st.quality = b.dataset.q; Save.save(); this.applyQuality(); this.renderer.shadowMap.enabled = st.quality !== 'low'; this.resize(); this.menuSettings(); }));
     $('#edit-prof').onclick = () => { this.closeModal(); this.showRegister(true); };
     if ($('#st-parent')) $('#st-parent').onclick = () => this.olPin(() => this.olParent());
     if ($('#st-kids')) $('#st-kids').onclick = () => this.olPin(() => this.olPickChild(), '아이 바꾸기');
-    if ($('#st-login')) $('#st-login').onclick = () => this.olEntry();
+    if ($('#st-acc')) $('#st-acc').onclick = () => this.menuAccount();
     $('#reset').onclick = () => { const b = $('#reset'); if (b.dataset.sure) { Save.reset(); Save.save(true); setTimeout(() => location.reload(), 900); } else { b.dataset.sure = 1; b.textContent = '정말 지울까요? 한 번 더 누르기'; b.classList.remove('gray'); } };
   },
 };
@@ -3819,8 +3819,8 @@ Object.assign(App, {
     this.show('register'); $('#controls').classList.add('hidden'); const S = Save.data; let age = S.profile ? S.profile.age : 7, level = S.profile ? S.profile.level : levelForAge(age), touched = !!S.profile;
     let color = COLORS[S.equip.color] ? S.equip.color : 'pink';
     const colors = STARTER_COLORS.concat(Object.keys(COLORS).filter((k) => !STARTER_COLORS.includes(k) && S.owned.includes('color:' + k)));
-    $('#reg-nick').value = Online.child ? Online.child.nickname : S.profile ? S.profile.nick : ''; $('#reg-nick').disabled = !!Online.child;
-    $('#reg-note').textContent = Online.child ? '닉네임은 보호자 메뉴에서 바꿀 수 있어요. 기록은 서버에 저장돼요.' : '실명 대신 별명을 써 주세요. 정보는 이 기기에만 저장돼요.';
+    $('#reg-nick').value = Online.child ? Online.child.nickname : S.profile ? S.profile.nick : ''; $('#reg-nick').disabled = false;
+    $('#reg-note').textContent = Online.enabled ? '실명 대신 별명을 써 주세요. 닉네임과 게임 기록만 서버에 저장돼요.' : '실명 대신 별명을 써 주세요. 정보는 이 기기에만 저장돼요.';
     const draw = () => {
       $('#reg-blob').style.setProperty('--c', hexCss(COLORS[color].hex)); $('#reg-cname').textContent = COLORS[color].name;
       $('#reg-color').innerHTML = colors.map((k) => `<button class="sw ${k === color ? 'on' : ''}" data-c="${k}" style="--c:${hexCss(COLORS[k].hex)}" aria-label="${COLORS[k].name}"></button>`).join('');
@@ -3834,13 +3834,14 @@ Object.assign(App, {
     draw();
     $('#btn-reg').textContent = edit ? '저장하기' : '말랑 행성으로 출발!';
     $('#btn-reg').onclick = () => {
-      const nick = Online.child ? Online.child.nickname : $('#reg-nick').value.trim().replace(/[<>"'&]/g, '');
+      const nick = $('#reg-nick').value.trim().replace(/[<>"'&]/g, '');
       if (nick.length < 2) { $('#reg-nick').focus(); $('#reg-nick').style.borderColor = '#ff5a7a'; return; }
       const prevLevel = S.profile ? S.profile.level : null;
       S.profile = Object.assign(S.profile || { createdAt: new Date().toISOString() }, { nick, age, level });
       if (!S.owned.includes('color:' + color)) S.owned.push('color:' + color); S.equip.color = color;
       Save.save(); Sound.play('correct'); this.refreshPlayerLook(); this.enterHub();
       if (prevLevel && prevLevel !== level) this.toastHub(`수학 레벨이 LV${level} ${LEVELS[level].name}(으)로 바뀌었어요`);
+      if (this.afterRegister) this.afterRegister(edit);
     };
   },
 });
@@ -3887,7 +3888,7 @@ const Online = {
   async call(fn, args) { const r = await this.rpc(fn, args); if (r && r.ok === false) throw r; return r; },
   async loadFamily() {
     const g = await this.sb.from('guardians').select('id,consent_at').maybeSingle(); if (g.error) throw g.error; this.guardian = g.data || null;
-    const c = await this.sb.from('children').select('id,nickname,friend_code,look,level,controls,created_at').order('created_at'); if (c.error) throw c.error;
+    const c = await this.sb.from('children').select('id,nickname,friend_code,look,level,controls,created_at,restore_code').order('created_at'); if (c.error) throw c.error;
     this.children = c.data || [];
     try { this.admin = !!(await this.rpc('is_admin')); } catch (e) { this.admin = false; }
     if (this.child) this.child = this.children.find((k) => k.id === this.child.id) || null;
@@ -4123,7 +4124,7 @@ Object.assign(App, {
     const days = st.daily || [], mx = Math.max(1, ...days.map((d) => d.n));
     const nt = notice && notice[0];
     this.modal(`<h2>🛠️ 관리자 모드</h2>
-      <div class="ad-grid">${box(st.guardians, '보호자 계정')}${box(st.children, '아이')}${box(st.new_children_7d, '7일 새 아이')}${box(st.players_today, '오늘 플레이한 아이')}${box(st.games_today, '오늘 판 수')}${box(st.games_7d, '7일 판 수')}${box(st.room_games_7d, '7일 친구 방 판')}${box(st.friendships, '친구 맺기')}</div>
+      <div class="ad-grid">${box(st.guardians, '계정')}${box(st.children, '아이')}${box(st.new_children_7d, '7일 새 아이')}${box(st.players_today, '오늘 플레이한 아이')}${box(st.games_today, '오늘 판 수')}${box(st.games_7d, '7일 판 수')}${box(st.room_games_7d, '7일 친구 방 판')}${box(st.friendships, '친구 맺기')}</div>
       <h3>최근 14일 판 수</h3><div class="ad-bars">${days.length ? days.map((d) => `<div title="${d.d} · ${d.n}판"><i style="height:${Math.round(d.n / mx * 100)}%"></i><small>${d.d.slice(3)}</small></div>`).join('') : '<p class="muted">아직 기록이 없어요.</p>'}</div>
       <h3>📢 공지</h3><p class="muted">모든 아이가 광장에 들어올 때 한 번 보여요. 비워서 저장하면 공지를 내려요.</p>
       <div class="row"><input class="ol-inline" id="ad-notice" maxlength="200" style="flex:1" value="${escapeHtml(nt ? nt.body : '')}" placeholder="예: 이번 주말에 새 월드가 열려요!"><button class="btn sm blue" id="ad-nsave">저장</button></div>
@@ -4442,8 +4443,8 @@ Object.assign(App, {
   async menuRooms() {
     if (this.room) return this.drawRoomLobby();
     if (!Online.child) {
-      this.modal(`<h2>👫 친구랑 달리기</h2><p>친구와 같이 달리려면 처음 한 번만 <b>보호자님 계정</b>으로 로그인해 주세요. 그다음부터는 친구 코드만 넣으면 돼요.</p><div class="row" style="justify-content:center">${Online.enabled ? '<button class="btn" id="rm-login">👨‍👩‍👧 보호자 계정으로 하기</button>' : '<p class="muted">이 버전은 아직 서버가 연결되지 않았어요.</p>'}<button class="btn sm gray" onclick="App.closeModal()">닫기</button></div>`);
-      if ($('#rm-login')) $('#rm-login').onclick = () => this.olEntry(); return;
+      this.modal(`<h2>👫 친구랑 달리기</h2><p>친구와 같이 달리려면 서버에 연결해야 해요.</p><div class="ol-msg" id="ol-msg"></div><div class="row" style="justify-content:center">${Online.enabled ? '<button class="btn" id="rm-login">☁️ 서버에 연결하기</button>' : '<p class="muted">이 버전은 아직 서버가 연결되지 않았어요.</p>'}<button class="btn sm gray" onclick="App.closeModal()">닫기</button></div>`);
+      if ($('#rm-login')) $('#rm-login').onclick = async () => { try { await Online.quickStart(); this.drawTitleOnline(); this.menuRooms(); } catch (e) { $('#ol-msg').textContent = olErr(e); } }; return;
     }
     if (!Online.roomsOn()) { this.modal('<h2>👫 친구 방</h2><p>보호자님이 친구 방을 꺼 두었어요.</p><button class="btn" onclick="App.closeModal()">알겠어요</button>'); return; }
     this.modal(`<h2>👫 친구랑 달리기</h2><p class="muted">방을 만들고 친구 옆의 <b>초대</b>를 누르면 친구 화면에 초대가 떠요. 8명까지 함께 달리고, 남은 자리는 AI 말랑이가 채워요.</p>
@@ -4542,6 +4543,120 @@ Object.assign(App, {
       else if (r) show(r.look, `<b>${escapeHtml(r.host)}</b>의 친구 방이 열렸어요!`, '들어가기', () => this.openRoom(r.code), r.code);
       else el.classList.add('hidden');
     } catch (e) { el.classList.add('hidden'); }
+  },
+});
+
+// ---- 90-simple.js
+// ============================================================================
+// Quick start: no guardian account. Each device signs in anonymously and holds one player
+// (nickname, mallang look, game records). A restore code moves the player to another device.
+// The old email login stays only behind a small link, for the operator and for accounts made before.
+// ============================================================================
+Object.assign(OL_ERR, {
+  nick: '닉네임은 한글·영문·숫자 2~10글자로 써 주세요. 긴 숫자나 나쁜 말은 쓸 수 없어요.',
+  no_restore: '그런 이어하기 코드가 없어요. 다시 확인해 주세요.', restore_locked: '코드를 여러 번 틀려서 10분 동안 잠겼어요.',
+  anon_off: '서버 설정에서 익명 로그인이 꺼져 있어서 지금은 이 기기에만 저장돼요.',
+});
+Object.assign(Online, {
+  async ensureSession() {
+    if (this.session) return;
+    const { data, error } = await this.sb.auth.signInAnonymously();
+    if (error) { if (/anonymous/i.test(error.message || '')) throw { err: 'anon_off' }; throw error; }
+    this.session = data.session;
+  },
+  // create (or find) this device's player and keep the save that is on screen now
+  async quickStart() {
+    const P = Save.data.profile; if (!P) return null;
+    await this.ensureSession();
+    const r = await this.call('quick_start', { nick: P.nick, look: this.lookMini(), lvl: P.level });
+    await this.loadFamily();
+    const c = this.children.find((k) => k.id === r.child.id) || r.child;
+    this.adopt(c); return c;
+  },
+  adopt(child) {
+    const d = Save.data; this.child = child; LS.set('malangrace.child', child.id);
+    Save.key = 'malangrace.save.c.' + child.id; Save.use(d);
+    if (Save.data.profile) Save.data.profile.nick = child.nickname;
+    this._pushed = ''; Save.save(true);
+  },
+  async restore(code) {
+    await this.ensureSession();
+    const r = await this.call('restore_account', { code });
+    await this.loadFamily();
+    const c = this.children.find((k) => k.id === r.child.id) || r.child;
+    await this.activate(c); return c;
+  },
+});
+
+Object.assign(App, {
+  drawTitleOnline() {
+    const b = $('#btn-online'), st = $('#title-online'); if (!b) return;
+    $('#btn-start').classList.remove('hidden');
+    if (!Online.enabled) { b.classList.add('hidden'); st.textContent = ''; $('#btn-start').textContent = '시작하기'; return; }
+    b.classList.remove('hidden'); b.textContent = '📱 다른 기기에서 하던 기록 가져오기';
+    if (Online.child) { st.textContent = `☁️ ${Online.child.nickname}의 기록은 서버에 저장돼요`; $('#btn-start').textContent = `▶ ${Online.child.nickname} 시작`; }
+    else { st.textContent = '닉네임만 정하면 바로 시작해요. 기록은 서버에 저장되고 친구와 같이 달릴 수 있어요'; $('#btn-start').textContent = '시작하기'; }
+  },
+  async olBoot() {
+    await Online.init();
+    if (Online.enabled && Online.session && Online.children.length) {
+      const id = Online.lastChildId(), c = Online.children.find((k) => k.id === id) || Online.children[0];
+      await Online.activate(c);
+    } else if (Online.enabled && Save.data.profile) {
+      try { await Online.quickStart(); } catch (e) { console.warn('quick start', e); }
+    }
+    this.refreshPlayerLook(); this.drawTitleOnline();
+  },
+  olStart() { if (Save.data.profile) this.enterHub(); else this.showRegister(); },
+  olAfterLogin() { // email login (operator, or an account made before)
+    this.drawTitleOnline(); if (!Online.email || !Online.guardian) return; // anonymous sign-in is handled by quickStart
+    if (Online.children.length === 1) { Online.activate(Online.children[0]).then(() => { this.refreshPlayerLook(); this.closeModal(); this.drawTitleOnline(); if (Save.data.profile) this.enterHub(); else this.showRegister(); }); }
+    else this.olPickChild();
+  },
+  olRegisterGuardian() { this.closeModal(); this.drawTitleOnline(); },
+  // title button and settings: bring a player over from another device
+  olEntry() {
+    this.modal(`<h2>📱 다른 기기 기록 가져오기</h2>
+      <p>다른 기기의 <b>⚙️ 설정</b>에 있는 <b>이어하기 코드</b> 8자리를 넣어 주세요. 그 기기에서 하던 말랑이와 기록을 이 기기로 가져와요.</p>
+      <div class="row"><input class="ol-inline" id="rs-code" maxlength="9" placeholder="이어하기 코드 8자리" style="text-transform:uppercase;flex:1;font-size:20px;letter-spacing:2px"><button class="btn sm" id="rs-go">가져오기</button></div>
+      <div class="ol-msg" id="ol-msg"></div>
+      <p class="muted" style="margin-top:14px">운영자이거나 예전에 이메일 계정을 만들었다면 <a href="#" id="rs-old">이메일로 로그인</a></p>`);
+    $('#modal-panel').classList.add('narrow');
+    $('#rs-go').onclick = async () => {
+      const m = $('#ol-msg'), code = $('#rs-code').value.trim(); if (code.replace(/[^A-Za-z0-9]/g, '').length !== 8) { m.textContent = '코드 8자리를 써 주세요.'; return; }
+      $('#rs-go').disabled = true; m.textContent = '가져오는 중…';
+      try { const c = await Online.restore(code); this.refreshPlayerLook(); this.drawTitleOnline(); this.closeModal(); if (Save.data.profile) this.enterHub(); else this.showRegister(); this.toastHub(`${c.nickname}의 기록을 가져왔어요! ☁️`); }
+      catch (e) { m.textContent = olErr(e); $('#rs-go').disabled = false; }
+    };
+    $('#rs-old').onclick = (e) => { e.preventDefault(); this.olAuth('login'); };
+  },
+  // after the register screen: connect to the server, or rename on the server
+  async afterRegister(edit) {
+    if (!Online.enabled) return;
+    const P = Save.data.profile; if (!P) return;
+    try {
+      if (!Online.child) { await Online.quickStart(); this.drawTitleOnline(); this.drawHub && this.drawHub(); return; }
+      if (P.nick !== Online.child.nickname) { await Online.call('rename_me', { child: Online.child.id, nick: P.nick }); Online.child.nickname = P.nick; this.toastHub('닉네임을 바꿨어요'); }
+    } catch (e) {
+      if (e && e.err === 'nick') { if (Online.child) P.nick = Online.child.nickname; Save.save(); this.toastHub(OL_ERR.nick); setTimeout(() => this.showRegister(true), 600); }
+      else this.toastHub(olErr(e));
+    }
+  },
+  menuAccount() {
+    const C = Online.child;
+    this.modal(`<h2>☁️ 내 계정</h2>
+      ${C ? `<div class="ol-code">이어하기 코드 <b>${escapeHtml((C.restore_code || '').replace(/^(.{4})/, '$1-'))}</b> <button class="btn sm blue" id="ac-copy">복사</button></div>
+      <p class="muted" style="text-align:center">다른 기기에서 <b>📱 다른 기기에서 하던 기록 가져오기</b>를 누르고 이 코드를 넣으면 이어서 할 수 있어요. 코드는 다른 사람에게 알려 주지 마세요.</p>` : `<p>아직 서버에 연결되지 않았어요. 지금은 이 기기에만 저장돼요.</p><div class="row" style="justify-content:center"><button class="btn" id="ac-link">서버에 연결하기</button></div>`}
+      <div class="row" style="justify-content:center;margin-top:8px"><button class="btn sm" id="ac-restore">📱 다른 기기 기록 가져오기</button>${C ? '<button class="btn sm gray" id="ac-del">계정과 기록 지우기</button>' : ''}</div>
+      <div class="ol-msg" id="ol-msg"></div>
+      <p class="muted">서버에는 닉네임, 말랑이 모습, 게임 기록만 저장해요. 이메일, 실명, 생년월일, 전화번호는 받지 않아요.</p>`);
+    if ($('#ac-copy')) $('#ac-copy').onclick = () => { try { navigator.clipboard.writeText(C.restore_code); } catch (e) {} $('#ac-copy').textContent = '복사됨'; };
+    if ($('#ac-link')) $('#ac-link').onclick = async () => { try { await Online.quickStart(); this.drawTitleOnline(); this.menuAccount(); } catch (e) { $('#ol-msg').textContent = olErr(e); } };
+    $('#ac-restore').onclick = () => this.olEntry();
+    if ($('#ac-del')) $('#ac-del').onclick = async () => {
+      const b = $('#ac-del'); if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = '정말 지울까요? 한 번 더 누르기'; return; }
+      try { const id = C.id; await Online.call('delete_me'); LS.del('malangrace.save.c.' + id); await Online.signOut(); Save.reset(); Save.save(true); setTimeout(() => location.reload(), 600); } catch (e) { $('#ol-msg').textContent = olErr(e); }
+    };
   },
 });
 

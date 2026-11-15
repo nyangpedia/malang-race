@@ -39,7 +39,7 @@ const Online = {
   async call(fn, args) { const r = await this.rpc(fn, args); if (r && r.ok === false) throw r; return r; },
   async loadFamily() {
     const g = await this.sb.from('guardians').select('id,consent_at').maybeSingle(); if (g.error) throw g.error; this.guardian = g.data || null;
-    const c = await this.sb.from('children').select('id,nickname,friend_code,look,level,controls,created_at').order('created_at'); if (c.error) throw c.error;
+    const c = await this.sb.from('children').select('id,nickname,friend_code,look,level,controls,created_at,restore_code').order('created_at'); if (c.error) throw c.error;
     this.children = c.data || [];
     try { this.admin = !!(await this.rpc('is_admin')); } catch (e) { this.admin = false; }
     if (this.child) this.child = this.children.find((k) => k.id === this.child.id) || null;
@@ -275,7 +275,7 @@ Object.assign(App, {
     const days = st.daily || [], mx = Math.max(1, ...days.map((d) => d.n));
     const nt = notice && notice[0];
     this.modal(`<h2>🛠️ 관리자 모드</h2>
-      <div class="ad-grid">${box(st.guardians, '보호자 계정')}${box(st.children, '아이')}${box(st.new_children_7d, '7일 새 아이')}${box(st.players_today, '오늘 플레이한 아이')}${box(st.games_today, '오늘 판 수')}${box(st.games_7d, '7일 판 수')}${box(st.room_games_7d, '7일 친구 방 판')}${box(st.friendships, '친구 맺기')}</div>
+      <div class="ad-grid">${box(st.guardians, '계정')}${box(st.children, '아이')}${box(st.new_children_7d, '7일 새 아이')}${box(st.players_today, '오늘 플레이한 아이')}${box(st.games_today, '오늘 판 수')}${box(st.games_7d, '7일 판 수')}${box(st.room_games_7d, '7일 친구 방 판')}${box(st.friendships, '친구 맺기')}</div>
       <h3>최근 14일 판 수</h3><div class="ad-bars">${days.length ? days.map((d) => `<div title="${d.d} · ${d.n}판"><i style="height:${Math.round(d.n / mx * 100)}%"></i><small>${d.d.slice(3)}</small></div>`).join('') : '<p class="muted">아직 기록이 없어요.</p>'}</div>
       <h3>📢 공지</h3><p class="muted">모든 아이가 광장에 들어올 때 한 번 보여요. 비워서 저장하면 공지를 내려요.</p>
       <div class="row"><input class="ol-inline" id="ad-notice" maxlength="200" style="flex:1" value="${escapeHtml(nt ? nt.body : '')}" placeholder="예: 이번 주말에 새 월드가 열려요!"><button class="btn sm blue" id="ad-nsave">저장</button></div>

@@ -370,8 +370,8 @@ Object.assign(App, {
     this.show('register'); $('#controls').classList.add('hidden'); const S = Save.data; let age = S.profile ? S.profile.age : 7, level = S.profile ? S.profile.level : levelForAge(age), touched = !!S.profile;
     let color = COLORS[S.equip.color] ? S.equip.color : 'pink';
     const colors = STARTER_COLORS.concat(Object.keys(COLORS).filter((k) => !STARTER_COLORS.includes(k) && S.owned.includes('color:' + k)));
-    $('#reg-nick').value = Online.child ? Online.child.nickname : S.profile ? S.profile.nick : ''; $('#reg-nick').disabled = !!Online.child;
-    $('#reg-note').textContent = Online.child ? '닉네임은 보호자 메뉴에서 바꿀 수 있어요. 기록은 서버에 저장돼요.' : '실명 대신 별명을 써 주세요. 정보는 이 기기에만 저장돼요.';
+    $('#reg-nick').value = Online.child ? Online.child.nickname : S.profile ? S.profile.nick : ''; $('#reg-nick').disabled = false;
+    $('#reg-note').textContent = Online.enabled ? '실명 대신 별명을 써 주세요. 닉네임과 게임 기록만 서버에 저장돼요.' : '실명 대신 별명을 써 주세요. 정보는 이 기기에만 저장돼요.';
     const draw = () => {
       $('#reg-blob').style.setProperty('--c', hexCss(COLORS[color].hex)); $('#reg-cname').textContent = COLORS[color].name;
       $('#reg-color').innerHTML = colors.map((k) => `<button class="sw ${k === color ? 'on' : ''}" data-c="${k}" style="--c:${hexCss(COLORS[k].hex)}" aria-label="${COLORS[k].name}"></button>`).join('');
@@ -385,13 +385,14 @@ Object.assign(App, {
     draw();
     $('#btn-reg').textContent = edit ? '저장하기' : '말랑 행성으로 출발!';
     $('#btn-reg').onclick = () => {
-      const nick = Online.child ? Online.child.nickname : $('#reg-nick').value.trim().replace(/[<>"'&]/g, '');
+      const nick = $('#reg-nick').value.trim().replace(/[<>"'&]/g, '');
       if (nick.length < 2) { $('#reg-nick').focus(); $('#reg-nick').style.borderColor = '#ff5a7a'; return; }
       const prevLevel = S.profile ? S.profile.level : null;
       S.profile = Object.assign(S.profile || { createdAt: new Date().toISOString() }, { nick, age, level });
       if (!S.owned.includes('color:' + color)) S.owned.push('color:' + color); S.equip.color = color;
       Save.save(); Sound.play('correct'); this.refreshPlayerLook(); this.enterHub();
       if (prevLevel && prevLevel !== level) this.toastHub(`수학 레벨이 LV${level} ${LEVELS[level].name}(으)로 바뀌었어요`);
+      if (this.afterRegister) this.afterRegister(edit);
     };
   },
 });
