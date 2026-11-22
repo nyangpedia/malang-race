@@ -215,7 +215,7 @@ class Race {
     const P = this.player; const el = $('#qpanel');
     $('#leaderboard').classList.toggle('q-hide', !!G);
     if (!G) { if (this._qHtml) { this._qHtml = ''; el.classList.add('hidden'); } return; }
-    let html; const title = `숫자 에너지 관문 ${G.idx + 1}`;
+    let html; const title = `${(typeof BRAND !== 'undefined' && BRAND && BRAND.gateTitle) || '숫자 에너지 관문'} ${G.idx + 1}`;
     const al = G.allowed.get(P);
     const mySlot = P.d >= G.d - GATE_ZONE && P.d <= G.d + 0.7 ? G.slotAt(P.p.x) : -1;
     const chips = (rev) => `<div class="q-chips">${G.doors.map((dr) => `<span class="q-chip ${dr.i === mySlot ? 'me' : ''} ${rev ? (dr.correct ? 'ok' : 'no') : ''}" style="background:${dr.color}">${escapeHtml(dr.value)}</span>`).join('')}</div>`;
